@@ -2,6 +2,8 @@
 #include "memory.h"
 #include "log.h"
 #include <cstring>
+#include "memory_registers.h"
+#include "cpu_registers.h"
 
 //extern functions
 extern uint		nrom_read(uint);
@@ -274,11 +276,12 @@ void mmc3_ppu_do_cycle()
 		} else {
 			s_nScanlineCount--;
 		}
+
+		if (s_nScanlineCount == 0 && s_bDisableIRQ == false) {
+			set_mapper1_irq();
+		}
 	}
 
-	if (s_nScanlineCount == 0 && s_bDisableIRQ == false) {
-		set_mapper1_irq();
-	}
 
 	/*
 
