@@ -96,7 +96,7 @@ uint memory_main_read(uint address)
 			//read from ppu
 			uint ppuaddress = g_MemoryRegisters.r2006;
 			g_MemoryRegisters.r2006 = ( g_MemoryRegisters.r2006 + ((g_MemoryRegisters.r2000 & 0x4)? 32 : 1)) & 0x7FFF;
-				
+			g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
 			if (ppuaddress >= 0x3F00) {
 				//returns value right away, but also sets the latch too
 				g_MemoryRegisters.r2006ByteLatch = ppu_memory_main_read(ppuaddress & 0x2FFF);
@@ -225,6 +225,7 @@ void memory_main_write(uint address, uint value)
 			{
 				uint address = g_MemoryRegisters.r2006;
 				g_MemoryRegisters.r2006 = ( g_MemoryRegisters.r2006 + ((g_MemoryRegisters.r2000 & 0x4)? 32 : 1)) & 0x7FFF;
+				g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
 				ppu_memory_main_write(address, value);
 				break;
 			}
