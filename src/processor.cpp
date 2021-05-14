@@ -46,7 +46,7 @@ void CPUProcess()
 	while (sn == g_PPURegisters.scanline) {
 		g_Registers.memoryExtraCycles = 0;
 		memory_read_latch();
-#if 1
+#if 0
 		auto op = OpCodes[g_Registers.opCode];
 		if (g_Registers.opCode == OPCODE_LSR_A) {
 			int n = 0;

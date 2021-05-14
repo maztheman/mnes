@@ -266,7 +266,11 @@ void mmc3_ppu_do_cycle()
 {
 	static uint s_ui_ppu_addr_last = 0;
 
-	const auto ui_ppu_addr = ppu_addr_bus();
+	auto ui_ppu_addr = ppu_addr_bus();
+
+	if (ui_ppu_addr >= 0x3F00 && ui_ppu_addr <= 0x3FFF) {
+		ui_ppu_addr = s_ui_ppu_addr_last;
+	}
 
 	if (is_a12_rising(s_ui_ppu_addr_last, ui_ppu_addr)) {
 		//clocked
