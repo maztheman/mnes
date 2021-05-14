@@ -78,6 +78,12 @@ struct ppu_sprite_state_t
 		}
 	}
 
+	void inc_oam_m_index_bugged() {
+		if (++oam_m_index >= 4) {
+			oam_m_index = 0;
+		}
+	}
+
 	void inc_oam_index() {
 		oam_index++;
 		if (oam_index == 64) {
@@ -183,12 +189,13 @@ static inline void ppu_sprite_process_2()
 	if (is_sprite_in_range(ppu_scanline(), oam[idx + sprite_state.oam_m_index])) {
 		set_sprite_overflow();
 		sprite_state.inc_oam_index();
-		sprite_state.inc_oam_m_index(false);
+		sprite_state.inc_oam_m_index_bugged();
+		//sprite_state.inc_oam_m_index(true); //old way is to let the m_index wrap
 		//sprite_state.inc_oam_m_index(true);
 		//sprite_state.inc_oam_m_index(true);
 	} else {
 		sprite_state.inc_oam_index();
-		sprite_state.inc_oam_m_index(false);
+		sprite_state.inc_oam_m_index_bugged();
 	}
 }
 
