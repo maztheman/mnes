@@ -1,0 +1,795 @@
+<html>
+<head><title>NES 101: A guide for otherwise experienced programmers</title></head>
+<body>
+<center><h1>NES 101</h1>
+<h3>An NES tutorial for otherwise experienced programmers</h3>
+by Michael Martin, <a href="mailto:mcmartin@hkn.berkeley.edu">mcmartin@hkn.berkeley.edu</a>
+<br>
+Revision 1.2, 23 Mar 2002
+</center>
+
+<ul>
+    <li><a href="#about">About this document</a>
+    <li><a href="#prereqs">Is this for you?</a>
+    <li><a href="#overview">Overview</a>
+    <li><a href="#ines">Organizing the iNES file</a>
+    <li><a href="#main">The Main Loop</a>
+    <li><a href="#cpu">NES CPU initialization</a>
+    <li><a href="#ppu">PPU initialization</a>
+    <li><a href="#sprite">Working with sprites</a>
+    <li><a href="#bg">Background basics</a>
+    <li><a href="#scroll">Scrolling</a>
+    <li><a href="#input">Input</a>
+    <li><a href="#sound">Sound Effects</a>
+    <li><a href="#wrapup">The Final Results</a>
+</ul>
+
+
+<a name="about">
+<h2>About this document</h2>
+
+<p>So.  You're a hotshot programmer for something that isn't the NES.  Well, maybe a warmshot programmer.  Maybe you're an average computer geek that likes emulators and thinks it would be cool to write up some .NES programs.  Maybe you're like me and the 6502 family of processors was the first one you ever learned assembler for, back when you were 12 and playing with your Apple IIe or Commodore 64, and now you want to put that knowledge to good use now that you've got the CS ability to back it up.</p>
+
+<p>Maybe you went online to find NES development data and found a huge mass of impossibly technical stuff for the people that <i>really</i> know what's going on, and a somewhat smaller mass of stuff that's so basic that it can't teach you anything at all.</p>
+
+<p>Maybe you've gotten so lost seeing the people who are making the NES do stuff that isn't in its spec sheets that you can't find how to make it do the things that <i>are</i> in its spec sheets.</p>
+
+<p>Maybe this seriously irritates you, or makes you think that maybe you found out about the NES development scene too late.</p>
+
+<p>Maybe this article is for you.</p>
+
+<h3>Revision History</h3>
+<ul>
+    <li>Revision 1.2: 23 Mar 2002.  More initialization issues repaired.  Updated the sample code to use the newest version of P65.  Fixed some bugs.
+    <li>Revision 1.1b: 2 Dec 2001.  Figured out <i>why</i> the 1.0 code was a bug, and why the 1.1 code fixes it.  I think.
+    <li>Revision 1.1: 29 Nov 2001.  Fixed a bug in the PPU initialization section that caused high-end emulators to bomb.  Added sections on defensive coding to the CPU initialization section.  Added a revision history, a slightly more detailed copyright notice, and a special thanks section.
+    <li>Revision 1.0: 24 Oct 2001.  First public release.
+</ul>
+
+<h3>Copyright notice</h3>
+
+<p>You know the drill.  This article and the code therein is &copy; 2001,2 Michael Martin.  This tutorial is intended to be <i>used</i>, however, so feel free to make copies and share with friends.  Don't edit the text, please.  If there's something wrong with the code or the info, <i>let me know</i> and I'll fold it into the text.</p>
+
+<p>Some of the graphics (specifically, the character set) were derived from a font created by Commodore Business Machines in 1982.</p>
+
+<h3>Special thanks</h3>
+
+<p>Generic thanks go to everyone who's written NES documentation and put it on the web, for getting me started down this crazy path, and to the developers who publish their NES source code, for giving me examples of code that <i>works</i> so I can figure out why mine doesn't.</p>
+
+<p>Specific thanks go to Memblers and the NESDev crew for functioning as a clearinghouse for this information, and to Christian Henz for pointing out a bug in the 1.0 code.  Thanks as well to Quietust for additional pointers on $4017 magic, and a technical proofread which caught some embarassing errors.</p>
+
+<a name="prereqs">
+<h2>Is this for you?</h2>
+
+<p>We'll be building a complete NES program that does all the basic stuff in this tutorial, so I don't want to deal with <i>too</i> much that's outside of that.  This means that I assume some stuff about you.</p>
+
+<ul>
+  <li>You're a proficient 6502 programmer, and don't need to be told about the opcodes, addressing modes, and such.  The concepts of loops, function calls, and pointers/indirect addressing are not mysteries to you, and you have at least a basic grasp of how to break past the 8-bit boundary and do 16-bit addition and addressing and such.
+  <li>You understand or have access to the basic technical information about the NES.
+  <li>You have access to an assembler that can produce .NES files, and you know how to use it.  There are a great many that can do this; this tutorial will be using the P65 assembler because, well, I wrote it for the express purpose of letting me do 8-bit development.  The P65 assembler is fairly powerful but very generic.  We won't get <i>too</i> deeply into its special features, but we will occasionally mention how to get similar effects with different sets of features, or features that P65 does not have, and how we work around <i>that</i>.
+</ul>
+
+Now, we all know what happens when you assume things; you gain the ability to function in an uncertain world.  If you don't meet these criteria, these links should prove helpful in getting you up to speed:
+
+<h3>6502 programming</h3>
+
+<a href="http://www.ping.be/kim-1__6502/6502/proman.html">
+6500 Microprocessor Family Programming Manual<br>
+http://www.ping.be/kim-1__6502/6502/proman.html</a>
+
+<p>This is the complete text of the official 65xx series programming guide.  If you don't know 6502 assembler, this is where to learn.  If you're new to assembler programming, it will help you some (though you may want to learn on a less rigorous system, like the Commodore 64) - if you already know the basics of assembly, this will rapidly get you up to speed on the opcodes and addressing modes.</p>
+
+<a href="http://www.classicgaming.com/area64/fdi/docs/c64prg10.zip">
+Commodore 64 Programmer's Guide<br>
+http://www.classicgaming.com/area64/fdi/docs/c64prg10.zip</a>
+
+<p>Chapter 5 is the chapter on machine language, and will give a gentle introduction to the ways of 6502 assembly if you've never dealt with assembly before.  The C64 uses a 6510, which has the same opcodes as the NES' 2A03, with a few additions (the ability to perform binary-coded-decimal operations and byte rotation) and a few subtractions (sound is done off-chip).  The P65 assembler was originally intended to produce C64 .PRG files; these files can usually be directly loaded by an appropriate emulator.</p>
+
+
+<h3>NES Technical information</h3>
+
+<a href="http://nesdev.parodius.com/">
+NESdev<br>
+http://nesdev.parodius.com/</a>
+
+<p>A collection of documents on NES development and emulator development.  If you need information, check here before you hit Google.  Specific documents hosted at NESdev are listed below, but some may be out of date by the time you read this.  Check the main NESdev page for updates.</p>
+
+<a href="http://nesdev.parodius.com/ndox200.zip">
+Jeremy "Yoshi" Chadwick's NES Technical Document<br>
+http://nesdev.parodius.com/ndox200.zip</a>
+
+<p>This is THE basic document for NES technical information, with a bit of a slant towards emulation.  You need this data, even if it is slightly outdated.  I won't repeat it, but I'll cross-reference it.</p>
+
+<a href="http://nesdev.parodius.com/NESSOUND.txt">
+Brad Taylor's NES Sound Channel Guide<br>
+http://nesdev.parodius.com/NESSOUND.txt</a>
+<p>The definitive information on NES sound.  We'll touch on sound effects in this tutorial, but if you want to write a music driver or fancy sound effects, this will tell you what you need to know.  Actually, if you want to clone the NES's sound hardware in silicon, this will <i>also</i> tell you what you need to know...</p>
+
+<a href="http://nesdev.parodius.com/NESprgmn.txt">
+Joker21's NES programming Tutorial<br>
+http://nesdev.parodius.com/NESprgmn.txt</a>
+
+<p>It was by tearing apart this document (and cross-checking with Yoshi's) that I managed to deduce enough practical information to produce the demo that accompanies this tutorial.  By itself, this document doesn't do much.  It doesn't repay careful study; it DOES repay careful dissection.  (How many short NES programs can you name?)  Very specific to NESASM (which I don't use) - the implications of NESASM inspired a number of features in P65.  If you can work through his demo program with your chosen assembler, you'll be able to work out how to assemble your own ROMs.</p>
+
+<h3>Assemblers</h3>
+
+<a href="http://hkn.berkeley.edu/~mcmartin/P65/">
+The P65 Assembler<br>
+http://hkn.berkeley.edu/~mcmartin/P65/</a>
+
+<p>This is my assembler for the 6502.  It's written in Perl, which means that it will run on pretty much <i>everything</i>.  (Go to <a href="http://www.perl.com/">http://www.perl.com/</a> to acquire a version of Perl that runs on your system.)  The current version of P65 (1.1 at the time of this writing) allows for extremely flexible memory allocation and file organization, and has some interesting error checking features that are a bit beyond the scope of this tutorial.</p>
+
+<a name="overview">
+<h2>Project overview</h2>
+
+<p>Learn by doing, right?  "Build a complete NES program that does all the basic stuff" is not exactly a highly specified problem.  So, let's break up all the aspects and produce a list of all the things that we want to do:</p>
+
+<ul>
+    <li>It should run on an emulator.  The ability to run on a real NES is the goal, of course, but be honest with yourself.  Are you really going to be running these on real decks?  Even if you <i>are</i> going to turn this into silicon you're going to test the logic on an emulator, so working knowledge of the iNES format is required.
+    <li>It should involve sprites moving over a background.
+    <li>It should involve scrolling.
+    <li>It should take input.
+    <li>It should produce sound.  <i>Music</i> is a significantly more complex issue (since you have to do timing and note values and all that good stuff) - I'll be touching on the issues you need to resolve to produce music, but this tutorial will only produce (tonal) sound effects, which the NES makes fairly easy.
+</ul>
+
+<p>OK, so that's what we <i>need</i>.  Now to come up with stuff that the tutorial will <i>do</i> to touch upon all of these things.</p>
+
+<ul>
+    <li>We will produce a file in iNES (.NES) format.  Pretty much all emulators can read these.
+    <li>We will have a simple (8x8) sprite and have it bounce back and forth across the screen, with an appropriate background (mostly text, because that's easy).
+    <li>We'll scroll the background in from the top, kind of like all those old Konami games that scrolled their titles in from the side.  This will be independent of the sprite, primarily to make our lives easier.
+    <li>We'll let the controller's up and down move our little sprite up and down as it bounces back and forth.  Also, pressing A will reverse the direction immediately.
+    <li>We'll produce sound effects whenever the sprite's direction changes; one tone for pressing A (which will be the C one octave below middle C), another for bouncing off the edge of the screen (which will be the C one octave <i>above</i> middle C).  This will let us deal with the math for producing the values we need for any given "real" note.  We'll mess with volume envelopes and worry about duty cycles but leave pitch slides, triangle waves, and noise alone for now.  Digital sound is big and messy so I'm leaving that completely alone.
+</ul>
+
+<p>Ready?  Let's go!</p>
+
+<a name="ines">
+<h2>Organizing the iNES file</h2>
+
+<p>Turning a bunch of chips on a cartridge into a file doesn't necessarily match what your average assembler produces.  NEStech section 9.A gives us what our file has to look like, as well as telling us what we need to decide about our "cartridge."</p>
+
+<p>Immediately we are overwhelmed with terminology.  (Well, not <i>immediately</i>.  The first four bytes - iNES' "magic number" - are easy enough to deal with.)  Let's get some definitions out of the way.</p>
+
+<ul>
+    <li><b>PRG-ROM page</b>: The PRG-ROM is the program code itself (and associated constants).  Programs come in 16-kilobyte chunks.  The NES can address 32 kilobytes of code (two pages) without requiring external support from a memory mapper (programs with lots of code should consider Mapper #2 - however, you'll have to manage pattern tables directly if you do, as Mapper #2 has no VROM).
+    <li><b>CHR-ROM page</b>: The NES' graphics chip (the PPU) constructs all of its images, both background and sprite, from 8x8x4 characters (16 bytes each).  CHR-ROM contains the definitions of all of these characters.  They are loaded into the pattern tables of the PPU's memory at boot time.  Each pattern table has 256 entries, and is thus 4 kilobytes in size.  The PPU can access 8 kilobytes of patterns (two tables) without requiring external support from a memory mapper (graphics-heavy and logic-light programs should consider Mapper #3).
+    <li><b>Mirroring</b>: The NES can address four screens worth of backgrounds (arranged in a square), but can only hold 2 screens worth of data without extra RAM on the cartridge.  The PPU deals with this by copying or mirroring rows or columns.  Under Horizontal Mirroring, $2000 lies above $2800; under vertical mirroring, $2000 is to the left of $2400.  Under Four-Screen mirroring has entirely seperate name tables at $2000, $2400, $2800, and $2C00, but I'm unsure as to how they are configured.  Experimentation is key.  Note that without a memory mapper the type of mirroring is hard-wired.  If you want to switch mirroring at run-time, consider using Mapper #1.
+    <li><b>SRAM</b>: Many cartridges have RAM onboard, either for name tables (see Four-Screen mirroring, above) or for saved games.  If a game has SRAM it's usually for saved games, but it also could conceivably be used to store extra volatile data, if the native 2KB of RAM isn't enough.
+</ul>
+    
+<p>Our code will be small.  We won't need more than one block each of PRG-ROM or CHR-ROM.  Because of this, our whole program will fit inside the NES' memory without any fancy hardware - this is simulated by Mapper #0.  NESdev will have the latest documentation on the various memory mappers and how to use them; mapper #0 (NROM) takes one or two blocks of PRG-ROM and zero or one blocks of CHR-ROM.  CHR-ROM goes in VRAM location $0000-$1FFF; the two blocks of PRG-ROM go in $8000-$BFFF and $C000-$FFFF.  (If there's only one block of PRG-ROM, as in this case, copies are loaded into both blocks.)  Attempts to write to program locations $8000-$FFFF have no effect.  I haven't done any experiments with trying to overwrite pattern tables under Mapper #0, but I suspect you can't.  Generally speaking, you don't want to mess with pattern tables directly anyway (unless you're using Mapper #2).</p>
+
+<p>We're only scrolling vertically, which means that we should use Horizontal Mirroring.  Our name tables will be at $2000 (mirrored at $2400) and $2800 (mirrored at $2C00) in VRAM.</p>
+
+<p>Consulting the table describing the iNES file, we produce our top level file, tutor.p65.  Here it is in its entirety:</p>
+
+<pre>
+; iNES header
+
+; iNES identifier
+.ascii "NES"
+.byte $1a 
+
+; Number of PRG-ROM blocks
+.byte $01
+
+; Number of CHR-ROM blocks
+.byte $01
+
+; ROM control bytes: Horizontal mirroring, no SRAM
+; or trainer, Mapper #0
+.byte $00, $00
+
+; Filler
+.byte $00,$00,$00,$00,$00,$00,$00,$00
+
+; PRG-ROM
+.include "tutorprg.p65"
+
+; CHR-ROM
+.include "tutorchr.p65"
+</pre>
+
+<p>We'll put our code for the PRG-ROM chip in the tutorprg.p65 file, and our code defining the characters in the tutorchr.p65 file.  Often, CHR-ROM data will be produced directly as a binary by some other tool.  In cases like that, you'd replace the <tt>.include "tutorchr.p65"</tt> line with something like <tt>.incbin "tutor.chr"</tt>.
+
+<p>Now that that's out of the way, we can start producing stuff that the deck will actually <i>see</i>.  A good starting point is the three interrupt vectors.  We won't have our graphics be interrupt-driven, we will never execute the BRK instruction (assuming we don't <i>completely</i> screw up), and we won't be invoking any IRQs.  Our basic tutorprg.p65 will look like this:</p>
+
+<pre>
+reset:  ; Do initialization here
+loop:   jmp loop
+
+
+; IRQ and VBLANK don't do anything yet
+vblank: rti
+
+irq:    rti
+
+.advance $FFFA
+.word vblank, reset, irq
+</pre>
+
+<p>This doesn't do much (but infinite loops are good for you, in the console world), but we've gotten our basics out of the way.  VBLANK and IRQ both just return immediately.  (This is mildly evil.  IRQ should never happen, so if we're doing development we <i>ought</i> to have the system crash or otherwise let us know that unpleasantness is going on.  By the time we release though, we can just cross our fingers and hope nobody notices.)</p>
+
+<a name="main">
+<h2>The Main Loop</h2>
+
+<p>The core of your code will be the main loop or frame loop.  Each iteration through the loop will advance the graphics, sound, and other things by one frame.  On NTSC (North American and Asian) machines, this happens 60 times a second.  On PAL (European) machines, it's 50.  This isn't horrendously important for this program, but there will be a rather marked difference in speed between PAL and NTSC machines.  (Most emulators treat the system as an NTSC system.)</p>
+
+<p>Generally speaking, you should only mess with the video memory during <i>VBLANK</i> - the time in between frames when the electron gun in your TV is moving back up to the top.  See section 4.M in NEStech for a description of VBlank and HBlank.</p>
+
+<p>There are two ways to detect VBlank: hardware and software.  In the hardware method, you instruct the PPU to produce a non-maskable interrupt every VBlank.  This produces an interrupt that jumps to the VBlank/NMI procedure you specified at memory location $FFFA.</p>
+
+<p>Another approach is to detect it in software.  Memory location $2002 is the graphical status register, and bit 7 of it becomes 1 when a new VBlank occurs.  Thus, spinlocking for a VBlank is a simple matter of loading location $2002 until the value therein is negative.</p>
+
+<p>On a real NES, and on good emulators, reading $2002 clears it.  After you read a 1 in, the VBlank bit will be 0 until the <i>next</i> VBlank.  Poorer emulators fail to do this, and return a 1 if the machine is in VBlank and a 0 if it is not.  We will end our loop with a spinlock that waits for the VBlank value to become 0.  This does (almost) nothing on a good emulator, and fixes performance on a bad one.</p>
+
+<p>Spinlocking on $2002 in your main loop is generally considered a bad move.  It's better to put your frame update inside the VBLANK routine.  In cases where you may have processing that's intensive enough that one frame isn't enough to handle it, only put frame-critical updates inside VBLANK and use some global variable to have VBLANK tell the main routine that the graphics updates are done and it's OK to mess with the sprite state, compute physics models, or what have you.</p>
+
+<p>It is also good practice to wait two VBLANKS before doing anything important.  This <i>has</i> to be done by spinlocking on $2002.</p>
+
+<p>The whole system in our tutorial file is a stimulus/response, graphics display engine.  There are no real "downtime" calculations to do, and the entire frame update, including computing what happens next, is generally complete before the VBLANK period even <i>ends</i>.  So we'll just put everything in the VBLANK handler for this program.</p>
+
+<p>We also can use an evil trick.  The IRQ handler does nothing but execute a return statement (RTI).  We point the IRQ handler to VBLANK's RTI statement, and save ourselves a byte of code.  (This fusion of subroutines can be done more generally, and can save considerable space; however, it makes maintanence of the resulting code all but impossible if it's done in anything but the most trivial cases.  If you do it, keep copies of your original code around.</p>
+
+<p>Our interrupt handlers thus look like this:</p>
+
+<pre>
+vblank: jsr scroll'screen
+        jsr update'sprite
+        jsr react'to'input
+irq:	rti
+
+</pre>
+
+<a name="cpu">
+<h2>NES CPU initialization</h2>
+<p>At power-on, RAM is <i>probably</i> zeroed, but in general we have no guarantee what's in memory at reset.  Our initialization routine should manually clear out all the RAM it's going to use, and then set the appropriate initial values.</p>
+
+<p>Technically we can ignore the "Decimal" flag, as the NES does not have support for Binary Coded Decimal, but it's good form to clear it out with a CLD command during initialization anyway.</p>
+
+<p>Initialization is supposed to be done before everything else; because of this, it is a good idea to disable interrupts while initialization is going on.  In fact, since the sound hardware occasionally generates interrupts, an <tt>SEI</tt> instruction should be the first thing the deck sees after a RESET.</p>
+
+<h3>Some notes on the 6502 memory model</h3>
+<p>The 6502 has a <i>flat memory model</i>, much like modern processors.  A modern machine has 32-bit addresses, and can thus access 2<sup>32</sup> = 4,294,967,296 bytes of memory (4 gigabytes).  The new 64-bit architectures can address 16 exabytes.  The 6502 series has 16-bit addresses, which span a whopping 2<sup>16</sup> = 65,536 bytes of memory (64 kilobytes).  In contrast, the 8086 series used a <i>segmented memory architecture</i> where a the address bytes overlapped, and the 32-bit address let you only get at 2<sup>20</sup> = 1,048,576 bytes of memory (1 megabyte).  (It no longer does.  The series switched to a flat memory architecture around the 80386 or 80486.)</p>
+
+<p>The literature on the 6502 series breaks up the 64 kilobytes of address space into 256 <i>pages</i> of 256 bytes each.  Page 0 (the "zero page") is locations $0000-$00FF, page $1A is $1A00-$1AFF, and so on.  Pages 0 and 1 are special for the 6502 family of processors.  The zero page is required for holding pointer values, and memory instructions involving the zero page are both faster and smaller than elsewhere.  Most 6502-based computers snarf most of the zero page for their operating system, but the NES has no OS, so we can do as we please with it.  Page 1 is the stack and should generally be left alone (except for push and pop commands).</p>
+
+<p>The NES only has 2K of program RAM.  These are the first 7 pages, $0000 to $07FF.  NEStech section 3.B gives the basic memory map and where it is mirrored.  If you <i>really need</i> more RAM than that for your program, hijack the "Save RAM" at $6000, and note its presence in the .NES header.  (This RAM would be included on the cartridge, were this a real cartridge.)</p>
+
+<p>Note that despite the fact that the 6502's memory model is flat, there are still three general segments of CPU-MEM:</p>
+<ul>
+	<li>The zero page holds our time critical variables and our pointer values.
+	<li>Pages 2-7 hold the rest of our data.  One of those pages will likely be dedicated to sprite information.
+	<li>Pages $80-$FF hold the PRG-ROM information.  Data that doesn't change should generally be here, too.
+</ul>
+
+<p>Of these, only the last one is actually specified in the .NES file; the rest are implicit in the addresses of the instructions.  However, as human programmers, we like to have symbolic names for memory locations and not REALLY care too much about where it goes as long as it's in the right region.  NESASM has directives to move you back and forth between these regions (<tt>.zp</tt> for the zero page, <tt>.bss</tt> for the normal RAM - a term it inherits from Intel's segmented architecture, and <tt>.code</tt> for marking actual program text).  P65 was inspired in part by the basic assemblers for the MIPS architecture and uses <tt>.data</tt> and <tt>.text</tt>.  However, it also lets you define regions more or less arbitrarily, and even lets them overlap.  We can use this to produce a seperate region for zero page variables.  It does <i>no</i> consistency checking, and if you enter an <tt>.org</tt> wrong, or put space in a <tt>.text</tt> region, or code in a <tt>.data</tt> region, you're almost certainly in big trouble.  (Alternatively, you're unleashing something like self-relocating code, and it works great, which is <i>why</i> P65 doesn't check too hard.)</p>
+
+<p>P65 also just lets you assign names to arbitrary memory locations.  This is tempting for us, as we have exactly three local variables: we need to keep track of what direction the sprite is moving, how far we've scrolled, and a flag keeping track of the A button (we'll get to all of these later).  We'll just put all of those on the zero page, for speed and size purposes.  Also, the current state of the sprites is maintained in a 256-byte block of special memory called SPR-RAM.  The traditional way to write to it involves copying a page from the CPU-RAM to the SPR-RAM, and the hardware has a cheap way of doing that.  We'll use page 2 ($0200-$02FF) of CPU-RAM to keep track of sprites.  Directly specifying the addresses produces a chunk of code like this at the top of tutorprg.p65:</p>
+
+<pre>
+.alias dx $00
+.alias a $01
+.alias scroll $02
+.alias sprite $200
+</pre>
+
+<p>Easy enough, but if there are a lot of variables, or if you need to change the <i>size</i> of one of them later, you've got your work cut out for you.  P65 provides a command <tt>.space</tt> that you use inside data segments to allocate variables of any given size.  We'll keep <tt>sprite</tt> as a directly defined address because it's important that it point to the beginning of a page.  The fancier variable allocation code looks like this:</p>
+
+<pre>
+; Assign the sprite page to page 2.
+.alias        sprite        $200
+
+; Define zero page variables.
+.segment zp
+.org $0000
+.space dx 1
+.space a 1
+.space scroll 1
+
+; Program begins here.
+.text
+.org $C000
+reset:
+	; ... rest of code
+</pre>
+
+<p>If we had variables that we were putting outside of the Zero Page, we'd put them in <tt>.data</tt>, and our first <tt>.data</tt> would be followed by an <tt>.org $0300</tt> so the variables would start right after the sprite definitions stopped.</p>
+
+<p>Now that memory has been allocated, we proceed with initialization.  This covers three areas.  We'll cover each one as we add them to our code.</p>
+
+<pre>
+reset:  sei
+	cld
+	; Wait two VBLANK cycles.
+*	lda $2002
+	bpl -
+*	lda $2002
+	bpl -
+
+	jsr init'graphics
+	jsr init'input
+	jsr init'sound
+	cli
+
+loop:   jmp loop
+</pre>
+
+<p>The <tt>*</tt>s in the code above are "anonymous labels", another of P65's features.  The command <tt>bpl -</tt> means "branch to previous anonymous label if positive."  You can go forward or backward arbitrary numbers of labels, but we only use it for simple loops in this tutorial.  If your assembler doesn't have anonymous labels, just invent random names for the labels and don't use the same one twice.</p>
+
+<h3>Some comments on defensive coding</h3>
+
+<p>If you <i>really</i> want to be thorough in your CPU initialization, you should not only clear out the entirety of RAM, you should also reset the stack pointer to the top of the stack ($01FF).  Since the stack holds the return addresses of your procedure calls, you <i>must not do this inside of a procedure</i> - stick it in the code right after the RESET vector.</p>
+
+<p>Here's one way to do it:</p>
+
+<pre>
+        lda #$00
+        ldx #$00
+*       sta $000,x
+        sta $100,x
+        sta $200,x
+        sta $300,x
+        sta $400,x
+        sta $500,x
+        sta $600,x
+        sta $700,x
+        inx
+        bne -
+
+        ldx #$FF
+        txs
+</pre>
+
+<p>Note that this code avoids the need to store any addresses in memory (where they'd be clobbered) by "unrolling" the loop.</p>
+
+<a name="ppu">
+<h2>PPU initialization</h2>
+
+<p>We'll need to do a bunch of stuff to prepare our graphics.  We need to prepare the sprites, the palette, the background, and our scrolling.  These will all be dealt with in later sections (and will get their own subroutines).</p>
+
+<p>We also need to decide on our configuration.  PPU configuration mostly involves deciding on what to write into $2000 and $2001 of the CPU memory.  We consult NEStech's section 8 to determine what it is we need.</p>
+
+<ul>
+<li><b>Execute NMI on VBLANK?</b> Well, it won't do much if we don't.
+<li><b>Sprite Size:</b> We'll stick to 8x8 for now, since it's simpler.
+<li><b>Pattern Table Addresses:</b> We'll load the background from pattern table 0, and the sprites from pattern table 1.
+<li><b>PPU Address Increment:</b> We want this to be 1 for our purposes.  See <a href="#bg">Background basics</a> for when you'd want it to be 32.
+<li><b>Name Table Address:</b> We'll have this be $2000 (the first name table).  See <a href="#bg">Background basics</a> for more information.
+<li><b>Monochrome/Color Intensity:</b> We'll leave this stuff alone.
+<li><b>Sprite/Background Visibility and Clipping:</b> Obviously, both sprites and background need to be displayed.  Clipping is needed if you're going to scroll stuff smoothly off the left side of the screen.  We aren't, so we'll leave clipping off.
+</ul>
+
+<p>Now it's a simple matter of turning those into binary numbers and feeding them to the appropriate registers.</p>
+
+<p><i>However</i>.</p>
+
+<p>Most of our initialization involves writing values into VRAM.  NESTech section 10.C describes the basic protocol for doing this.  There is an internal VRAM pointer that can be set, and it autoincrements when you write into the VRAM I/O register (we'll be doing this shortly).  Unfortunately for our initialization routines, the PPU manipulates this VRAM pointer behind the CPU's back when it draws the screen, which means that the writes through the I/O register end up going to the wrong locations.  To ensure that this does not happen, we must turn off the graphics updates before initialization.  A quick check on the table indicates that simply writing zeros into $2000 and $2001 will turn off the display and disable the VBLANK interrupt.  (We should wait for VBLANK to actually do the switch, to ensure we're in a nice and consistent state.)</p>
+
+<p>Also, we want to make sure that we don't get any interrupts while we're still initializing, so we should set this last.</p>
+
+Thus, our initialization calls go something like:
+
+<pre>
+	; Disable all graphics.
+        lda #$00
+        sta $2000
+        sta $2001
+
+	jsr init'graphics
+	jsr init'input
+	jsr init'sound
+
+	; Set basic PPU registers.  Load background from $0000,
+	; sprites from $1000, and the name table from $2000.
+        lda #%10001000
+        sta $2000
+        lda #%00011110
+        sta $2001
+
+	cli
+
+	; Transfer control to the VBLANK routines.
+loop:   jmp loop
+</pre>
+
+<p>The <tt>init'graphics</tt> routine itself will just call the various components.</p>
+
+<pre>
+init'graphics:
+        jsr init'sprites
+        jsr load'palette
+        jsr load'name'tables
+        jsr init'scrolling
+        rts
+</pre>
+
+<p>The NES has three totally seperate memory spaces.  The CPU-MEM is what you hit with your LDA and STA statements.  Most of our graphics information - pattern tables, name tables, attribute tables, palettes - is stored in PPU-MEM, a seperate 16 kilobytes of address space we access through $2006 and $2007 of CPU-MEM (see below).  Lastly, there are 256 bytes of memory (SPR-MEM) that can be accessed through $2003 and $2004, or through $4014.  More on that when we get to sprites.</p>
+
+<p>To write to PPU memory, you write the address to $2006, high byte first.  (Yes, the 6502 is little-endian, so this is totally backwards with respect to the instruction encoding.  Tough.)  The value you wish to write is then written to $2007.  This produces the write, and also advances the internal VRAM pointer by the amount specified in our write to $2000 earlier.  (In this case, 1.)</p>
+
+<p>Again, this internal VRAM pointer is modified continuously by the PPU when it is drawing the screen.  <i>Do not touch memory location $2007 except during VBLANK, or unless the background display is off.</i>  Older emulators will let you do this, but real decks (and newer, more precise emulators) will die horribly.</p>
+
+<p><i>(Note to the CS types: Yep, this is a concurrency/multiprocessing issue.  Bet you thought you wouldn't have to worry about that stuff when retrocoding.  Think again.)</i></p>
+
+<p>So let's start writing stuff into the VRAM, shall we?  Our pattern tables are already in place, from $0000 to $1FFF, and we can't mess with that when we're using the mapper that we're using.  We'll start by copying in our palette.  (Information on the palettes may be found in NEStech section 4.F.)</p>
+
+<pre>
+; Load palette into $3F00
+load'palette:
+        lda #$3F
+        ldx #$00
+        sta $2006
+        stx $2006
+*       lda palette,x
+        sta $2007
+        inx
+        cpx #$20
+        bne -
+        rts
+
+; palette data
+palette:
+.byte $0E,$00,$0E,$19,$00,$00,$00,$00,$00,$00,$00,$00,$01,$00,$01,$21
+.byte $0E,$20,$22,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+</pre>
+
+<p>The first four lines there set the VRAM pointer to $3F00, the beginning of the palette memory.  Then it's a simple index-advance loop to jam 32 values into $2007, one at a time.  (Note that the read is indexed, and the write is not.)</p>
+
+<p>The palette data itself is fairly straightforward.  The first sixteen values are the background palette, the last sixteen are the sprite palette.  Any color that isn't used is marked 00.</p>
+
+<p>Each element in the pattern table has two bits of color information (the two least significant bits) - the top two bits are set by the attribute tables (for background) or the individual sprite.  (We'll deal with that in detail later.)  For now it is enough to note that any pattern pixel whose color is '00' is treated as transparent, regardless of attribute or sprite color.  This means that you only <i>really</i> have 12 colors to work with.  (The background's color 0 - in this case, 0E - is the 'ultimate background' color.)</p>
+
+<a name="sprite">
+<h2>Working with sprites</h2>
+
+<p>Basic information about sprites is in section 4.K of the NEStech document.  If you haven't read 4.D yet (pattern tables), that'll be good to know too.  We aren't doing anything terribly special with background priorities, but section 4.J discusses the issues involved.</p>
+
+<p>Sprites take their data from one of the pattern tables - we chose pattern table 1 (at $1000 in VRAM) back during PPU initialization.  We'll only be using one sprite, so we need a "blank" sprite pattern for the other 63 sprites.  Our CHR-ROM specification will thus look something like this:</p>
+
+<pre>
+.advance $1000
+.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00 ; Character 0: Blank
+.byte $18,$24,$66,$99,$99,$66,$24,$18,$00,$18,$18,$66,$66,$18,$18,$00 ; Character 1: Diamond sprite
+.advance $2000
+</pre>
+
+<p>Actual sprite data is stored in a page (256 bytes) of memory seperate from VRAM.  NEStech calls it SPR-RAM, and we'll follow their conventions.  There are two ways to get at SPR-RAM.  One way is to write the address into $2003 and then the value into $2004.  Comments on the NESdev site imply that this is tricky and can occasionally produce graphical glitches.  If you've got the RAM to spare, DMA transfer is a better choice, and that's what we'll use.</p>
+
+<p>Sprite DMA transfer is simple.  The 6502 can address 256 pages of memory (page 0 = $0000-$00FF, page 1 = $0100-$01FF, and so on) - writing an 8-bit value to location $4014 jams the entire contents of that page into SPR-RAM.</p>
+
+<p>We set our alias 'sprite' to point at location $0200, so Page 2 will be our CPU-RAM copy of SPR-RAM.  Consulting secton 4-K, we decide on the rest of the data we'll need for our initial conditions.</p>
+
+<pre>
+init'sprites:
+        ; Clear page #2, which we'll use to hold sprite data
+        lda #$00
+        ldx #$00
+*       sta sprite, x
+        inx
+        bne -
+
+        ; initialize Sprite 0
+        lda #$70
+        sta sprite          ; Y coordinate
+        lda #$01
+        sta sprite+1        ; Pattern number
+        sta sprite+3        ; X coordinate
+                            ; sprite+2, color, stays 0.
+
+        ; Set initial value of dx
+        lda #$01
+        sta dx
+        rts
+</pre>
+
+<p>Updating the sprite just involves adding the value of 'dx' to the Sprite's X value, and changing dx if necessary.  Because we do the DMA before the update, we guarantee no problems with flicker, and the values in $200 tend to be one frame ahead.  It's not that big of a deal, but if we're debugging our sprite code, we should note that.</p>
+
+<pre>
+update'sprite:
+        lda #>sprite
+        sta $4014       ; Jam page $200-$2FF into SPR-RAM
+
+        lda sprite+3
+        beq hit'left
+        cmp #255-8
+        bne edge'done
+        ; Hit right
+        ldx #$FF
+        stx dx
+        jsr high'c
+        jmp edge'done
+hit'left:
+        ldx #$01
+        stx dx
+        jsr high'c
+
+edge'done:              ; update X and store it.
+        clc
+        adc dx
+        sta sprite+3
+        rts
+</pre>
+
+<p>The routine "high'c" is a sound effect routine; we'll deal with that later.</p>
+
+<a name="bg">
+<h2>Background basics</h2>
+
+<p>Creating the backgrounds are comparatively more difficult than creating the sprites.  Go read Chapter 4 of the NEStech doc, sections A through H.  Go on, I'll wait.</p>
+
+<p><i>. . .</i></p>
+
+<p>Back?  Good.</p>
+
+<p>Our pattern tables are already loaded into VROM, thanks to our clever use of Mapper #0.  We merely need to initialize our name and attribute tables.  There are all kinds of clever ways to compress this data, but we've got PRG-ROM space to burn, so we'll just jam it in a byte at a time.  We've got $2000 and $2400 mirrored, so by filling the name tables at $2400 and then $2800, all our screens have been defined.  $2400's will be full of stuff; $2800's will be blank.  The code for loading up $2400 looks like this:</p>
+
+<pre>
+load'name'tables:
+; Jam some text into the first name table (at $2400, thanks to mirroring)
+        ldy #$00
+        ldx #$04
+        lda #<bg
+        sta $10
+        lda #>bg
+        sta $11
+        lda #$24
+        sta $2006
+        lda #$00
+        sta $2006
+*       lda ($10),y
+        sta $2007
+        iny
+        bne -
+        inc $11
+        dex
+        bne -
+</pre>
+
+<p>Upon reading that code, you had one of two reactions.  If your reaction was "OK, that transferred a kilobyte of information from label bg into $2007, one byte at a time, using $10 and $11 as its memory pointer," you can skip the rest of this paragraph.  For the ones staring in puzzled horror, it works like this.  The key is indirect indexed addressing: $10 contains the low byte of the beginning of the background info, and $11 starts with the high byte thereof.  That memory address, plus Y, is what is loaded into the accumulator with the instruction <tt>lda ($10), y</tt>.  Once y wraps around and becomes 0 again, the high byte is incremented (so, by adding the new value of y (0) to it, we advance one byte, net).  Then the X register is decremented.  If it's zero, we stop.  Since we loaded X with 4 at the beginning, the net effect is to transfer $0400 (1024) bytes into VRAM.</p>
+
+<p>After jamming the name and attribute data in, we can proceed to clear out the next page table.  The VRAM pointer is already at $2800, so we can just load 1,024 zeroes into VRAM.  The basic loop structure ends up the same:</p>
+
+<pre>
+; Clear out the Name Table at $2800 (where we already are.  Yay.)
+        ldy #$00
+        ldx #$04
+        lda #$00
+*       sta $2007
+        iny
+        bne -
+        dex
+        bne -
+        rts
+</pre>
+
+<p>All that remains is the actual specification of the background and basic attrbute tables itself.  We'll just be displaying text, so we need an alphabet.  If you're in an optimizing mood, you can only keep the letters that you want to use.  We, however, have lots of pattern table space, so we'll copy all values from ASCII 32-95 (space through 'Z') into the appropriate locations in pattern table 0; that way we can use <tt>.ascii</tt> directives to produce our screen background.  As a source of letters, we raid the Commodore 64 Character Generator ROM.  These are only 8 bytes each (the C64 has a monochrome character set) - we append 8 bytes of FF to the end of it, causing the two colors to be 3 and 4 of our chosen attribute for that location.  Why do we do this?  We'd like to do a background change (to fake the C64 colors) at the bottom of the screen.  If we had the not-part-of-the-letter parts of the graphic be color 0, they would be read as transparent and would thus not have a different background.</p>
+
+<p>Note that the top and bottom lines of the background are not displayed except for the edgemost pixel; this allows for smooth scrolling in both directions.  Since we turned off background clipping, the leftmost column remains visible.</p>
+
+<pre>
+; Background data
+bg:
+.ascii "                                "
+.ascii "12345678901234567890123456789012"
+.ascii "                                "
+.ascii "                                "
+.ascii " PRESENTING NES 101:            "
+.ascii "    A GUIDE FOR OTHERWISE       "
+.ascii "    EXPERIENCED PROGRAMMERS     "
+.ascii "                                "
+.ascii "    TUTORIAL FILE BY            "
+.ascii "    MICHAEL MARTIN              "
+.ascii "                                "
+.ascii "                                "
+.ascii "                                "
+.ascii "    PRESS UP AND DOWN TO SHIFT  "
+.ascii "    THE SPRITE                  "
+.ascii "                                "
+.ascii "    PRESS A TO REVERSE DIRECTION"
+.ascii "                                "
+.ascii "                                "
+.ascii "                                "
+.ascii "                                "
+.ascii "                                "
+.ascii "                                "
+.ascii "CHARACTER SET HIJACKED FROM     "
+.ascii "COMMODORE BUSINESS MACHINES     "
+.ascii "           (C64'S CHARACTER ROM)"
+.ascii "                                "
+.ascii "READY.                          "
+.ascii "                                "
+.ascii "                                "
+; Attribute table
+.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+.byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+.byte $00,$00,$00,$00,$00,$00,$00,$00,$F0,$F0,$F0,$F0,$F0,$F0,$F0,$F0
+.byte $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$0F,$0F,$0F,$0F,$0F,$0F,$0F,$0F
+</pre>
+
+<a name="scroll">
+<h2>Scrolling</h2>
+
+<p>Scrolling is only casually mentioned in the NEStech doc as of version 2.0; Loopy's docs contain the data needed to perform scrolling, but it's well hidden.  The <i>basic</i> protocol for scrolling works like this:</p>
+
+<ul>
+<li>Wait for VBLANK.
+<li>Do all the messing with VRAM (not necessarily SPR-RAM) that you're going to do.
+<li>Have written an even number of times into $2005 and $2006 during this time frame.  (0 is even.)
+<li>Write the horizontal scroll value (between 0 and 256) into $2005.
+<li>Write the vertical scroll value (between 0 and 239) into $2005.
+<li>Don't mess with the contents of $2006 until the next VBLANK.
+</ul>
+
+<p>Failure to adhere to this protocol can produce astonishing results, some of which you may even have intended, and a few of which might even be emulated by your emulator of choice.  The 'final word' on the precise behavior or $2005 and $2006, and the PPU logic therein, is contained in Loopy's "The skinny on NES scrolling" documents.  This document is mostly a string of zeroes and ones.  To interpret them, consider them to be bitmasks  (That is, the block of 1s on the left take the value of the block of 1s on the right.)  You should be able to deduce your stunts from that.</p>
+
+<p>A standard trick is to take advantage of the Sprite #0 hit flag (See NEStech section 4.L for info on the hit flag) to trigger a hit on a specific line every frame, then changing the horizontal scroll value.  This lets you scroll part of the screen while leaving the rest static (handy for status bars and the like).  Vertical scroll is trickier.</p>
+
+<p>The two scroll routines themselves are thus pretty straightforward:</p>
+
+<pre>
+init'scrolling:
+        lda #240
+        sta scroll
+        rts
+
+scroll'screen:
+        ldx #$00        ; Reset VRAM
+        stx $2006
+        stx $2006
+
+        ldx scroll      ; Do we need to scroll at all?
+        beq no'scroll
+        dex
+        stx scroll
+        lda #$00
+        sta $2005       ; Write 0 for Horiz. Scroll value
+        stx $2005       ; Write the value of 'scroll' for Vert. Scroll value
+no'scroll:
+        rts
+</pre>
+
+<a name="input">
+<h2>Input</h2>
+
+<p>Input is covered pretty well by section 6.A of NEStech.  The only real trick here is the results only give the current state of the pad, so if we don't want to trigger an effect every frame, we must recall the old value.  We use our variable 'a' to do this here.  The direction will only be reversed when we <i>press</i> A; holding it down has no effect.  (Without this check, it would jitter in place for as long as we held the button down.)  The rest of the code is pretty straightforward.  (The reverse-dx routine calls a sound routine, and performs standard two's complement negation.)</p>
+
+<pre>
+init'input:
+        ; The A button starts out not-pressed.
+        lda #$00
+        sta a
+        rts
+
+react'to'input:
+        lda #$01        ; strobe joypad
+        sta $4016
+        lda #$00
+        sta $4016
+
+        lda $4016       ; Is the A button down?
+        and #1
+        beq not'a       
+        ldx a
+        bne a'done      ; Only react if the A button wasn't down last time.
+        sta a           ; Store the 1 in local variable 'a' so that we this is
+        jsr reverse'dx  ; only called once per press.
+        jmp a'done
+not'a:  sta a           ; A has been released, so put that zero into 'a'.
+a'done: lda $4016       ; B does nothing
+        lda $4016       ; Select does nothing
+        lda $4016       ; Start does nothing
+        lda $4016       ; Up
+        and #1
+        beq not'up
+        ldx sprite      ; Load Y value
+        cpx #7
+        beq not'up      ; No going past the top of the screen
+        dex     
+        stx sprite
+not'up: lda $4016       ; Down
+        and #1
+        beq not'dn
+        ldx sprite
+        cpx #223        ; No going past the bottom of the screen.
+        beq not'dn
+        inx
+        stx sprite
+not'dn: rts             ; Ignore left and right, we don't use 'em
+
+reverse'dx:
+        lda #$FF        
+        eor dx
+        clc
+        adc #$01
+        sta dx
+        jsr low'c
+        rts
+</pre>
+
+<a name="sound">
+<h2>Sound Effects</h2>
+<p>Brad Taylor's sound documents do a pretty good job of saying which registers do what for sound production.  This article will only deal with computing the values that you need to put into said registers, and with $4017, which Brad Taylor's documents don't cover.</p>
+
+<p>The Square and triangle waves have two modes, basically; they can do Decay or Sustain.  If you're doing Decay to silence, we can just let the note "last" as long as we want.  (When the counter set by the upper 5 bits of $2003 hits zero, the channel is cut off.  We'll have a count of 127 frames, so that it fades off "naturally."  Note that letting this counter run down is the only way to shut the channel up if you don't have a decay or if you have it looping.</p>
+
+<p>Since we'll be just using Square Wave 1, initialization is pretty simple.  We activate the channel by writing a 1 into $4015, and we clear out $4001 (since we won't be doing frequency sweeps).  We leave $4000 alone because we'll have different decay rates for low C and high C.</p>
+
+<p>Then there's $4017.</p>
+
+<p>$4017 is a sound initialization register.  Only bits 6 and 7 of $4017 are important, when you write to it.  Bit 6 controls Sound IRQs: if bit 6 is set, no sound IRQs will occur.  If it's clear (which is the default), interrupts to a sound routine will occur at the end of every audio frame.  Audio and video frames have slightly different lengths, apparently; bit 7 lets you get some control about how different they are.  Writing a 1 into bit 7, then never touching $4017 after that makes envelopes decay about 20% more slowly.  Writing a 1 into bit 7 every NMI will produce similar decay rates to cleared 7 (probably the 'normal' decay rate) but timed effects like slides and fades won't happen until later in the frame - this will allow you to do more advanced sound computation without glitching the sound.</p>
+
+<p>If an IRQ goes off, you must acknowledge it, either by writing $4017 or reading $4015.  If you don't, another IRQ will be generated after one instruction.  This is rarely what you want.</p>
+
+<p>We don't care about any of that, but we'd rather not have any IRQs.  We'll write a $40 into $4017 as well.</p>
+
+<pre>
+init'sound:
+        ; initialize sound hardware
+        lda #$01
+        sta $4015
+        lda #$00
+        sta $4001
+	lda #$40
+	sta $4017
+        rts
+</pre>
+
+<p>Oscillation is controlled by a down counter in $4002 and $4003, which means that's it's really the WAVELENGTH that we're (indirectly) specifying, not the frequency.  Take notes, this is important:</p>
+
+<ul>
+<li>The formula for turning a frequency into a counter value is (1790000/(F*X))-1, where F is your desired frequency, and X=16 for square waves and 32 for triangle waves.
+<li>The A below Middle C has frequency 440 Hz.
+<li>Going up an octave doubles the frequency.
+<li>To increase/decrease by a half-step, multiply/divide the frequency by the twelfth root of 2.
+</ul>
+
+<p>Middle C is thus about 523 Hz, so our sound routine will need square waves at 261.5 Hz ($1AA) and 1,046 Hz ($06A).  Since we're decaying to silence, we set the tone length to be %00001, which works out to 127 frames.</p>
+
+<pre>
+low'c:
+        pha
+        lda #$84
+        sta $4000
+        lda #$AA
+        sta $4002
+        lda #$09
+        sta $4003
+        pla
+        rts
+
+high'c:
+        pha
+        lda #$86
+        sta $4000
+        lda #$6A
+        sta $4002
+        lda #$08
+        sta $4003
+        pla
+        rts
+</pre>
+
+<p>(We save the value of the accumulator on the stack in these routines so that we don't have to wory about clobbering the value in the calling function.)</p>
+
+<a name="wrapup">
+<h2>The final results</h2>
+
+<p>So, now we've now written a whole bunch of routines that, together, produce a complete program.  For those of you who don't want to type everything in...</p>
+
+<ul>
+<li><b><a href="tutor.p65">tutor.p65</a></b> - Linking data
+<li><b><a href="tutorprg.p65">tutorprg.p65</a></b> - The program code
+<li><b><a href="tutorchr.p65">tutorchr.p65</a></b> - The graphics data for the CHR-ROM page
+<li><b><a href="p65">p65</a></b> - The P65 assembler
+<li><b><a href="tutor.nes">tutor.nes</a></b> - The final product
+</ul>
+
+<p>The final .NES file should run in nearly all emulators.  I've tested it on LoopyNES, NESten, NESticle, and FCE Ultra.</p>
+
+<p>And there you have it.  You won't be setting the demo scene on fire with just this, but we might get some good original games out of you.  Get to it!</p>
+
+<p align=right>-- Michael Martin, 24 Oct 2001</p>
+</body>
+</html>

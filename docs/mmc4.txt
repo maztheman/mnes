@@ -1,0 +1,68 @@
+Nintendo MMC4 technical information
+-Utilized by Fire Emblem, Fire Emblem Gaiden, and Family War
+-Other games may use this MMC, however these are the only 3 I know of.
+
+-**Note**
+-Information contained within was provided by FanWen Yang (yangfanw@ms4.hinet.net)
+-Please thank him for providing this information.
+  
+-MMC4 Prg-ROM pages are 16K, and Chr-ROM pages are 4K
+-Upon reset, the last 2 Prg-ROM pages of the cartridge are loaded 
+-into the NES cpu space of $8000-$FFFF.  The last 16K page is hardwired
+-to the NES cpu space of $C000-$FFFF. 
+
+ÚÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³ Address ³ Status³ Bits     ³ Description                                 ³
+ÃÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ $A000   ³  W    ³ pppppppp ³ Prg-ROM 16K Page Select Register             ³
+³  ...    ³       ³          ³                                             ³
+³ $AFFF   ³       ³          ³    p = 16K Prg-ROM Select                    ³
+³         ³       ³          ³         Selects 16K Prg-ROM page at $8000.   ³
+³         ³       ³          ³                                             ³
+³ $B000   ³  W    ³ cccccccc ³ Chr-ROM 4K Latch Register #1                ³
+³  ...    ³       ³          ³                                             ³
+³ $BFFF   ³       ³          ³    c = 4K Chr-ROM Select                    ³
+³         ³       ³          ³         Selects 4K Chr-ROM latch value      ³
+³         ³       ³          ³         to be stored in latch register #1   ³
+³         ³       ³          ³                                             ³
+³ $C000   ³  W    ³ cccccccc ³ Chr-ROM 4K Latch Register #2                ³
+³  ...    ³       ³          ³                                             ³
+³ $CFFF   ³       ³          ³    c = 4K Chr-ROM Select                    ³
+³         ³       ³          ³         Selects 4K Chr-ROM latch value      ³
+³         ³       ³          ³         to be stored in latch register #2   ³
+³         ³       ³          ³                                             ³
+³ $D000   ³  W    ³ cccccccc ³ Chr-ROM 4K Latch Register #3                ³
+³  ...    ³       ³          ³                                             ³
+³ $DFFF   ³       ³          ³    c = 4K Chr-ROM Select                    ³
+³         ³       ³          ³         Selects 4K Chr-ROM latch value      ³
+³         ³       ³          ³         to be stored in latch register #3   ³
+³         ³       ³          ³                                             ³
+³ $E000   ³  W    ³ cccccccc ³ Chr-ROM 4K Latch Register #4                ³
+³  ...    ³       ³          ³                                             ³
+³ $EFFF   ³       ³          ³    c = 4K Chr-ROM Select                    ³
+³         ³       ³          ³         Selects 4K Chr-ROM latch value      ³
+³         ³       ³          ³         to be stored in latch register #4   ³
+³         ³       ³          ³                                             ³
+³ $F000   ³  W    ³ ???????m ³ Mirroring Control Register                  ³
+³  ...    ³       ³          ³                                             ³
+³ $FFFF   ³       ³          ³    m = Vram mirror select                   ³
+³         ³       ³          ³         0 = Vertical mirroring              ³
+³         ³       ³          ³         1 = Horizontal mirroring            ³
+ÀÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+
+-**Note**
+
+-MMC4 also contains 2 latch selectors which shall be explained presently.
+-The selectors contain the byte $FD or $FE, with $FE contained on reset.
+
+-MMC4 has two methods of bankswitching VROM space $0000-$0FFF.
+1). Write to B000-CFFF.  
+	
+	-If latch selector #1 contains the byte $FD, the page contained in
+	latch register #1 will be switched into VROM space $0000-$0FFF.
+	-If latch selector #1 contains the byte $FE, the page contained in
+	latch register #2 will be switched into VROM space $0000-$0FFF.
+
+    Therefore, if the program execution writes to $C000-$CFFF and latch 
+    selector #1 contains $F
