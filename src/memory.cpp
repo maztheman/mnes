@@ -80,6 +80,12 @@ uchar g_TMP_SPR_RAM[32] = {0};
 
 #include "rwm_addressing.cpp"
 
+
+uint memory_pc_peek(uint address)
+{
+	return g_mapper->read_memory(address);
+}
+
 uint memory_main_read(uint address)
 {
 	uint nMapperAnswer = g_mapper->read_memory(address);
@@ -182,6 +188,10 @@ uint memory_main_read(uint address)
 
 void memory_main_write(uint address, uint value)
 {
+	if (address >= 0x0202 && address <= 0x0300) {
+		int look = 0;
+	}
+
 	g_mapper->write_memory(address, value);
 	//g_pCurrentMapper->WriteMemory(address, value);
 
@@ -403,7 +413,7 @@ void memory_pop_pc()
 static inline void memory_read_opcode()
 {
 	g_Registers.opCode = ext_memory_read(g_Registers.pc);
-
+	uint pc = g_Registers.pc;
 	//if the last cycle processed caused a irq then trigger it now
 	if (g_Registers.prev_nmi) {
 		g_Registers.opCode = 0x00;
@@ -415,7 +425,22 @@ static inline void memory_read_opcode()
 
 #if 1
 	auto op = OpCodes[g_Registers.opCode];
-	VLog().AddLine("$%04X %02X %s\n", g_Registers.pc - 1, g_Registers.opCode, op);
+	//VLog().AddLine("$%04X %02X %s\n", pc, g_Registers.opCode, op);
+	char opBuff[48] = { 0 };
+	if (op.nParams != -1 && op.nType != -1) {
+		if (op.nParams == 0) {
+			sprintf(&opBuff[0], OpCodeFormats[op.nType].pcszFormat, op.sOpCode, g_Registers.byteLatch);
+		} else if (op.nParams == 1) {
+			sprintf(&opBuff[0], OpCodeFormats[op.nType].pcszFormat, op.sOpCode, memory_pc_peek(pc + 1), g_Registers.byteLatch);
+		} else if (op.nParams == 2) {
+			sprintf(&opBuff[0], OpCodeFormats[op.nType].pcszFormat, op.sOpCode, memory_pc_peek(pc + 2), memory_pc_peek(pc + 1), g_Registers.byteLatch);
+		}
+		VLog().AddLine("$%04X %02X %s x:%02X a:%02X y:%02X\n", pc, g_Registers.opCode, &opBuff[0], g_Registers.x, g_Registers.a, g_Registers.y);
+	} else {
+		VLog().AddLine("$%04X %02X %s\n", pc, g_Registers.opCode, "Unknown OPCODE");
+	}
+
+
 #endif
 
 }

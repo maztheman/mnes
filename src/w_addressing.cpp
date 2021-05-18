@@ -81,7 +81,7 @@ void memory_w_zero_page()
 void memory_w_zero_page_indexed_x()
 {
 	//2
-	uint address = ext_memory_read(address);
+	uint address = ext_memory_read(g_Registers.pc++);
 	//3
 	cpu_do_cycle();
 	address = (address + g_Registers.x) & 0xFF;
@@ -101,7 +101,7 @@ void memory_w_zero_page_indexed_x()
 void memory_w_zero_page_indexed_y()
 {
 	//2
-	uint address = ext_memory_read(address);
+	uint address = ext_memory_read(g_Registers.pc++);
 	//3
 	cpu_do_cycle();
 	address = (address + g_Registers.y) & 0xFF;

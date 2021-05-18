@@ -196,11 +196,6 @@ static inline void memory_r_zero_page_indexed(const uint& indexRegister)
     cpu_do_cycle();
     //4.1
     g_Registers.byteLatch = ext_memory_read((address + indexRegister) & 0xFF);
-}
-
-void memory_r_zero_page_indexed_x()
-{
-    memory_r_zero_page_indexed(g_Registers.x);
     //4.2
     switch (g_Registers.opCode) {
 
@@ -228,15 +223,6 @@ void memory_r_zero_page_indexed_x()
     case OPCODE_CMP_ZP_X:
         cpu_cmp();
         break;
-    }
-}
-
-void memory_r_zero_page_indexed_y()
-{
-    memory_r_zero_page_indexed(g_Registers.y);
-    //4.2
-    switch (g_Registers.opCode) {
-
     case OPCODE_LDX_ZP_Y:
         cpu_ldx();
         break;
@@ -244,7 +230,16 @@ void memory_r_zero_page_indexed_y()
         cpu_lax();
         break;
     }
+}
 
+void memory_r_zero_page_indexed_x()
+{
+    memory_r_zero_page_indexed(g_Registers.x);
+}
+
+void memory_r_zero_page_indexed_y()
+{
+    memory_r_zero_page_indexed(g_Registers.y);
 }
 
 /*
@@ -440,12 +435,37 @@ void memory_r_indirect_indexed()
     //3
     uint pcl = ext_memory_read(pointer);
     //4
-    uint pch = ext_memory_read((pointer + 1) & 0xFF);
+    uint pch = ext_memory_read((pointer + 1) & 0xFF) << 8;
     pcl += g_Registers.y;
     //5
-    g_Registers.byteLatch = ext_memory_read((pcl & 0xFF) | (pch << 8));
+    g_Registers.byteLatch = ext_memory_read((pcl & 0xFF) | pch);
     if (pcl > 0xFF) {
         //6*
-        g_Registers.byteLatch = ext_memory_read((pcl + (pch << 8)) & 0xFFFF);
+        g_Registers.byteLatch = ext_memory_read((pcl + pch) & 0xFFFF);
+    }
+    //Do Operation
+    switch (g_Registers.opCode)
+    {
+    case OPCODE_LDA_IN_Y:
+        cpu_lda();
+        break;
+    case OPCODE_EOR_IN_Y:
+        cpu_eor();
+        break;
+    case OPCODE_AND_IN_Y:
+        cpu_and();
+        break;
+    case OPCODE_ORA_IN_Y:
+        cpu_ora();
+        break;
+    case OPCODE_ADC_IN_Y:
+        cpu_adc();
+        break;
+    case OPCODE_SBC_IN_Y:
+        cpu_sbc();
+        break;
+    case OPCODE_CMP_IN_Y:
+        cpu_cmp();
+        break;
     }
 }
