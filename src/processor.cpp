@@ -44,13 +44,9 @@ void CPUProcess()
 {
 	uint sn = g_PPURegisters.scanline;
 	while (sn == g_PPURegisters.scanline) {
-		g_Registers.memoryExtraCycles = 0;
-		memory_read_latch();
+		memory_pc_process(); //should be cycle accurate
 #if 0
 		auto op = OpCodes[g_Registers.opCode];
-		if (g_Registers.opCode == OPCODE_LSR_A) {
-			int n = 0;
-		}
 		char opBuff[48] = {0};
 		if (op.nParams != -1 && op.nType != -1) {
 			if (op.nParams == 0) {
@@ -65,16 +61,6 @@ void CPUProcess()
 			VLog().AddLine( "$%04X %02X %s\n", g_Registers.pc, g_Registers.opCode, "Unknown OPCODE");
 		}
 #endif
-		cpu_execute();
-		g_Registers.bMidWrite = !g_Registers.bMidWrite;
-		memory_write_latch();//could possible do a dma here..which would do a big burst of ppu, and most likely moved the scanlines about 5 times :P
-		if ((int)g_Registers.cycles < 0) {
-			g_Registers.cycles = 0;
-		}
-		while (g_Registers.cycles != 0) {
-			cpu_do_cycle();
-		}
-		g_Registers.cycles = 0;
 	}
 }
 

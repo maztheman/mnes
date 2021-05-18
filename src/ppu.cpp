@@ -130,7 +130,7 @@ static void ppu_process_prerender_frame(const uint& ppu_cycle)
 			ppu_bg_post_process_shift_regs(ppu_cycle);
 		} else if (ppu_cycle >= 337 && ppu_cycle <= 340) {
 			//unused ppu fetch
-			//ppu_bg_pre_process_shift_regs(ppu_cycle, 327);
+			ppu_bg_pre_process_shift_regs(ppu_cycle, 343);
 		}
 	}
 }

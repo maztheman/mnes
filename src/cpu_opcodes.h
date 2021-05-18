@@ -160,6 +160,7 @@
 #define OPCODE_SLO_ZP_X			0x17
 #define OPCODE_SLO_IN_X			0x03
 #define OPCODE_SLO_IN_Y			0x13
+
 #define OPCODE_RLA_AB			0x2F
 #define OPCODE_RLA_AB_X			0x3F
 #define OPCODE_RLA_AB_Y			0x3B
@@ -167,6 +168,7 @@
 #define OPCODE_RLA_ZP_X			0x37
 #define OPCODE_RLA_IN_X			0x23
 #define OPCODE_RLA_IN_Y			0x33
+//aka SRE
 #define OPCODE_LSE_AB			0x4F
 #define OPCODE_LSE_AB_X			0x5F
 #define OPCODE_LSE_AB_Y			0x5B
@@ -198,6 +200,7 @@
 #define OPCODE_DCP_ZP_X			0xD7
 #define OPCODE_DCP_IN_X			0xC3
 #define OPCODE_DCP_IN_Y			0xD3
+//aka ISB
 #define OPCODE_ISC_AB			0xEF
 #define OPCODE_ISC_AB_X			0xFF
 #define OPCODE_ISC_AB_Y			0xFB

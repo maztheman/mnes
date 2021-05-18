@@ -1,3 +1,4 @@
+#if 0
 static inline bool is_page_crossed(uint a, uint b)
 {
 	if ((a & 0xFF00) != (b & 0xFF00)) {
@@ -53,7 +54,6 @@ static inline void memory_absolute_x()
 		//dummy read is here which executes a cycle
 		auto dummy = (oldpc & 0xFF00) | ((oldpc + g_Registers.x) & 0xFF);
 		ext_memory_read(dummy);
-		g_Registers.memoryExtraCycles++;
 	}
 
 
@@ -72,7 +72,6 @@ static inline void memory_absolute_y()
 	if (is_page_crossed(oldpc, g_Registers.addressLatch)) {
 		cpu_do_cycle();
 		//this might have to a dummy read
-		g_Registers.memoryExtraCycles++;
 	}
 }
 
@@ -98,3 +97,4 @@ static inline void memory_indirect_y()
 		g_Registers.memoryExtraCycles++;
 	}
 }
+#endif

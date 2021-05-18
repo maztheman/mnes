@@ -8,15 +8,10 @@ struct Registers
 	uint a,y,x;
 	uint opCode;
 	uint pc;
-	uint cycles;
-	uint extraCycles;
 	uint byteLatch;
 	uint addressLatch;
 	uint status;
 	uint stack;
-	bool bMidWrite;
-	uint memoryExtraCycles;
-
 	bool nmi;
 	bool prev_nmi;
 

@@ -255,10 +255,6 @@ static bool is_a12_rising(const uint s_ui_ppu_addr_last, const uint ui_ppu_addr)
 	auto last_is_zero = (s_ui_ppu_addr_last & 0x1000) == 0;
 	auto now_is_1 = (ui_ppu_addr & 0x1000) == 0x1000;
 	return last_is_zero && now_is_1;
-	//rising edge 
-	/*auto last_is_zero = (s_ui_ppu_addr_last & 0x1000) == 0;
-	auto now_is_1 = (ui_ppu_addr & 0x1000) == 0x1000;
-	return last_is_zero && now_is_1;*/
 }
 
 
@@ -285,34 +281,7 @@ void mmc3_ppu_do_cycle()
 			set_mapper1_irq();
 		}
 	}
-
-
-	/*
-
-	static uint irqwait = 0;
-	static bool s_bDecrementedToZero = false;
-	if (irqwait) {
-		irqwait--;
-	}
-	
-	if (irqwait == 0 && ppu_addr_bus() & 0x1000) {
-		uint tmp = s_nScanlineCount;
-		if (s_nScanlineCount == 0 || s_bForceReload) {
-			s_bForceReload = false;
-			s_nScanlineCount = s_rC000;
-		} else {
-			s_nScanlineCount--;
-		}
-		
-		if ((tmp || s_bForceReload) && s_nScanlineCount == 0 && s_bDisableIRQ == false) {
-			set_mapper1_irq();
-		}
-	}
-	if (ppu_addr_bus() & 0x1000) {
-		irqwait = 8;
-	}*/
 	s_ui_ppu_addr_last = ui_ppu_addr;
-
 }
 
 void mmc3_nop()

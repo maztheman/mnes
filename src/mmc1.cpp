@@ -101,6 +101,8 @@ void mmc1_reset()
 	maprMMC1.m_bSaveRam = s_bSaveRam = (g_ines_format.rom_control_1 & 2) == 2;
 }
 
+static uint mmc1_last_address = ~0U;
+
 void mmc1_write(uint address, uint value) 
 {
 	if (address >= 0x6000 && address < 0x8000) {
@@ -114,9 +116,12 @@ void mmc1_write(uint address, uint value)
 		return;
 	}
 
-	if (g_Registers.bMidWrite == false) {//fetch-modify-store opcodes cause 2 writes, very quickly.  MMC1 ignores the second write (which happens to be the correct value )
+	if (address == mmc1_last_address) {//fetch-modify-store opcodes cause 2 writes, very quickly.  MMC1 ignores the second write (which happens to be the correct value )
+		mmc1_last_address = ~0U; //now forget it
 		return;
 	}
+
+	address = mmc1_last_address;
 
 	if (value & 0x80) {
 		s_Regs[0] = s_Regs[0] | 0xC;
