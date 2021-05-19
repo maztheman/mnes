@@ -154,6 +154,18 @@ void memory_w_absolute_indexed(const uint& indexRegister)
 	case OPCODE_STA_AB_Y:
 		cpu_sta();
 		break;
+	case OPCODE_SHY_AB_X:
+		g_Registers.byteLatch = (g_Registers.y & ((address >> 8) + 1)) & 0xFF;
+		if ((g_Registers.x + pcl) > 0xFF) {
+			return;
+		}
+		break;
+	case OPCODE_SHX_AB_Y:
+		g_Registers.byteLatch = (g_Registers.x & ((address >> 8) + 1)) & 0xFF;
+		if ((g_Registers.y + pcl) > 0xFF) {
+			return;
+		}
+		break;
 	}
 	//5.2
 	ext_memory_write(address, g_Registers.byteLatch);

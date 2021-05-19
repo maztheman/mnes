@@ -29,7 +29,7 @@ static inline void ppu_update_scanline();
 
 static std::vector<uint> s_arMod341(89342, 0);
 static std::vector<signed int> s_arCycle2Scanline(89342, 0);
-static bool s_bEvenFrame = true;
+static bool s_bEvenFrame = false;
 
 void ppu_initialize()
 {
@@ -157,6 +157,7 @@ static inline void ppu_inc_cycle()
 	ppu_update_scanline();
 }
 
+
 void ppu_do_cycle()
 {
 	extern mapper_t* g_mapper;
@@ -170,8 +171,16 @@ void ppu_do_cycle()
 		ppu_process_visible_frame(ppu_cycle);
 	} else if (g_PPURegisters.scanline == 241) {
 		if (ppu_cycle == 1) {
-			if (g_PPURegisters.last_2002_read == PPU_cycles) {
-				int look = 0;
+			/*
+				Reading $2002 within a few PPU clocks of when VBL is set results in special-case behavior.
+				Reading one PPU clock before reads it as clear and never sets the flag or generates NMI for that frame.
+				Reading on the same PPU clock or one later reads it as set, clears it, and suppresses the NMI for that frame.
+				Reading two or more PPU clocks before/after it's set behaves normally (reads flag's value, clears it, and doesn't affect NMI operation).
+				This suppression behavior is due to the $2002 read pulling the NMI line back up too quickly after it drops (NMI is active low) for the CPU to see it.
+				(CPU inputs like NMI are sampled each clock.)
+			*/
+			if (g_PPURegisters.last_2002_read == PPU_cycles || (g_PPURegisters.last_2002_read + 1) == PPU_cycles) {
+				VLog().AddLine("** NMI Surpressed due to Reading of $2002 too soon before**\n");
 			} else {
 				set_vblank();
 				if (g_MemoryRegisters.r2000 & 128) {

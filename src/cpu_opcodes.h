@@ -219,6 +219,31 @@
 #define OPCODE_NOP_7A			0x7A
 #define OPCODE_NOP_DA			0xDA
 #define OPCODE_NOP_FA			0xFA
+#define OPCODE_NOP_1C_AB_X		0x1C
+#define OPCODE_NOP_3C_AB_X		0x3C
+#define OPCODE_NOP_5C_AB_X		0x5C
+#define OPCODE_NOP_7C_AB_X		0x7C
+#define OPCODE_NOP_DC_AB_X		0xDC
+#define OPCODE_NOP_FC_AB_X		0xFC
+#define OPCODE_NOP_14_ZP_X		0x14
+#define OPCODE_NOP_34_ZP_X		0x34
+#define OPCODE_NOP_54_ZP_X		0x54
+#define OPCODE_NOP_74_ZP_X		0x74
+#define OPCODE_NOP_D4_ZP_X		0xD4
+#define OPCODE_NOP_F4_ZP_X		0xF4
+
+#define OPCODE_NOP_04_ZP		0x04
+#define OPCODE_NOP_44_ZP		0x44
+#define OPCODE_NOP_64_ZP		0x64
+
+//missing for sure:
+#define OPCODE_SHY_AB_X			0x9C
+#define OPCODE_SHX_AB_Y			0x9E
+
+#define OPCODE_TAS_AB_Y			0x9B
+#define OPCODE_LAS_AB_Y			0xBB
+#define OPCODE_AHX_AB_Y			0x9F
+#define OPCODE_AHX_IN_Y			0x93
 
 struct SDebugOpCode
 {

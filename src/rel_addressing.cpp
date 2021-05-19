@@ -77,10 +77,8 @@ void memory_rel()
         if ((pch & 0xFF00) != (g_Registers.pc & 0xFF00)) {
             //4
             cpu_do_cycle();
-            g_Registers.pc = pch;
-        } else {
-            //g_Registers.pc++;
         }
+        g_Registers.pc = pch;
     } else {
         //g_Registers.pc++;
     }

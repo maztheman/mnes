@@ -27,19 +27,25 @@ Notes: * The high byte of the effective address may be invalid
 *
 *
 */
-static inline void memory_rmw_absolute_indexed()
+static inline void memory_rmw_absolute_indexed(const uint& indexRegister)
 {
     //2
     uint pcl = ext_memory_read(g_Registers.pc++);
     //3
     uint pch = ext_memory_read(g_Registers.pc);
-    pcl += g_Registers.x;
+    pcl += indexRegister;
     g_Registers.pc++;
     //4
     ext_memory_read((pch << 8) | (pcl & 0xFF));
     pch += (pcl >> 8); //pcl could be 0x100
     pch &= 0xFF;
     g_Registers.addressLatch = ((pch << 8) | (pcl & 0xFF));
+    if (g_Registers.opCode == OPCODE_LAS_AB_Y) {
+        g_Registers.byteLatch = g_Registers.stack & (g_Registers.addressLatch >> 8);
+        g_Registers.a = g_Registers.x = g_Registers.stack = g_Registers.byteLatch;
+        set_nz(g_Registers.a);
+        return; //odd behavior skips the rest
+    }
     //5
     g_Registers.byteLatch = ext_memory_read(g_Registers.addressLatch);
     //6.1
@@ -66,28 +72,54 @@ static inline void memory_rmw_absolute_indexed()
         cpu_dec();
         break;
     case OPCODE_SLO_AB_X:
+    case OPCODE_SLO_AB_Y:
         cpu_slo();
         break;
     case OPCODE_LSE_AB_X:
+    case OPCODE_LSE_AB_Y:
         cpu_lse();
         break;
     case OPCODE_RLA_AB_X:
+    case OPCODE_RLA_AB_Y:
         cpu_rla();
         break;
     case OPCODE_RRA_AB_X:
+    case OPCODE_RRA_AB_Y:
         cpu_rra();
         break;
     case OPCODE_ISC_AB_X:
+    case OPCODE_ISC_AB_Y:
         cpu_isc();
         break;
     case OPCODE_DCP_AB_X:
+    case OPCODE_DCP_AB_Y:
         cpu_dcp();
         break;
+    case OPCODE_TAS_AB_Y:
+    {
+        g_Registers.stack = g_Registers.a & g_Registers.x;
+        g_Registers.byteLatch = g_Registers.stack & (g_Registers.addressLatch >> 8);
+    }
+        break;
+    case OPCODE_AHX_AB_Y:
+    {
+        g_Registers.byteLatch = g_Registers.a & g_Registers.x & (g_Registers.addressLatch >> 8);
+        break;
+    }
     }
     //7
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
 }
 
+static inline void memory_rmw_absolute_indexed_x()
+{
+    memory_rmw_absolute_indexed(g_Registers.x);
+}
+
+static inline void memory_rmw_absolute_indexed_y()
+{
+    memory_rmw_absolute_indexed(g_Registers.y);
+}
 /*
 #  address R / W description
 -- - ------ - -- - ------------------------------------------
@@ -338,7 +370,9 @@ static inline void memory_rwm_indexed_indirect()
     case OPCODE_DCP_IN_X:
         cpu_dcp();
         break;
-
+    case OPCODE_LAX_IN_X:
+        cpu_lax();
+        break;
     }
     //8
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
@@ -401,6 +435,12 @@ static inline void memory_rwm_indirect_indexed()
         break;
     case OPCODE_DCP_IN_Y:
         cpu_dcp();
+        break;
+    case OPCODE_AHX_IN_Y:
+        g_Registers.byteLatch = g_Registers.a & g_Registers.x & (g_Registers.addressLatch >> 8);
+        break;
+    case OPCODE_LAX_IN_Y:
+        cpu_lax();
         break;
     }
     //8

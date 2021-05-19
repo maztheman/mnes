@@ -486,4 +486,5 @@ static uint mmc5_mode_3_read(uint address)
 		return g_arRawData[address];
 	}
 
+	return ~0;//basically a bad null 
 }

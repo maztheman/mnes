@@ -1,13 +1,16 @@
-static inline void cpu_clc() {
+static inline void cpu_clc() 
+{
 	set_carry(false);
 }
 
-static inline void cpu_cld() {
+static inline void cpu_cld() 
+{
 	SET_DECIMAL(false);
 }
 
-static inline void cpu_cli() {
-	SET_INTERRUPT(false);
+static inline void cpu_cli() 
+{
+	g_Registers.delayed = delayed_i::no;
 }
 
 static inline void cpu_clv() {
@@ -18,12 +21,14 @@ static inline void cpu_sec() {
 	set_carry(true);
 }
 
-static inline void cpu_sed() {
+static inline void cpu_sed() 
+{
 	SET_DECIMAL(true);//maybe we should do nothing...cuz this is illegal on nes
 }
 
-static inline void cpu_sei() {
-	SET_INTERRUPT(true);
+static inline void cpu_sei() 
+{
+	g_Registers.delayed = delayed_i::yes;
 }
 
 static inline void cpu_tax() {

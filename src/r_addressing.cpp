@@ -467,5 +467,8 @@ void memory_r_indirect_indexed()
     case OPCODE_CMP_IN_Y:
         cpu_cmp();
         break;
+    case OPCODE_LAX_IN_Y:
+        cpu_lax();
+        break;
     }
 }

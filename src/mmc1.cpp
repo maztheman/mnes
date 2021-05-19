@@ -102,6 +102,8 @@ void mmc1_reset()
 }
 
 static uint mmc1_last_address = ~0U;
+static uint64_t mmc1_last_cycle = 0;
+static uint64_t mmc1_mid_write_cycle = 0;
 
 void mmc1_write(uint address, uint value) 
 {
@@ -116,12 +118,12 @@ void mmc1_write(uint address, uint value)
 		return;
 	}
 
-	if (address == mmc1_last_address) {//fetch-modify-store opcodes cause 2 writes, very quickly.  MMC1 ignores the second write (which happens to be the correct value )
-		mmc1_last_address = ~0U; //now forget it
+	if (address == mmc1_last_address && mmc1_mid_write_cycle == mmc1_last_cycle) {//fetch-modify-store opcodes cause 2 writes, very quickly.  MMC1 ignores the second write (which happens to be the correct value )
 		return;
 	}
 
-	address = mmc1_last_address;
+	mmc1_last_address = address;
+	mmc1_mid_write_cycle = mmc1_last_cycle + 1;
 
 	if (value & 0x80) {
 		s_Regs[0] = s_Regs[0] | 0xC;
@@ -254,6 +256,8 @@ void mmc1_set_prgrom()
 
 void mmc1_do_cpu_cycle()
 {
+	mmc1_last_cycle++;
+
 	if (s_nIRQEnable == 0) {
 		return;
 	}

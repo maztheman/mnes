@@ -17,30 +17,29 @@ static inline void cpu_brk()
 {
 	uint pcl_addr = 0;
 	uint pch_addr = 0;
-	bool is_irq = false;
-	bool is_nmi = false;
-	if (g_Registers.prev_nmi) {
+	//2
+	ext_memory_read(g_Registers.pc);
+	if (g_Registers.actual_irq == doing_irq::brk) {
+		g_Registers.pc++;
+	}
+	//3-4
+	memory_push_pc();
+	if (g_Registers.nmi || g_Registers.actual_irq == doing_irq::nmi) {
 		g_Registers.nmi = false;
-		is_nmi = true;
 		pcl_addr = NMILO;
 		pch_addr = NMIHI;
-	} else if (g_Registers.prev_irq) {
-		is_irq = true;
+		if (g_Registers.actual_irq == doing_irq::brk) {
+			VLog().AddLine("** NMI INTERRUPTED BRK**\n");
+		}
+	} else if (g_Registers.prev_irq || g_Registers.actual_irq == doing_irq::irq) {
 		pcl_addr = BRKLO;
 		pch_addr = BRKHI;
 	} else {
 		pcl_addr = BRKLO;
 		pch_addr = BRKHI;
 	}
-	//2
-	ext_memory_read(g_Registers.pc);
-	if (is_irq == false && is_nmi == false) {
-		g_Registers.pc++;
-	}
-	//3-4
-	memory_push_pc();
 	//5
-	memory_push_byte((is_nmi || is_irq) ? (g_Registers.status & 0xEF) : (g_Registers.status | 0x10));
+	memory_push_byte((g_Registers.actual_irq != doing_irq::brk) ? (g_Registers.status | BFLAG_10_MASK) : (g_Registers.status | BFLAG_10_MASK | BFLAG_01_MASK ));
 	//6
 	g_Registers.pc = (g_Registers.pc & 0xFF00) | ext_memory_read(pcl_addr);
 	SET_INTERRUPT(true);
@@ -64,12 +63,12 @@ static inline void cpu_brk()
 static inline void cpu_rti()
 {
 	//2
-	ext_memory_read(g_Registers.pc + 1);
+	ext_memory_read(g_Registers.pc);
 	//3
 	cpu_do_cycle();
 	memory_inc_stack();
 	//4
-	g_Registers.status = ext_memory_read(0x100 + g_Registers.stack);
+	g_Registers.status = ext_memory_read(0x100 + g_Registers.stack) & BFLAG_CLEAR_MASK;
 	memory_inc_stack();
 	//5
 	g_Registers.pc = (g_Registers.pc & 0xFF00) |  ext_memory_read(0x100 + g_Registers.stack);
@@ -94,7 +93,7 @@ static inline void cpu_rti()
 static inline void cpu_rts() 
 {
 	//2
-	ext_memory_read(g_Registers.pc + 1);
+	ext_memory_read(g_Registers.pc);
 	//3
 	cpu_do_cycle();
 	memory_inc_stack();
@@ -121,7 +120,7 @@ static inline void cpu_rts()
 static inline void cpu_pha()
 {
 	//2
-	ext_memory_read(g_Registers.pc + 1);
+	ext_memory_read(g_Registers.pc);
 	//3
 	memory_push_byte(g_Registers.a);
 }
@@ -129,9 +128,9 @@ static inline void cpu_pha()
 static inline void cpu_php()
 {
 	//2
-	ext_memory_read(g_Registers.pc + 1);
+	ext_memory_read(g_Registers.pc);
 	//3
-	memory_push_byte(g_Registers.status);
+	memory_push_byte(g_Registers.status | BFLAG_01_MASK | BFLAG_10_MASK);
 }
 
 /*
@@ -148,7 +147,7 @@ static inline void cpu_php()
 static inline void cpu_pla()
 {
 	//2
-	ext_memory_read(g_Registers.pc + 1);
+	ext_memory_read(g_Registers.pc);
 	//3
 	cpu_do_cycle();
 	memory_inc_stack();
@@ -159,14 +158,16 @@ static inline void cpu_pla()
 
 static inline void cpu_plp()
 {
-	//delay of irq will not work right now, gotta figure it out
 	//2
-	ext_memory_read(g_Registers.pc + 1);
+	ext_memory_read(g_Registers.pc);
 	//3
 	cpu_do_cycle();
 	memory_inc_stack();
 	//4
-	g_Registers.status = ext_memory_read(0x100 + g_Registers.stack);;
+	bool old = IF_INTERRUPT();
+	g_Registers.status = ext_memory_read(0x100 + g_Registers.stack) & BFLAG_CLEAR_MASK;
+	g_Registers.delayed = IF_INTERRUPT() ? delayed_i::yes : delayed_i::no;
+	SET_INTERRUPT(old);
 }
 
 /*
