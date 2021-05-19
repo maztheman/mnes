@@ -24,16 +24,26 @@ static inline void cpu_brk()
 	}
 	//3-4
 	memory_push_pc();
+	//Poll the most up to date irq lines so we can interrupt
 	if (g_Registers.nmi || g_Registers.actual_irq == doing_irq::nmi) {
 		g_Registers.nmi = false;
 		pcl_addr = NMILO;
 		pch_addr = NMIHI;
+#ifdef _DEBUG
 		if (g_Registers.actual_irq == doing_irq::brk) {
-			VLog().AddLine("** NMI INTERRUPTED BRK**\n");
+			VLog().AddLine("** NMI INTERRUPTED BRK **\n");
+		} else if (g_Registers.actual_irq == doing_irq::irq) {
+			VLog().AddLine("** NMI INTERRUPTED IRQ **\n");
 		}
-	} else if (g_Registers.prev_irq || g_Registers.actual_irq == doing_irq::irq) {
+#endif
+	} else if (g_Registers.irq || g_Registers.actual_irq == doing_irq::irq) {
 		pcl_addr = BRKLO;
 		pch_addr = BRKHI;
+#ifdef _DEBUG
+		if (g_Registers.actual_irq == doing_irq::brk) {
+			VLog().AddLine("** IRQ INTERRUPTED BRK **\n");
+		}
+#endif
 	} else {
 		pcl_addr = BRKLO;
 		pch_addr = BRKHI;

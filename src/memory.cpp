@@ -418,12 +418,16 @@ static inline void check_for_hardware_irq()
 	if (g_Registers.prev_nmi) {
 		g_Registers.opCode = 0x00;
 		g_Registers.actual_irq = doing_irq::nmi;
-//		VLog().AddLine("NMI -> ");
+#ifdef _DEBUG
+		VLog().AddLine("NMI -> ");
+#endif
 	} else if (IF_INTERRUPT() == false) {
 		if (g_Registers.irq) {
 			g_Registers.opCode = 0x00;
 			g_Registers.actual_irq = doing_irq::irq;
-	//		VLog().AddLine("IRQ -> ");
+#ifdef _DEBUG			
+			VLog().AddLine("IRQ -> ");
+#endif
 		} else {
 			g_Registers.actual_irq = doing_irq::none;
 			g_Registers.pc++;
@@ -463,7 +467,7 @@ static inline void memory_read_opcode()
 	check_for_software_irq();
 	check_for_delayed_i_flag();
 
-#if 0
+#if _DEBUG
 	auto op = OpCodes[g_Registers.opCode];
 	VLog().AddLine("$%04X  %02X %s\n", pc, g_Registers.opCode, op.sOpCode);
 #endif

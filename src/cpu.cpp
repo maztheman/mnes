@@ -22,7 +22,7 @@ void cpu_do_cycle()
 
 	//this is where hijacking a interrupt can happen
 	g_Registers.prev_nmi = g_Registers.nmi;
-	g_Registers.prev_irq = (IF_INTERRUPT() == false) ? g_Registers.irq : 0;
+	//g_Registers.prev_irq = (IF_INTERRUPT() == false) ? g_Registers.irq : 0;
 
 	//1 apu cycles per 2 cpu cycle
 	apu_do_cycle();
@@ -40,7 +40,7 @@ void cpu_reset()
 {
 	g_Registers.delayed = delayed_i::empty;
 	g_Registers.a = g_Registers.y = g_Registers.x = 0;
-	g_Registers.prev_irq = g_Registers.irq = 0;
+	g_Registers.irq = 0;
 	g_Registers.status = IRQ_DISABLE_FLAG_MASK;
 	g_Registers.stack = 0xFD;
 	g_Registers.pc = (memory_main_read(RESETLO)) | (memory_main_read(RESETHI) << 8);

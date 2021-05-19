@@ -38,7 +38,7 @@ struct Registers
 	bool prev_nmi;
 
 	uint irq;
-	uint prev_irq;
+	//uint prev_irq;
 	EDelayedI delayed;
 	EDoingIRQ actual_irq;
 };

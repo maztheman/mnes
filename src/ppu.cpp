@@ -179,8 +179,10 @@ void ppu_do_cycle()
 				This suppression behavior is due to the $2002 read pulling the NMI line back up too quickly after it drops (NMI is active low) for the CPU to see it.
 				(CPU inputs like NMI are sampled each clock.)
 			*/
-			if (g_PPURegisters.last_2002_read == PPU_cycles || (g_PPURegisters.last_2002_read + 1) == PPU_cycles) {
+			if (g_PPURegisters.last_2002_read == PPU_cycles/* || (g_PPURegisters.last_2002_read + 1) == PPU_cycles*/) {
+#ifdef _DEBUG
 				VLog().AddLine("** NMI Surpressed due to Reading of $2002 too soon before**\n");
+#endif
 			} else {
 				set_vblank();
 				if (g_MemoryRegisters.r2000 & 128) {
