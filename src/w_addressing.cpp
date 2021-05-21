@@ -14,7 +14,7 @@ void memory_w_absolute()
 	//2
 	uint pcl = ext_memory_read(g_Registers.pc++);
 	//3
-	uint pch = ext_memory_read(g_Registers.pc++);
+	uint pch = ext_memory_read(g_Registers.pc++) << 8;
 	//4.1 Do Operation
 	switch (g_Registers.opCode)
 	{
@@ -29,7 +29,8 @@ void memory_w_absolute()
 		break;
 	}
 	//4.2 
-	ext_memory_write(pcl | (pch << 8), g_Registers.byteLatch);
+	MLOG(" $%04X <= $%02X", pcl | pch, g_Registers.byteLatch);
+	ext_memory_write(pcl | pch, g_Registers.byteLatch);
 }
 
 /*
@@ -59,6 +60,8 @@ void memory_w_zero_page()
 		break;
 	}
 	//3.2
+	MLOG(" $%02X <= $%02X", address, g_Registers.byteLatch)
+
 	ext_memory_write(address, g_Registers.byteLatch);
 }
 
@@ -78,13 +81,14 @@ void memory_w_zero_page()
 				i.e. page boundary crossings are not handled.
 */
 
-void memory_w_zero_page_indexed_x()
+static inline void memory_w_zero_page_indexed(const uint& indexRegister)
 {
 	//2
 	uint address = ext_memory_read(g_Registers.pc++);
 	//3
 	cpu_do_cycle();
-	address = (address + g_Registers.x) & 0xFF;
+	MLOG(" $%02X, I[$%02X]", address, indexRegister);
+	address = (address + indexRegister) & 0xFF;
 	//4.1 Do Operation
 	switch (g_Registers.opCode) {
 	case OPCODE_STA_ZP_X:
@@ -93,26 +97,23 @@ void memory_w_zero_page_indexed_x()
 	case OPCODE_STY_ZP_X:
 		cpu_sty();
 		break;
-	}
-	//4.2
-	ext_memory_write(address, g_Registers.byteLatch);
-}
-
-void memory_w_zero_page_indexed_y()
-{
-	//2
-	uint address = ext_memory_read(g_Registers.pc++);
-	//3
-	cpu_do_cycle();
-	address = (address + g_Registers.y) & 0xFF;
-	//4.1 Do Operation
-	switch (g_Registers.opCode) {
 	case OPCODE_STX_ZP_Y:
 		cpu_stx();
 		break;
 	}
 	//4.2
+	MLOG(" A:$%04X <= $%02X", address, g_Registers.byteLatch)
 	ext_memory_write(address, g_Registers.byteLatch);
+}
+
+void memory_w_zero_page_indexed_x()
+{
+	memory_w_zero_page_indexed(g_Registers.x);
+}
+
+void memory_w_zero_page_indexed_y()
+{
+	memory_w_zero_page_indexed(g_Registers.y);
 }
 
 /*
@@ -143,6 +144,8 @@ void memory_w_absolute_indexed(const uint& indexRegister)
 	uint pcl = ext_memory_read(g_Registers.pc++);
 	//3
 	uint pch = ext_memory_read(g_Registers.pc++) << 8;
+
+	MLOG(" $%04X, I[$%02X]", pcl | pch, indexRegister);
 	pcl += indexRegister;
 	//4
 	ext_memory_read((pcl & 0xFF) | pch);
@@ -168,6 +171,7 @@ void memory_w_absolute_indexed(const uint& indexRegister)
 		break;
 	}
 	//5.2
+	MLOG(" A:$%04X <= $%02X", address, g_Registers.byteLatch)
 	ext_memory_write(address, g_Registers.byteLatch);
 }
 
@@ -201,6 +205,7 @@ void memory_w_indexed_indirect()
 {
 	//2
 	uint pointer = ext_memory_read(g_Registers.pc++);
+	MLOG(" ($%02X, X[$%02X])", pointer, g_Registers.x)
 	//3
 	cpu_do_cycle(); //dummy read OR pointer + x
 	//4
@@ -215,6 +220,7 @@ void memory_w_indexed_indirect()
 		break;
 	}
 	//6.2
+	MLOG(" A:$%04X <= $%02X", pcl | pch, g_Registers.byteLatch)
 	ext_memory_write(pcl | pch, g_Registers.byteLatch);
 }
 /*
@@ -242,6 +248,7 @@ void memory_w_indirect_indexed()
 {
 	//2
 	uint pointer = ext_memory_read(g_Registers.pc++);
+	MLOG(" ($%02X), Y[%02X]", pointer, g_Registers.y);
 	//3
 	uint pcl = ext_memory_read(pointer);
 	//4
@@ -259,5 +266,6 @@ void memory_w_indirect_indexed()
 
 	}
 	//6.2
+	MLOG(" A:$%04X <= $%02X", address, g_Registers.byteLatch);
 	ext_memory_write(address, g_Registers.byteLatch);
 }

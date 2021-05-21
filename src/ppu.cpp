@@ -29,7 +29,7 @@ static inline void ppu_update_scanline();
 
 static std::vector<uint> s_arMod341(89342, 0);
 static std::vector<signed int> s_arCycle2Scanline(89342, 0);
-static bool s_bEvenFrame = false;
+static bool s_bEvenFrame = true;
 
 void ppu_initialize()
 {
@@ -180,9 +180,7 @@ void ppu_do_cycle()
 				(CPU inputs like NMI are sampled each clock.)
 			*/
 			if (g_PPURegisters.last_2002_read == PPU_cycles/* || (g_PPURegisters.last_2002_read + 1) == PPU_cycles*/) {
-#ifdef _DEBUG
-				VLog().AddLine("** NMI Surpressed due to Reading of $2002 too soon before**\n");
-#endif
+				MLOG("** NMI Surpressed due to Reading of $2002 too soon before**\n");
 			} else {
 				set_vblank();
 				if (g_MemoryRegisters.r2000 & 128) {

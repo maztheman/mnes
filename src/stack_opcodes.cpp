@@ -29,7 +29,7 @@ static inline void cpu_brk()
 		g_Registers.nmi = false;
 		pcl_addr = NMILO;
 		pch_addr = NMIHI;
-#ifdef _DEBUG
+#ifdef USE_LOG
 		if (g_Registers.actual_irq == doing_irq::brk) {
 			VLog().AddLine("** NMI INTERRUPTED BRK **\n");
 		} else if (g_Registers.actual_irq == doing_irq::irq) {
@@ -39,7 +39,7 @@ static inline void cpu_brk()
 	} else if (g_Registers.irq || g_Registers.actual_irq == doing_irq::irq) {
 		pcl_addr = BRKLO;
 		pch_addr = BRKHI;
-#ifdef _DEBUG
+#ifdef USE_LOG
 		if (g_Registers.actual_irq == doing_irq::brk) {
 			VLog().AddLine("** IRQ INTERRUPTED BRK **\n");
 		}

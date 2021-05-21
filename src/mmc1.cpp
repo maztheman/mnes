@@ -7,6 +7,7 @@
 #include "mapper.h"
 
 extern uint nrom_read(uint);
+extern uint	ppu_get_current_scanline_cycle();
 
 static bool						s_bSaveRam;
 static uint						s_Regs[4];
@@ -119,6 +120,7 @@ void mmc1_write(uint address, uint value)
 	}
 
 	if (address == mmc1_last_address && mmc1_mid_write_cycle == mmc1_last_cycle) {//fetch-modify-store opcodes cause 2 writes, very quickly.  MMC1 ignores the second write (which happens to be the correct value )
+		MLOG_PPU("MMC1: RWM ignored PC:$%04X SL:%ld C:%ld\n", g_Registers.pc, ppu_scanline(), ppu_get_current_scanline_cycle())
 		return;
 	}
 
@@ -127,6 +129,7 @@ void mmc1_write(uint address, uint value)
 
 	if (value & 0x80) {
 		s_Regs[0] = s_Regs[0] | 0xC;
+		
 	} else {
 		s_Latch &= ~(1 << s_Shift);
 		s_Latch |= (value & 0x1) << s_Shift++;
@@ -137,6 +140,7 @@ void mmc1_write(uint address, uint value)
 		s_Regs[nRegister] = s_Latch & 0x1F;
 	}
 
+	MLOG_PPU("MMC1 R0:$%02X R1:$%02X R2:$%02X R3:$%02X PC:$%04X SL:%ld C:%ld\n", s_Regs[0], s_Regs[1], s_Regs[2], s_Regs[3], g_Registers.pc, ppu_scanline(), ppu_get_current_scanline_cycle());
 
 	s_Shift = 0;
 	s_Latch = 0;

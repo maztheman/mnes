@@ -61,13 +61,19 @@ static inline void memory_implied_or_accumulator()
 		internals::cpu_asl(g_Registers.a);
 		break;
 	case OPCODE_LSR_A:
+		MLOG(" $%02X ->", g_Registers.a)
 		internals::cpu_lsr(g_Registers.a);
+		MLOG(" $%02X", g_Registers.a)
 		break;
 	case OPCODE_ROL_A:
+		MLOG(" $%02X ->", g_Registers.a)
 		internals::cpu_rol(g_Registers.a);
+		MLOG(" $%02X", g_Registers.a)
 		break;
 	case OPCODE_ROR_A:
+		MLOG(" $%02X ->", g_Registers.a)
 		internals::cpu_ror(g_Registers.a);
+		MLOG(" $%02X", g_Registers.a)
 		break;
 	}
 }

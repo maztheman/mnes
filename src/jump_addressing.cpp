@@ -15,6 +15,9 @@ void memory_jmp_absolute()
     uint pcl = ext_memory_read(g_Registers.pc++);
     //3
     g_Registers.pc = pcl | (ext_memory_read(g_Registers.pc) << 8);
+#ifdef USE_LOG
+    VLog().AddLine(" $%04X", g_Registers.pc);
+#endif
 }
 
 /*

@@ -32,14 +32,13 @@ static inline void memory_rmw_absolute_indexed(const uint& indexRegister)
     //2
     uint pcl = ext_memory_read(g_Registers.pc++);
     //3
-    uint pch = ext_memory_read(g_Registers.pc);
+    uint pch = ext_memory_read(g_Registers.pc++) << 8;
+    MLOG(" $%04X, I[$%02X]", pcl | pch, indexRegister)
     pcl += indexRegister;
-    g_Registers.pc++;
     //4
-    ext_memory_read((pch << 8) | (pcl & 0xFF));
-    pch += (pcl >> 8); //pcl could be 0x100
-    pch &= 0xFF;
-    g_Registers.addressLatch = ((pch << 8) | (pcl & 0xFF));
+    MLOG(" DR:$%04X", pch | (pcl & 0xFF))
+    ext_memory_read(pch | (pcl & 0xFF));
+    g_Registers.addressLatch = (pch + pcl) & 0xFFFF;
     if (g_Registers.opCode == OPCODE_LAS_AB_Y) {
         g_Registers.byteLatch = g_Registers.stack & (g_Registers.addressLatch >> 8);
         g_Registers.a = g_Registers.x = g_Registers.stack = g_Registers.byteLatch;
@@ -48,6 +47,7 @@ static inline void memory_rmw_absolute_indexed(const uint& indexRegister)
     }
     //5
     g_Registers.byteLatch = ext_memory_read(g_Registers.addressLatch);
+    MLOG(" R/W:$%04X <- $%02X", g_Registers.addressLatch, g_Registers.byteLatch)
     //6.1
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
     //6.2 do operation
@@ -108,6 +108,7 @@ static inline void memory_rmw_absolute_indexed(const uint& indexRegister)
     }
     }
     //7
+    MLOG(" W:$%04X <= $%02X", g_Registers.addressLatch, g_Registers.byteLatch)
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
 }
 
@@ -137,10 +138,11 @@ static inline void memory_rwm_absolute()
     //2
     uint pcl = ext_memory_read(g_Registers.pc++);
     //3
-    uint pch = ext_memory_read(g_Registers.pc++);
-    g_Registers.addressLatch = (pch << 8) | pcl;
+    uint pch = ext_memory_read(g_Registers.pc++) << 8;
+    g_Registers.addressLatch = pch | pcl;
     //4
     g_Registers.byteLatch = ext_memory_read(g_Registers.addressLatch);
+    MLOG(" R/W:$%04X <- $%02X", g_Registers.addressLatch, g_Registers.byteLatch);
     //5.1
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
     //5.1 Do the operation
@@ -184,6 +186,7 @@ static inline void memory_rwm_absolute()
     }
     //6
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
+    MLOG(" W:$%04X <= $%02X", g_Registers.addressLatch, g_Registers.byteLatch);
 }
 
 /*
@@ -204,6 +207,7 @@ static inline void memory_rwm_zero_page()
     //3
     g_Registers.byteLatch = ext_memory_read(g_Registers.addressLatch);
     //4.1
+    MLOG(" $%02X <- $%02X", g_Registers.addressLatch, g_Registers.byteLatch);
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
     //4.2 Do the operation
     switch (g_Registers.opCode) {
@@ -245,6 +249,7 @@ static inline void memory_rwm_zero_page()
         break;
     }
     //5
+    MLOG(" W:$%02X <= $%02X", g_Registers.addressLatch, g_Registers.byteLatch);
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
 }
 
@@ -262,14 +267,18 @@ static inline void memory_rwm_zero_page()
 Note: * The high byte of the effective address is always zero,
         i.e. page boundary crossings are not handled.
 */
+
 static inline void memory_rwm_zero_page_indexed_x()
 {
     //2
     uint address = ext_memory_read(g_Registers.pc++);
     //3
-    uint effectiveAddress = (ext_memory_read(address) + g_Registers.x) & 0xFF;
+    MLOG(" $%02X, X[$%02X]", address, g_Registers.x)
+    cpu_do_cycle();
+    uint effectiveAddress = (address + g_Registers.x) & 0xFF;
     //4
     g_Registers.byteLatch = ext_memory_read(effectiveAddress);
+    MLOG(" R/W:$%02X <- $%02X", effectiveAddress, g_Registers.byteLatch);
     //5.1
     ext_memory_write(effectiveAddress, g_Registers.byteLatch);
     //5.2 Do Operation
@@ -312,6 +321,7 @@ static inline void memory_rwm_zero_page_indexed_x()
         break;
     }
     //6
+    MLOG(" W:$%04X <= $%02X", effectiveAddress, g_Registers.byteLatch);
     ext_memory_write(effectiveAddress, g_Registers.byteLatch);
 }
 
@@ -339,6 +349,7 @@ static inline void memory_rwm_indexed_indirect()
     //2
     uint pointer = ext_memory_read(g_Registers.pc++);
     //3
+    MLOG(" ($%02X, X[$%02X])", pointer, g_Registers.x)
     cpu_do_cycle();//read from the address, add X to it, this simulates that
     //4
     uint pcl = ext_memory_read((pointer + g_Registers.x) & 0xFF);
@@ -347,6 +358,7 @@ static inline void memory_rwm_indexed_indirect()
     g_Registers.addressLatch = pcl | (pch << 8);
     //6
     g_Registers.byteLatch = ext_memory_read(g_Registers.addressLatch);
+    MLOG(" R/W:$%04X <- $%02X", g_Registers.addressLatch, g_Registers.byteLatch);
     //7.1
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
     //7.2
@@ -375,6 +387,7 @@ static inline void memory_rwm_indexed_indirect()
         break;
     }
     //8
+    MLOG(" W:$%04X <= $%02X", g_Registers.addressLatch, g_Registers.byteLatch);
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
 }
 
@@ -404,16 +417,19 @@ static inline void memory_rwm_indirect_indexed()
 {
     //2
     uint pointer = ext_memory_read(g_Registers.pc++);
+    MLOG(" ($%02X), Y[%02X]", pointer, g_Registers.y);
     //3
     uint pcl = ext_memory_read(pointer);
     //4
-    uint pch = ext_memory_read((pointer + 1) & 0xFF);
+    uint pch = ext_memory_read((pointer + 1) & 0xFF) << 8;
     pcl += g_Registers.y;
     //5
-    ext_memory_read((pcl & 0xFF) | (pch << 8));
-    g_Registers.addressLatch = ((pch << 8) + pcl) & 0xFFFF;
+    MLOG(" DR:$%04X", pch | (pcl & 0xFF))
+    ext_memory_read((pcl & 0xFF) | pch);
+    g_Registers.addressLatch = (pch + pcl) & 0xFFFF;
     //6
     g_Registers.byteLatch = ext_memory_read(g_Registers.addressLatch);
+    MLOG(" R/W:$%04X <- $%02X", g_Registers.addressLatch, g_Registers.byteLatch)
     //7.1
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
     //7.2 - Do Operation
@@ -444,5 +460,6 @@ static inline void memory_rwm_indirect_indexed()
         break;
     }
     //8
+    MLOG(" W:$%04X <= $%02X", g_Registers.addressLatch, g_Registers.byteLatch)
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
 }

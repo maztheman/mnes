@@ -140,6 +140,7 @@ uint memory_main_read(uint address)
 			break;
 		case 7://RW
 			//read from ppu
+			MLOG(" @ PPU Cycle %ld", ppu_get_current_scanline_cycle())
 			uint ppuaddress = g_MemoryRegisters.r2006;
 			g_MemoryRegisters.r2006 = ( g_MemoryRegisters.r2006 + ((g_MemoryRegisters.r2000 & 0x4)? 32 : 1)) & 0x7FFF;
 			g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
@@ -258,7 +259,10 @@ void memory_main_write(uint address, uint value)
 					//which is prolly why they use 2005 to scroll, since it is the scrolling register.
 					g_MemoryRegisters.r2006Temp |= value;//set bottom
 					g_MemoryRegisters.r2006 = g_MemoryRegisters.r2006Temp;
-					g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+					if (g_MemoryRegisters.r2006 < 0x3F00) {
+						MLOG(" @ PPU cycle %ld old $%04X", ppu_get_current_scanline_cycle(), g_MemoryRegisters.ppu_addr_bus)
+						g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+					}
 				} else {//first write
 					g_MemoryRegisters.r2006Temp &= 0xFF;//clear top
 					g_MemoryRegisters.r2006Temp |= (value & 0x3F) << 8;//set top
@@ -271,7 +275,10 @@ void memory_main_write(uint address, uint value)
 			{
 				uint address = g_MemoryRegisters.r2006;
 				g_MemoryRegisters.r2006 = ( g_MemoryRegisters.r2006 + ((g_MemoryRegisters.r2000 & 0x4)? 32 : 1)) & 0x7FFF;
-				g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+				if (g_MemoryRegisters.r2006 < 0x3F00) {
+					MLOG(" @ PPU cycle %ld old $%04X", ppu_get_current_scanline_cycle(), g_MemoryRegisters.ppu_addr_bus)
+					g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+				}
 				ppu_memory_main_write(address, value);
 				break;
 			}
@@ -418,14 +425,14 @@ static inline void check_for_hardware_irq()
 	if (g_Registers.prev_nmi) {
 		g_Registers.opCode = 0x00;
 		g_Registers.actual_irq = doing_irq::nmi;
-#ifdef _DEBUG
+#ifdef USE_LOG
 		VLog().AddLine("NMI -> ");
 #endif
 	} else if (IF_INTERRUPT() == false) {
 		if (g_Registers.irq) {
 			g_Registers.opCode = 0x00;
 			g_Registers.actual_irq = doing_irq::irq;
-#ifdef _DEBUG			
+#ifdef USE_LOG			
 			VLog().AddLine("IRQ -> ");
 #endif
 		} else {
@@ -467,9 +474,9 @@ static inline void memory_read_opcode()
 	check_for_software_irq();
 	check_for_delayed_i_flag();
 
-#if _DEBUG
+#ifdef USE_LOG
 	auto op = OpCodes[g_Registers.opCode];
-	VLog().AddLine("$%04X  %02X %s\n", pc, g_Registers.opCode, op.sOpCode);
+	VLog().AddLine("$%04X  %02X %s", pc, g_Registers.opCode, op.sOpCode);
 #endif
 
 }
@@ -816,6 +823,9 @@ void memory_pc_process()
 		break;
 	}
 	
+#ifdef USE_LOG
+	VLog().AddLine("\n");
+#endif
 }
 
 #if 0
