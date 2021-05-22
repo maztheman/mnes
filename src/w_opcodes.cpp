@@ -18,7 +18,13 @@ static inline void cpu_sty()
 	g_Registers.byteLatch = g_Registers.y;
 }
 
-static inline void cpu_sax() 
+static inline void cpu_sax()
+{
+	g_Registers.byteLatch = g_Registers.a & g_Registers.x;
+}
+
+/*
+static inline void cpu_axs() 
 {
 	//immediate mode value used later
 	uint tmp = g_Registers.byteLatch;
@@ -38,3 +44,4 @@ static inline void cpu_sax()
 	g_Registers.byteLatch = oldA;
 	cpu_lda();
 }
+*/

@@ -474,10 +474,8 @@ static inline void memory_read_opcode()
 	check_for_software_irq();
 	check_for_delayed_i_flag();
 
-#ifdef USE_LOG
 	auto op = OpCodes[g_Registers.opCode];
-	VLog().AddLine("$%04X  %02X %s", pc, g_Registers.opCode, op.sOpCode);
-#endif
+	MLOG("$%04X %02X %s", pc, g_Registers.opCode, op.sOpCode);
 
 }
 
@@ -499,7 +497,19 @@ void memory_pc_process()
 	case OPCODE_LDY_OP:
 	case OPCODE_ORA_OP:
 	case OPCODE_SBC_OP:
+	case OPCODE_SBC_IMM_EB:
 	case OPCODE_ARR_IMM:
+	case OPCODE_NOP_IMM:
+	case OPCODE_NOP_IMM_82:
+	case OPCODE_NOP_IMM_89:
+	case OPCODE_NOP_IMM_C2:
+	case OPCODE_NOP_IMM_E2:
+	case OPCODE_ANC_IMM_0B:
+	case OPCODE_ANC_IMM_2B:
+	case OPCODE_ALR_IMM:
+	case OPCODE_LAX_IMM:
+	case OPCODE_AXS_IMM:
+	case OPCODE_XAA_IMM:
 		memory_r_immediate();
 		break;
 		//Read Instructions - Absolute
@@ -709,7 +719,7 @@ void memory_pc_process()
 	case OPCODE_STA_ZP:
 	case OPCODE_STX_ZP:
 	case OPCODE_STY_ZP:
-	//case OPCODE_SAX_ZP:
+	case OPCODE_SAX_ZP:
 		memory_w_zero_page();
 		break;
 		//Write instructions - Zero Page Indexed
@@ -718,7 +728,7 @@ void memory_pc_process()
 		memory_w_zero_page_indexed_x();
 		break;
 	case OPCODE_STX_ZP_Y:
-	//case OPCODE_SAX_ZP_Y:
+	case OPCODE_SAX_ZP_Y:
 		memory_w_zero_page_indexed_y();
 		break;
 		//Write instructions - Absolute Indexed
@@ -736,6 +746,7 @@ void memory_pc_process()
 	//case OPCODE_SHA_AB_Y:
 	case OPCODE_SHX_AB_Y:
 	//case OPCODE_SHY_AB_Y:
+
 		memory_w_absolute_indexed_y();
 		break;
 		//Write instructions - Indexed indirect
@@ -814,6 +825,12 @@ void memory_pc_process()
 	case OPCODE_LSR_A:
 	case OPCODE_ROR_A:
 	case OPCODE_ROL_A:
+	case OPCODE_NOP_1A:
+	case OPCODE_NOP_3A:
+	case OPCODE_NOP_5A:
+	case OPCODE_NOP_7A:
+	case OPCODE_NOP_DA:
+	case OPCODE_NOP_FA:
 		memory_implied_or_accumulator();
 		break;
 	default:
@@ -824,7 +841,7 @@ void memory_pc_process()
 	}
 	
 #ifdef USE_LOG
-	VLog().AddLine("\n");
+	VLog().AddLine(" T:[$%016lX]\n", g_Registers.tick_count++);
 #endif
 }
 

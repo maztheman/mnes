@@ -129,7 +129,6 @@ void mmc1_write(uint address, uint value)
 
 	if (value & 0x80) {
 		s_Regs[0] = s_Regs[0] | 0xC;
-		
 	} else {
 		s_Latch &= ~(1 << s_Shift);
 		s_Latch |= (value & 0x1) << s_Shift++;
@@ -140,7 +139,7 @@ void mmc1_write(uint address, uint value)
 		s_Regs[nRegister] = s_Latch & 0x1F;
 	}
 
-	MLOG_PPU("MMC1 R0:$%02X R1:$%02X R2:$%02X R3:$%02X PC:$%04X SL:%ld C:%ld\n", s_Regs[0], s_Regs[1], s_Regs[2], s_Regs[3], g_Registers.pc, ppu_scanline(), ppu_get_current_scanline_cycle());
+	MLOG_PPU("MMC1 R0:$%02X R1:$%02X R2:$%02X R3:$%02X PC:$%04X SL:%ld C:%ld T:%016lX\n", s_Regs[0], s_Regs[1], s_Regs[2], s_Regs[3], g_Registers.pc, ppu_scanline(), ppu_get_current_scanline_cycle(), g_Registers.tick_count);
 
 	s_Shift = 0;
 	s_Latch = 0;
@@ -172,27 +171,36 @@ void mmc1_set_control()
 		SetOneScreenMirror();
 	}
 }
+
+//MMC1 R0:$1A R1:$18 R2:$00 R3:$01 PC:$A36A SL:253 C:195 T:0000000000069381
+//Sprite C4: O:$0008 N:$1000 SL:0 PC:$8084 C:261 H:8 T:[$00000000000694DC]
+
+
 void mmc1_set_chr_lo()
 {
 	if ((s_Regs[0] & 0x10) == 0) {//switch 8k
-		uint nAddress = ((s_Regs[1] & 0xF) & s_n8KbVRomMask) * 0x2000;
+		uint nAddress = ((s_Regs[1] & 0x1E) & s_n8KbVRomMask) * 0x2000;
 		for (uint n = 0; n < 8; n++) {
 			g_PPUTable[n] = &s_pVROM[nAddress + ((0x400) * n)];
 		}
 	} else {//switch 4k
-		uint nAddress = ((s_Regs[1] & 0xF) & s_n4KbVRomMask) * 0x1000;
+		uint nAddress = ((s_Regs[1] & 0x1F) & s_n4KbVRomMask) * 0x1000;
 		for (uint n = 0; n < 4; n++) {
 			g_PPUTable[n] = &s_pVROM[nAddress + ((0x400) * n)];
 		}
 	}
 }
+
+//MMC1 R0:$1A R1:$18 R2:$00 R3:$01 PC:$A36A SL:253 C:195 T:0000000000069381
+//Sprite C4: O:$0008 N:$1000 SL:0 PC:$8084 C:261 H:8 T:[$00000000000694DC]
+
 void mmc1_set_chr_hi()
 {
 	if ((s_Regs[0] & 0x10) == 0) {
 		return;
 	}
 	//switch 4k at 0x1000
-	uint nAddress = ((s_Regs[2] & 0xF) & s_n4KbVRomMask) * 0x1000;
+	uint nAddress = ((s_Regs[2] & 0x1F) & s_n4KbVRomMask) * 0x1000;
 	for (uint n = 0; n < 4; n++) {
 		g_PPUTable[n + 4] = &s_pVROM[nAddress + ((0x400) * n)];
 	}

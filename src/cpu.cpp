@@ -38,6 +38,7 @@ void cpu_do_cycle()
 
 void cpu_reset()
 {
+	g_Registers.tick_count = 0;
 	g_Registers.delayed = delayed_i::empty;
 	g_Registers.a = g_Registers.y = g_Registers.x = 0;
 	g_Registers.irq = 0;

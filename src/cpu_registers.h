@@ -41,6 +41,7 @@ struct Registers
 	//uint prev_irq;
 	EDelayedI delayed;
 	EDoingIRQ actual_irq;
+	uint64_t tick_count{ 0 };
 };
 
 extern Registers g_Registers;

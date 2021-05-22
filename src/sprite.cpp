@@ -333,7 +333,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 
 			MLOG_PPU("Sprite C4: O:$%04X", g_MemoryRegisters.ppu_addr_bus);
 			pattern_table_addr = g_MemoryRegisters.ppu_addr_bus = ptable | (tile << 4) | (FineY & 0x7);
-			MLOG_PPU(" N:$%04X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), height)
+			MLOG_PPU(" N:$%04X SL:%ld PC:$%04X C:%ld H:%ld T:[$%016lX]\n", g_MemoryRegisters.ppu_addr_bus, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), height, g_Registers.tick_count)
 
 			sprite_count[selected_index] = oam2nd[idx + 3];
 		}

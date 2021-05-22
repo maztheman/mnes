@@ -99,13 +99,20 @@ static inline void cpu_nop()
 //should be a read i think
 static inline void cpu_arr()
 {
-	cpu_and();
-	internals::cpu_ror(g_Registers.a);
+	g_Registers.a &= g_Registers.byteLatch;
+	g_Registers.a >>= 1;
+	set_nz(g_Registers.a);
+	uint b6 = (g_Registers.a & 0x80) ? 1 : 0;
+	uint b5 = (g_Registers.a & 0x40) ? 1 : 0;
+	set_carry(b6);
+	SET_OVERFLOW(b6 ^ b5);
+
 }
 
-//below doesnt exist in opcode jump table yet
-static inline void cpu_axs() {
-	g_Registers.byteLatch = g_Registers.a & g_Registers.x;
+static inline void cpu_axs() 
+{
+	g_Registers.x = ((g_Registers.a & g_Registers.x) - g_Registers.byteLatch) & 0xFF;
+	set_nz(g_Registers.x);
 }
 
 static inline void cpu_alr() {
@@ -114,9 +121,9 @@ static inline void cpu_alr() {
 }
 
 
-static inline void cpu_xaa() {
-	g_Registers.a = g_Registers.x;
-	cpu_and();
+static inline void cpu_xaa() 
+{
+	g_Registers.a = ((g_Registers.a | 0xEE) & g_Registers.x & g_Registers.byteLatch);
 }
 
 static inline void cpu_oal() {

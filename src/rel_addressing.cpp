@@ -38,6 +38,7 @@ void memory_rel()
 {
     //2.1
     uint operand = ext_memory_read(g_Registers.pc++);
+    MLOG(" $%02X %ld", operand, (signed char)operand);
     //2.2 Do Operation
     bool bTakeBranch = false;
     switch (g_Registers.opCode) 

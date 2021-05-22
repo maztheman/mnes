@@ -123,6 +123,7 @@
 #define OPCODE_RTI				0x40
 #define OPCODE_RTS				0x60
 #define OPCODE_SBC_OP				0xE9
+#define OPCODE_SBC_IMM_EB			0xEB
 #define OPCODE_SBC_ZP				0xE5
 #define OPCODE_SBC_ZP_X			0xF5
 #define OPCODE_SBC_AB				0xED
@@ -212,7 +213,7 @@
 #define OPCODE_ARR_IMM			0x6B
 #define OPCODE_XAA_IMM			0x8B
 #define OPCODE_OAL_IMM			0xAB
-#define OPCODE_SAX_IMM			0xCB
+#define OPCODE_AXS_IMM			0xCB
 #define OPCODE_NOP_1A			0x1A
 #define OPCODE_NOP_3A			0x3A
 #define OPCODE_NOP_5A			0x5A
@@ -245,6 +246,18 @@
 #define OPCODE_AHX_AB_Y			0x9F
 #define OPCODE_AHX_IN_Y			0x93
 
+#define OPCODE_NOP_IMM			0x80
+#define OPCODE_NOP_IMM_82		0x82
+#define OPCODE_NOP_IMM_89		0x89
+#define OPCODE_NOP_IMM_C2		0xC2
+#define OPCODE_NOP_IMM_E2		0xE2
+#define OPCODE_ANC_IMM_0B		0x0B
+#define OPCODE_ANC_IMM_2B		0x2B
+#define OPCODE_LAX_IMM			0xAB
+
+#define OPCODE_SAX_ZP			0x87
+#define OPCODE_SAX_ZP_Y			0x97
+
 struct SDebugOpCode
 {
 	const char* sOpCode;
@@ -258,6 +271,7 @@ struct SDebugOpCodeFormat
 };
 
 extern SDebugOpCode OpCodes[256];
-extern SDebugOpCodeFormat OpCodeFormats[12];
+extern SDebugOpCodeFormat OpCodeFormats[13];
 
 #endif
+

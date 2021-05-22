@@ -58,6 +58,9 @@ void memory_w_zero_page()
 	case OPCODE_STY_ZP:
 		cpu_sty();
 		break;
+	case OPCODE_SAX_ZP:
+		cpu_sax();
+		break;
 	}
 	//3.2
 	MLOG(" $%02X <= $%02X", address, g_Registers.byteLatch)
@@ -100,9 +103,12 @@ static inline void memory_w_zero_page_indexed(const uint& indexRegister)
 	case OPCODE_STX_ZP_Y:
 		cpu_stx();
 		break;
+	case OPCODE_SAX_ZP_Y:
+		cpu_sax();
+		break;
 	}
 	//4.2
-	MLOG(" A:$%04X <= $%02X", address, g_Registers.byteLatch)
+	MLOG(" A:$%02X <= $%02X", address, g_Registers.byteLatch)
 	ext_memory_write(address, g_Registers.byteLatch);
 }
 

@@ -41,8 +41,63 @@ void memory_r_immediate()
     case OPCODE_SBC_OP:
         cpu_sbc();
         break;
+    case OPCODE_SBC_IMM_EB:
+        g_Registers.byteLatch = 255 - g_Registers.byteLatch;
+        cpu_sbc();
+        break;
     case OPCODE_ARR_IMM:
         cpu_arr();
+        break;
+    case OPCODE_NOP_IMM:
+    {
+        int look = 0;
+    }
+        break;
+    case OPCODE_ANC_IMM_0B:
+    case OPCODE_ANC_IMM_2B:
+        cpu_and();
+        set_carry(IF_SIGN());
+        break;
+    case OPCODE_ALR_IMM:
+        cpu_and();
+        internals::cpu_lsr(g_Registers.a);
+        break;
+    case OPCODE_LAX_IMM:
+        cpu_lax();
+        break;
+    case OPCODE_AXS_IMM:
+        /*SAX***
+            SAX ANDs the contents of the Aand X registers(leaving the contents of A
+                intact), subtracts an immediate value, and then stores the result in X.
+            ... A few points might be made about the action of subtracting an immediate
+            value.It actually works just like the CMP instruction, except that CMP
+            does not store the result of the subtraction it performs in any register.
+            This subtract operation is not affected by the state of the Carry flag,
+            though it does affect the Carry flag.It does not affect the Overflow
+            flag.
+
+            One supported mode :
+
+        SAX #ab; CB ab; No.Cycles = 2
+
+            Example:
+
+        SAX #$5A; CB 5A
+
+            Equivalent instructions :
+
+        STA $02
+            TXA
+            AND $02
+            SEC
+            SBC #$5A
+            TAX
+            LDA $02
+            */
+        cpu_axs();
+        break;
+    case OPCODE_XAA_IMM:
+        cpu_xaa();
         break;
     }
 }
@@ -202,7 +257,7 @@ static inline void memory_r_zero_page_indexed(const uint& indexRegister)
     cpu_do_cycle();
     //4.1
     g_Registers.byteLatch = ext_memory_read((address + indexRegister) & 0xFF);
-    MLOG(" $%02X, I[%02X] A:$%04X <- $%02X", address, indexRegister, (address + indexRegister) & 0xFF, g_Registers.byteLatch);
+    MLOG(" $%02X, I[%02X] A:$%02X <- $%02X", address, indexRegister, (address + indexRegister) & 0xFF, g_Registers.byteLatch);
     //4.2
     switch (g_Registers.opCode) {
 

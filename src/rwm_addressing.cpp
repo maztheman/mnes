@@ -321,7 +321,7 @@ static inline void memory_rwm_zero_page_indexed_x()
         break;
     }
     //6
-    MLOG(" W:$%04X <= $%02X", effectiveAddress, g_Registers.byteLatch);
+    MLOG(" W:$%02X <= $%02X", effectiveAddress, g_Registers.byteLatch);
     ext_memory_write(effectiveAddress, g_Registers.byteLatch);
 }
 
