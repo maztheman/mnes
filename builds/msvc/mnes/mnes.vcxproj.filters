@@ -1,0 +1,279 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\mappers">
+      <UniqueIdentifier>{4b76b2fb-5319-4503-80c9-d267f6449a90}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\mappers">
+      <UniqueIdentifier>{65d2729a-cf04-4b38-b1ae-f83a60d7d1f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\cpu">
+      <UniqueIdentifier>{9e3b7f53-48e4-4175-9202-4f122c1e9c16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cpu">
+      <UniqueIdentifier>{f4b52b33-7f67-41d4-8e2f-9ab2c49fee60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cpu\opcodes">
+      <UniqueIdentifier>{ac61e896-5f38-4dcf-9818-ea1ef75f1157}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ppu">
+      <UniqueIdentifier>{0f5e7ec2-40c9-42a0-a835-7ac3944c5af5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\apu">
+      <UniqueIdentifier>{7f45998f-9d43-4aba-9ab8-d8cf883746e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\apu">
+      <UniqueIdentifier>{b4f1c8e2-9506-4a9e-9c8e-927de4934302}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ppu">
+      <UniqueIdentifier>{df935136-6a1b-4014-baa4-e87db480540d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\cpu\addressing">
+      <UniqueIdentifier>{f7ef65fc-053c-450e-a9e9-1b9b6617b322}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\memory_registers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\FileLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\mapper.cpp">
+      <Filter>Source Files\mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\nrom.cpp">
+      <Filter>Source Files\mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\Log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\unrom.cpp">
+      <Filter>Source Files\mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\cnrom.cpp">
+      <Filter>Source Files\mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\mmc3.cpp">
+      <Filter>Source Files\mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\mmc1.cpp">
+      <Filter>Source Files\mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\aorom.cpp">
+      <Filter>Source Files\mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\mmc2.cpp">
+      <Filter>Source Files\mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\platform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\processor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\control_flags.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\gfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\global.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\mmc4.cpp">
+      <Filter>Source Files\mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\mmc5.cpp">
+      <Filter>Source Files\mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\cpu.cpp">
+      <Filter>Source Files\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\rel_opcodes.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\alu.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\flag.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\loadstore.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\incdec.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\compare.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\transfer.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\stack.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\system.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\jump.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\ppu.cpp">
+      <Filter>Source Files\ppu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\ppu_memory.cpp">
+      <Filter>Source Files\ppu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\ppu_registers.cpp">
+      <Filter>Source Files\ppu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\ppuaddr.cpp">
+      <Filter>Source Files\ppu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\sprite.cpp">
+      <Filter>Source Files\ppu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\background.cpp">
+      <Filter>Source Files\ppu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\memory.cpp">
+      <Filter>Source Files\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\addressing_modes.cpp">
+      <Filter>Source Files\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\joystick.cpp">
+      <Filter>Source Files\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\apu.cpp">
+      <Filter>Source Files\apu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\sound.cpp">
+      <Filter>Source Files\apu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\cpu_registers.cpp">
+      <Filter>Source Files\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\cpu_opcodes.cpp">
+      <Filter>Source Files\cpu</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\illegal.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\rwm_addressing.cpp">
+      <Filter>Source Files\cpu\addressing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\rwm_opcodes.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\r_opcodes.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\w_opcodes.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\imp_addressing.cpp">
+      <Filter>Source Files\cpu\addressing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\imm_addressing.cpp">
+      <Filter>Source Files\cpu\addressing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\r_addressing.cpp">
+      <Filter>Source Files\cpu\addressing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\w_addressing.cpp">
+      <Filter>Source Files\cpu\addressing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\stack_opcodes.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\jump_addressing.cpp">
+      <Filter>Source Files\cpu\addressing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\rel_addressing.cpp">
+      <Filter>Source Files\cpu\addressing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\imp_opcodes.cpp">
+      <Filter>Source Files\cpu\opcodes</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\src\memory_registers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\ines_format.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\file.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\processor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\control_flags.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\gfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\BytePtrVector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\global.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\mapper.h">
+      <Filter>Header Files\mappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\platform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\FileLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\cpu.h">
+      <Filter>Header Files\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\apu.h">
+      <Filter>Header Files\apu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\memory.h">
+      <Filter>Header Files\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\cpu_opcodes.h">
+      <Filter>Header Files\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\cpu_registers.h">
+      <Filter>Header Files\cpu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\ppu.h">
+      <Filter>Header Files\ppu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\ppu_memory.h">
+      <Filter>Header Files\ppu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\ppu_registers.h">
+      <Filter>Header Files\ppu</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
