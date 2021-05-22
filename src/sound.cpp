@@ -59,10 +59,13 @@ struct envelope_t {
 	envelope_t(bool& lo, bool& dis)
 	: loop(lo)
 	, disable(dis)
+	, must_reload(false)
+	, reload(0)
+	, period(0)
+	, counter(0)
 	{
 
 	}
-
 
 	void clock() {
 		if (must_reload) {
@@ -93,7 +96,7 @@ struct envelope_t {
 
 	uint reload;
 	uint period;
-	uint		counter;
+	uint counter{ 0 };
 
 };
 

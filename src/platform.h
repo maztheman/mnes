@@ -1,5 +1,4 @@
-#ifndef __PLATFORM_HPP__
-#define __PLATFORM_HPP__
+#pragma once
 
 #include <Windows.h>
 #include <gl/GLU.h>
@@ -16,15 +15,16 @@ typedef void  (__cdecl *CalculateFunc)();
 
 void mazMainLoop();
 
-const unsigned int ID_FILE_MENU				= WM_USER + 1;
+const unsigned int ID_FILE					= WM_USER + 1;
 const unsigned int ID_FILE_OPEN				= WM_USER + 2;
 const unsigned int ID_FILE_EXIT				= WM_USER + 3;
-const unsigned int ID_EMULATION_MENU		= WM_USER + 4;
-const unsigned int ID_VIDEO_MENU			= WM_USER + 5;
+const unsigned int ID_EMULATION				= WM_USER + 4;
+const unsigned int ID_VIDEO					= WM_USER + 5;
 const unsigned int ID_EMULATION_START		= WM_USER + 6;
 const unsigned int ID_EMULATION_STOP		= WM_USER + 7;
 const unsigned int ID_EMULATION_RESET		= WM_USER + 8;
-
+const unsigned int ID_EMULATION_RESET_HARD	= WM_USER + 9;
+const unsigned int ID_EMULATION_RESET_SOFT	= WM_USER + 10;
 
 
 namespace gfx {
@@ -34,6 +34,10 @@ namespace gfx {
 class CMainframeMenu
 {
 	HMENU m_hMenu;
+
+	HMENU m_hFileMenu;
+	HMENU m_hEmulationMenu;
+	HMENU m_hResetMenu;
 public:
 	CMainframeMenu() : m_hMenu(nullptr) {
 		Create();
@@ -50,15 +54,46 @@ private:
 		unsigned int i = 100;
 		unsigned int pos = 0;
 
-		HMENU hFile = ::CreatePopupMenu();
-		HMENU hEmulation = ::CreatePopupMenu();
-		HMENU hVideo = ::CreatePopupMenu();
+		int fileMenuPos = 0, emulationMenuPos = 0, resetMenuPos = 0;
+		m_hFileMenu = ::CreateMenu();
+		m_hResetMenu = ::CreateMenu();
+		m_hEmulationMenu = ::CreateMenu();
 
-		//::InsertMenu(hFile, 0, MF_BYPOSITION | MF_ENABLED | MF_STRING, 
+		::InsertMenuA(m_hResetMenu, resetMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_STRING, ID_EMULATION_RESET_HARD, "&Hard");
+		::InsertMenuA(m_hResetMenu, resetMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_STRING, ID_EMULATION_RESET_SOFT, "&Soft");
+		
+		MENUITEMINFOA resetMenu = { 0 };
+		resetMenu.cbSize = sizeof(MENUITEMINFOA);
+		resetMenu.fMask = MIIM_ID | MIIM_SUBMENU | MIIM_STRING;
+		resetMenu.wID = ID_EMULATION_RESET;
+		resetMenu.hSubMenu = m_hResetMenu;
+		resetMenu.dwTypeData = "Reset";
 
-		::InsertMenu(m_hMenu, pos++, MF_BYPOSITION | MF_ENABLED | MF_POPUP | MF_STRING, ID_FILE_MENU, "&File");
-		::InsertMenu(m_hMenu, pos++, MF_BYPOSITION | MF_ENABLED | MF_POPUP | MF_STRING, ID_EMULATION_MENU, "&Emulation");
-		::InsertMenu(m_hMenu, pos++, MF_BYPOSITION | MF_ENABLED | MF_POPUP | MF_STRING, ID_VIDEO_MENU, "&Video");
+		::InsertMenuA(m_hEmulationMenu, emulationMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_STRING, ID_EMULATION_START, "&Start");
+		::InsertMenuA(m_hEmulationMenu, emulationMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_STRING, ID_EMULATION_STOP, "&Stop");
+		::InsertMenuItemA(m_hEmulationMenu, emulationMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_POPUP | MF_STRING, &resetMenu);
+
+		MENUITEMINFOA emulationMenu = { 0 };
+		emulationMenu.cbSize = sizeof(MENUITEMINFOA);
+		emulationMenu.fMask = MIIM_ID | MIIM_SUBMENU | MIIM_STRING;
+		emulationMenu.wID = ID_EMULATION;
+		emulationMenu.hSubMenu = m_hEmulationMenu;
+		emulationMenu.dwTypeData = "Emulation";
+
+		::InsertMenuA(m_hFileMenu, fileMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_STRING, ID_FILE_OPEN, "&Open");
+		::InsertMenuA(m_hFileMenu, fileMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_STRING, ID_FILE_EXIT, "&Exit");
+
+		MENUITEMINFOA fileMenu = { 0 };
+		fileMenu.cbSize = sizeof(MENUITEMINFOA);
+		fileMenu.fMask = MIIM_ID | MIIM_SUBMENU | MIIM_STRING;
+		fileMenu.wID = ID_FILE;
+		fileMenu.hSubMenu = m_hFileMenu;
+		fileMenu.dwTypeData = "File";
+
+		::InsertMenuItemA(m_hMenu, pos++, MF_BYPOSITION | MF_ENABLED | MF_POPUP | MF_STRING, &fileMenu);
+		::InsertMenuItemA(m_hMenu, pos++, MF_BYPOSITION | MF_ENABLED | MF_POPUP | MF_STRING, &emulationMenu);
+		::InsertMenu(m_hMenu, pos++, MF_BYPOSITION | MF_ENABLED | MF_POPUP | MF_STRING, ID_VIDEO, "&Video");
+
 
 	}
 };
@@ -139,5 +174,3 @@ public:
 
 extern gfx::CMainframeMenu g_MainframeMenu;
 inline gfx::CMainframeMenu& VMainframeMenu() { return g_MainframeMenu; }
-
-#endif

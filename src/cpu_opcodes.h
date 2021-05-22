@@ -1,5 +1,4 @@
-#ifndef __CPU_OPCODES_H__
-#define __CPU_OPCODES_H__
+#pragma once
 
 #define OPCODE_ADC_OP				0x69
 #define OPCODE_ADC_ZP				0x65
@@ -272,6 +271,3 @@ struct SDebugOpCodeFormat
 
 extern SDebugOpCode OpCodes[256];
 extern SDebugOpCodeFormat OpCodeFormats[13];
-
-#endif
-

@@ -1,5 +1,4 @@
-#ifndef __GFX_H__
-#define __GFX_H__
+#pragma once
 
 #include "platform.h"
 #include <gl/GLU.h>
@@ -17,5 +16,3 @@ void SetTextureData(void* pTextureData, GLuint texture);
 extern GLuint g_txMainWindow;
 extern GLuint g_txPatternTable;
 extern GLuint g_txNameTable;
-
-#endif

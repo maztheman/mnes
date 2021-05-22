@@ -1,5 +1,4 @@
-#ifndef __MEMORY_REGISTERS_H__
-#define __MEMORY_REGISTERS_H__
+#pragma once
 
 typedef unsigned int uint;
 
@@ -41,5 +40,3 @@ bool show_bg_leftmost_8px();
 bool show_sprite_leftmost_8px();
 
 uint ppu_addr_bus();
-
-#endif

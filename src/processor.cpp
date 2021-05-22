@@ -66,7 +66,7 @@ void CPUProcess()
 
 void Stop()
 {
-
+	g_bCpuRunning = false;
 }
 
 void Start()
@@ -162,7 +162,7 @@ void InitializeProcessor()
 
 	g_pMainFrame = new gfx::COpenGLWrapper;
 	g_pMainFrame->SetMenu(VMainframeMenu().GetSafeHmenu());//platform
-	g_pMainFrame->Create( ciDesiredHeight + ciCYBorderSize + ciCYFrameSize + ciCYBorderSize + ciCYFrameSize + ciCaption + ciPadding + ciPadding, ciDesiredWidth + ciCXBorderSize + ciCXBorderSize + ciPadding + ciPadding + ciCXFrameSize + ciCXFrameSize, "mnes-0.4.1"); //295, 272
+	g_pMainFrame->Create( ciDesiredHeight + ciCYBorderSize + ciCYFrameSize + ciCYBorderSize + ciCYFrameSize + ciCaption + ciPadding + ciPadding, ciDesiredWidth + ciCXBorderSize + ciCXBorderSize + ciPadding + ciPadding + ciCXFrameSize + ciCXFrameSize, "mnes-0.5.0"); //295, 272
 	g_pMainFrame->MakeCurrent();
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);

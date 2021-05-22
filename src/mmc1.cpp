@@ -23,12 +23,16 @@ static uint						s_nCartSize;
 static uint						s_nMaxIRQ;
 static uint						s_nIRQCounter;
 static uint						s_nIRQEnable;
+static uint						mmc1_last_address = ~0U;
+static uint64_t					mmc1_last_cycle = 0;
+static uint64_t					mmc1_mid_write_cycle = 0;
 
 
-void mmc1_set_control();
-void mmc1_set_chr_lo();
-void mmc1_set_chr_hi();
-void mmc1_set_prgrom();
+static void mmc1_set_control();
+static void mmc1_set_chr_lo();
+static void mmc1_set_chr_hi();
+static void mmc1_set_prgrom();
+
 void mmc1_reset();
 void mmc1_write(uint, uint);
 void mmc1_do_cpu_cycle();
@@ -102,9 +106,6 @@ void mmc1_reset()
 	maprMMC1.m_bSaveRam = s_bSaveRam = (g_ines_format.rom_control_1 & 2) == 2;
 }
 
-static uint mmc1_last_address = ~0U;
-static uint64_t mmc1_last_cycle = 0;
-static uint64_t mmc1_mid_write_cycle = 0;
 
 void mmc1_write(uint address, uint value) 
 {
@@ -157,7 +158,7 @@ void mmc1_write(uint address, uint value)
 	}
 }
 
-void mmc1_set_control()
+static void mmc1_set_control()
 {
 	if ((s_Regs[0] & 2) == 2) {
 		//do h/v mirrow
@@ -175,10 +176,10 @@ void mmc1_set_control()
 //MMC1 R0:$1A R1:$18 R2:$00 R3:$01 PC:$A36A SL:253 C:195 T:0000000000069381
 //Sprite C4: O:$0008 N:$1000 SL:0 PC:$8084 C:261 H:8 T:[$00000000000694DC]
 
-
-void mmc1_set_chr_lo()
+static void mmc1_set_chr_lo()
 {
 	if ((s_Regs[0] & 0x10) == 0) {//switch 8k
+		//low bit ignored in 8kb mode
 		uint nAddress = ((s_Regs[1] & 0x1E) & s_n8KbVRomMask) * 0x2000;
 		for (uint n = 0; n < 8; n++) {
 			g_PPUTable[n] = &s_pVROM[nAddress + ((0x400) * n)];
@@ -194,7 +195,7 @@ void mmc1_set_chr_lo()
 //MMC1 R0:$1A R1:$18 R2:$00 R3:$01 PC:$A36A SL:253 C:195 T:0000000000069381
 //Sprite C4: O:$0008 N:$1000 SL:0 PC:$8084 C:261 H:8 T:[$00000000000694DC]
 
-void mmc1_set_chr_hi()
+static void mmc1_set_chr_hi()
 {
 	if ((s_Regs[0] & 0x10) == 0) {
 		return;
@@ -206,7 +207,7 @@ void mmc1_set_chr_hi()
 	}
 }
 
-void mmc1_set_prgrom()
+static void mmc1_set_prgrom()
 {
 	uint n256Bank = 0;
 	if (s_nCartSize == 0) {

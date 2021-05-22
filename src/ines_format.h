@@ -1,7 +1,6 @@
-#ifndef __INES_FORMAT_H__
-#define __INES_FORMAT_H__
+#pragma once
 
-typedef unsigned char uchar;
+using uchar = unsigned char;
 /*
 +--------+------+------------------------------------------+
     | Offset | Size | Content(s)                               |
@@ -41,4 +40,12 @@ struct ines_format {
 	uchar alignment[8];
 };
 
-#endif
+struct ines_format2 {
+    uchar reserved[3];
+    uchar file_version;
+    uchar prg_rom_count;
+    uchar chr_rom_count;
+    uchar rom_control_1;
+    uchar rom_control_2;
+    uchar alignment[8];
+};

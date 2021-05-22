@@ -1,5 +1,4 @@
-#ifndef __LOG_HPP__
-#define __LOG_HPP__
+#pragma once
 
 #include <string>
 #include <vector>
@@ -111,6 +110,3 @@ inline CLog& VLog() {
 #define MLOG(x, ...) {}
 #define MLOG_PPU(x, ...) {}
 #endif
-
-#endif
-

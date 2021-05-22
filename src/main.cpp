@@ -6,7 +6,6 @@
 #include "processor.h"
 #include "mapper.h"
 #include "apu.h"
-
 #include "msound.h"
 
 #ifdef _DEBUG
@@ -17,7 +16,6 @@
 #pragma comment(lib , "msound32.lib")
 #endif
 
-
 class CMainMenu
 {
 public:
@@ -27,7 +25,8 @@ public:
 
 	void Initialize()
 	{
-		/*int nFile = glutCreateMenu( File );
+		/*
+		int nFile = glutCreateMenu( File );
 		glutAddMenuEntry( "Open", ID_FILE_OPEN );
 		glutAddMenuEntry( "Close", ID_FILE_CLOSE );
 		int nEmulation = glutCreateMenu( Emulation );
@@ -38,7 +37,8 @@ public:
 		glutCreateMenu( BaseMenu );
 		glutAddSubMenu( "File", nFile );
 		glutAddSubMenu( "Emulation", nEmulation );
-		glutAttachMenu( GLUT_RIGHT_BUTTON );*/
+		glutAttachMenu( GLUT_RIGHT_BUTTON );
+		*/
 	}
 
 	void SimulateEmulationStart()
@@ -102,20 +102,22 @@ int main( int argc, char* argv[] )
 	::ShowWindow( GetConsoleWindow(), SW_HIDE );
 #endif
 	
+	bool bLoaded = false;
+
 	if (argc == 2) {
-		bool bLoaded = CFileLoader::LoadRom(argv[1]);
-		if (!bLoaded) {
-		}
+		bLoaded = CFileLoader::LoadRom(argv[1]);
 	}
 
 	msound_initialize();
 
 	InitializeProcessor();
 
-	CMainMenu menu;
 
-	if (g_mapper != nullptr) {
-		menu.SimulateEmulationStart();
+	if (bLoaded) {
+		CMainMenu menu;
+		if (g_mapper != nullptr) {
+			menu.SimulateEmulationStart();
+		}
 	}
 
 	mazMainLoop();
