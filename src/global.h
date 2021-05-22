@@ -1,5 +1,4 @@
-#ifndef __GLOBAL_H__
-#define __GLOBAL_H__
+#pragma once
 
 #include "BytePtrVector.h"
 #include "log.h"
@@ -13,7 +12,5 @@ inline CBytePtrVector& VBufferCollection() {
 #define ID_FILE_CLOSE				2
 //#define ID_EMULATION_START			1
 //#define ID_EMULATION_STOP			2
-#define ID_EMULATION_RESET_HARD		3
-#define ID_EMULATION_RESET_SOFT		4
-
-#endif
+//#define ID_EMULATION_RESET_HARD		3
+//#define ID_EMULATION_RESET_SOFT		4

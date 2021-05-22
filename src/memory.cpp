@@ -10,6 +10,35 @@
 #include "cpu.h"
 #include "apu.h"
 
+
+static inline void cpu_ora();
+static inline void cpu_eor();
+static inline void cpu_and();
+static inline void cpu_adc();
+static inline void cpu_sbc();
+static inline void cpu_cmp();
+static inline void memory_inc_stack();
+static inline void memory_dec_stack();
+void memory_push_byte(uint nValue);
+void memory_push_pc();
+
+//opcodes 
+#include "imp_opcodes.cpp"
+#include "rwm_opcodes.cpp"
+#include "r_opcodes.cpp"
+#include "w_opcodes.cpp"
+#include "stack_opcodes.cpp"
+#include "jump.cpp"
+#include "rel_opcodes.cpp"
+
+#include "imp_addressing.cpp"
+#include "imm_addressing.cpp"
+#include "r_addressing.cpp"
+#include "w_addressing.cpp"
+#include "jump_addressing.cpp"
+#include "rel_addressing.cpp"
+
+
 extern mapper_t* g_mapper;
 
 struct joystick_shift_reg_t
@@ -48,6 +77,15 @@ uchar g_TMP_SPR_RAM[32] = {0};
 
 #include "addressing_modes.cpp"
 
+
+#include "rwm_addressing.cpp"
+
+
+uint memory_pc_peek(uint address)
+{
+	return g_mapper->read_memory(address);
+}
+
 uint memory_main_read(uint address)
 {
 	uint nMapperAnswer = g_mapper->read_memory(address);
@@ -72,6 +110,14 @@ uint memory_main_read(uint address)
 			break;
 		case 2://R
 			nRetval =  g_MemoryRegisters.r2002;
+			/*
+				Reading $2002 within a few PPU clocks of when VBL is set results in special-case behavior.
+				Reading one PPU clock before reads it as clear and never sets the flag or generates NMI for that frame.
+				Reading on the same PPU clock or one later reads it as set, clears it, and suppresses the NMI for that frame.
+				Reading two or more PPU clocks before/after it's set behaves normally (reads flag's value, clears it, and doesn't affect NMI operation).
+				This suppression behavior is due to the $2002 read pulling the NMI line back up too quickly after it drops (NMI is active low) for the CPU to see it.
+				(CPU inputs like NMI are sampled each clock.)
+			*/
 			g_PPURegisters.last_2002_read = ppu_get_cycle();
 			clear_vblank();
 			g_MemoryRegisters.r2006Latch = false;
@@ -94,6 +140,7 @@ uint memory_main_read(uint address)
 			break;
 		case 7://RW
 			//read from ppu
+			MLOG(" @ PPU Cycle %ld", ppu_get_current_scanline_cycle())
 			uint ppuaddress = g_MemoryRegisters.r2006;
 			g_MemoryRegisters.r2006 = ( g_MemoryRegisters.r2006 + ((g_MemoryRegisters.r2000 & 0x4)? 32 : 1)) & 0x7FFF;
 			g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
@@ -212,7 +259,10 @@ void memory_main_write(uint address, uint value)
 					//which is prolly why they use 2005 to scroll, since it is the scrolling register.
 					g_MemoryRegisters.r2006Temp |= value;//set bottom
 					g_MemoryRegisters.r2006 = g_MemoryRegisters.r2006Temp;
-					g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+					if (g_MemoryRegisters.r2006 < 0x3F00) {
+						MLOG(" @ PPU cycle %ld old $%04X", ppu_get_current_scanline_cycle(), g_MemoryRegisters.ppu_addr_bus)
+						g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+					}
 				} else {//first write
 					g_MemoryRegisters.r2006Temp &= 0xFF;//clear top
 					g_MemoryRegisters.r2006Temp |= (value & 0x3F) << 8;//set top
@@ -225,7 +275,10 @@ void memory_main_write(uint address, uint value)
 			{
 				uint address = g_MemoryRegisters.r2006;
 				g_MemoryRegisters.r2006 = ( g_MemoryRegisters.r2006 + ((g_MemoryRegisters.r2000 & 0x4)? 32 : 1)) & 0x7FFF;
-				g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+				if (g_MemoryRegisters.r2006 < 0x3F00) {
+					MLOG(" @ PPU cycle %ld old $%04X", ppu_get_current_scanline_cycle(), g_MemoryRegisters.ppu_addr_bus)
+					g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+				}
 				ppu_memory_main_write(address, value);
 				break;
 			}
@@ -280,7 +333,7 @@ void memory_main_write(uint address, uint value)
 			for(uint i = 0; i < 256; i++) {
 				ext_memory_write(0x2004, ext_memory_read(nStartAddress + i));
 			}
-			
+		
 			return;
 		}
 		case 0x16://rw
@@ -322,17 +375,29 @@ void ext_memory_write(uint address, uint value)
 	memory_main_write(address, value);
 }
 
-void memory_push_byte(uint nValue)
+
+static inline void memory_inc_stack()
 {
-	ext_memory_write(g_Registers.stack + 0x100, nValue);
+	g_Registers.stack++;
+	g_Registers.stack &= 0xFF;
+}
+
+static inline void memory_dec_stack()
+{
 	g_Registers.stack--;
 	g_Registers.stack &= 0xFF;
 }
 
+void memory_push_byte(uint nValue)
+{
+	ext_memory_write(g_Registers.stack + 0x100, nValue);
+	memory_dec_stack();
+}
+
+
 uint memory_pop_byte()
 {
-	g_Registers.stack++;
-	g_Registers.stack &= 0xFF;
+	memory_inc_stack();
 	uint retval = ext_memory_read(g_Registers.stack + 0x100);
 	return retval;
 }
@@ -340,26 +405,447 @@ uint memory_pop_byte()
 void memory_push_pc()
 {
 	ext_memory_write(g_Registers.stack + 0x100, (g_Registers.pc >> 8));
-	g_Registers.stack--;
-	g_Registers.stack &= 0xFF;
+	memory_dec_stack();
 	ext_memory_write(g_Registers.stack + 0x100, g_Registers.pc & 0xFF);
-	g_Registers.stack--;
-	g_Registers.stack &= 0xFF;
+	memory_dec_stack();
 }
 
 void memory_pop_pc()
 {
-	g_Registers.stack++;
-	g_Registers.stack &= 0xFF;
+	memory_inc_stack();
 	g_Registers.pc = ext_memory_read(g_Registers.stack + 0x100);
-	g_Registers.stack++;
-	g_Registers.stack &= 0xFF;
+	memory_inc_stack();
 	g_Registers.pc |= ext_memory_read(g_Registers.stack + 0x100) << 8;
+}
+/// <summary>
+/// Only is done right after opcode is officially read
+/// </summary>
+static inline void check_for_hardware_irq()
+{
+	if (g_Registers.prev_nmi) {
+		g_Registers.opCode = 0x00;
+		g_Registers.actual_irq = doing_irq::nmi;
+#ifdef USE_LOG
+		VLog().AddLine("NMI -> ");
+#endif
+	} else if (IF_INTERRUPT() == false) {
+		if (g_Registers.irq) {
+			g_Registers.opCode = 0x00;
+			g_Registers.actual_irq = doing_irq::irq;
+#ifdef USE_LOG			
+			VLog().AddLine("IRQ -> ");
+#endif
+		} else {
+			g_Registers.actual_irq = doing_irq::none;
+			g_Registers.pc++;
+		}
+	} else {
+		g_Registers.actual_irq = doing_irq::none;
+		g_Registers.pc++;
+	}
+}
+
+static inline void check_for_software_irq()
+{
+	if (g_Registers.actual_irq == doing_irq::none) {
+		if (g_Registers.opCode == OPCODE_BRK) {
+			g_Registers.actual_irq = doing_irq::brk;
+		}
+	}
+}
+
+static inline void check_for_delayed_i_flag()
+{
+	if (g_Registers.delayed != delayed_i::empty) {
+		SET_INTERRUPT(g_Registers.delayed == delayed_i::yes);
+		g_Registers.delayed = delayed_i::empty;
+	}
+}
+
+/// <summary>
+/// Does a read, using 1 cycle
+/// </summary>
+static inline void memory_read_opcode()
+{
+	g_Registers.opCode = ext_memory_read(g_Registers.pc);
+	uint pc = g_Registers.pc;
+
+	check_for_hardware_irq();
+	check_for_software_irq();
+	check_for_delayed_i_flag();
+
+	auto op = OpCodes[g_Registers.opCode];
+	MLOG("$%04X %02X %s", pc, g_Registers.opCode, op.sOpCode);
+
 }
 
 
+void memory_pc_process()
+{
+	memory_read_opcode();
+	switch (g_Registers.opCode)
+	{
+		//Read Instructions - Immediate
+	case OPCODE_ADC_OP:
+	case OPCODE_AND_OP:
+	case OPCODE_CMP_OP:
+	case OPCODE_CPX_OP:
+	case OPCODE_CPY_OP:
+	case OPCODE_EOR_OP:
+	case OPCODE_LDA_OP:
+	case OPCODE_LDX_OP:
+	case OPCODE_LDY_OP:
+	case OPCODE_ORA_OP:
+	case OPCODE_SBC_OP:
+	case OPCODE_SBC_IMM_EB:
+	case OPCODE_ARR_IMM:
+	case OPCODE_NOP_IMM:
+	case OPCODE_NOP_IMM_82:
+	case OPCODE_NOP_IMM_89:
+	case OPCODE_NOP_IMM_C2:
+	case OPCODE_NOP_IMM_E2:
+	case OPCODE_ANC_IMM_0B:
+	case OPCODE_ANC_IMM_2B:
+	case OPCODE_ALR_IMM:
+	case OPCODE_LAX_IMM:
+	case OPCODE_AXS_IMM:
+	case OPCODE_XAA_IMM:
+		memory_r_immediate();
+		break;
+		//Read Instructions - Absolute
+	case OPCODE_LDA_AB:
+	case OPCODE_LDX_AB:
+	case OPCODE_LDY_AB: 
+	case OPCODE_EOR_AB:
+	case OPCODE_AND_AB:
+	case OPCODE_ORA_AB:
+	case OPCODE_ADC_AB:
+	case OPCODE_SBC_AB:
+	case OPCODE_CMP_AB:
+	case OPCODE_BIT_AB:
+	case OPCODE_CPX_AB:
+	case OPCODE_CPY_AB:
+	case OPCODE_LAX_AB:
+		memory_r_absolute();
+		break;
+		//Read Instructions - Zero Page
+	case OPCODE_LDA_ZP:
+	case OPCODE_LDX_ZP:
+	case OPCODE_LDY_ZP:
+	case OPCODE_EOR_ZP:
+	case OPCODE_AND_ZP:
+	case OPCODE_ORA_ZP:
+	case OPCODE_ADC_ZP:
+	case OPCODE_SBC_ZP:
+	case OPCODE_CMP_ZP:
+	case OPCODE_BIT_ZP:
+	case OPCODE_LAX_ZP:
+	case OPCODE_CPX_ZP:
+	case OPCODE_CPY_ZP:
+	case OPCODE_NOP_04_ZP:
+	case OPCODE_NOP_44_ZP:
+	case OPCODE_NOP_64_ZP:
+		memory_r_zero_page();
+		break;
+		//Read Instructions - Zero Page Indexed
+	case OPCODE_LDA_ZP_X:
+	case OPCODE_LDY_ZP_X:
+	case OPCODE_EOR_ZP_X:
+	case OPCODE_AND_ZP_X:
+	case OPCODE_ORA_ZP_X:
+	case OPCODE_ADC_ZP_X:
+	case OPCODE_SBC_ZP_X:
+	case OPCODE_CMP_ZP_X:
+	case OPCODE_NOP_14_ZP_X:
+	case OPCODE_NOP_34_ZP_X:
+	case OPCODE_NOP_54_ZP_X:
+	case OPCODE_NOP_74_ZP_X:
+	case OPCODE_NOP_D4_ZP_X:
+	case OPCODE_NOP_F4_ZP_X:
+		memory_r_zero_page_indexed_x();
+		break;
+	case OPCODE_LDX_ZP_Y:
+	case OPCODE_LAX_ZP_Y:
+		memory_r_zero_page_indexed_y();
+		break;
+		//Read Instructions - Absolute Indexed
+	case OPCODE_LDA_AB_X:
+	case OPCODE_LDY_AB_X:
+	case OPCODE_EOR_AB_X:
+	case OPCODE_AND_AB_X:
+	case OPCODE_ORA_AB_X:
+	case OPCODE_ADC_AB_X:
+	case OPCODE_SBC_AB_X:
+	case OPCODE_CMP_AB_X:
+	case OPCODE_NOP_1C_AB_X:
+	case OPCODE_NOP_3C_AB_X:
+	case OPCODE_NOP_5C_AB_X:
+	case OPCODE_NOP_7C_AB_X:
+	case OPCODE_NOP_DC_AB_X:
+	case OPCODE_NOP_FC_AB_X:
+		memory_r_absolute_indexed_x();
+		break;
+	case OPCODE_LDA_AB_Y:
+	case OPCODE_LDX_AB_Y:
+	case OPCODE_EOR_AB_Y:
+	case OPCODE_AND_AB_Y:
+	case OPCODE_ORA_AB_Y:
+	case OPCODE_ADC_AB_Y:
+	case OPCODE_SBC_AB_Y:
+	case OPCODE_CMP_AB_Y:
+	case OPCODE_LAX_AB_Y:
+		memory_r_absolute_indexed_y();
+		break;
+		//Read Instructions - Indexed Indirect
+	case OPCODE_LDA_IN_X:
+	case OPCODE_ORA_IN_X:
+	case OPCODE_EOR_IN_X:
+	case OPCODE_AND_IN_X:
+	case OPCODE_ADC_IN_X:
+	case OPCODE_CMP_IN_X:
+	case OPCODE_SBC_IN_X:
+	case OPCODE_LAX_IN_X:
+		memory_r_indexed_indirect();
+		break;
+		//Read Instructions - Indirect Indexed
+	case OPCODE_LDA_IN_Y:
+	case OPCODE_EOR_IN_Y:
+	case OPCODE_AND_IN_Y:
+	case OPCODE_ORA_IN_Y:
+	case OPCODE_ADC_IN_Y:
+	case OPCODE_SBC_IN_Y:
+	case OPCODE_CMP_IN_Y:
+	case OPCODE_LAX_IN_Y:
+		memory_r_indirect_indexed();
+		break;
+		//Read-Modify-Write instructions - Absolute
+	case OPCODE_ASL_AB:
+	case OPCODE_LSR_AB:
+	case OPCODE_ROL_AB:
+	case OPCODE_ROR_AB:
+	case OPCODE_INC_AB:
+	case OPCODE_DEC_AB:
+	case OPCODE_SLO_AB:
+	case OPCODE_LSE_AB:
+	case OPCODE_RLA_AB:
+	case OPCODE_RRA_AB:
+	case OPCODE_ISC_AB:
+	case OPCODE_DCP_AB:
+		memory_rwm_absolute();
+		break;
+		//Read-Modify-Write instructions - Zero Page
+	case OPCODE_ASL_ZP:
+	case OPCODE_LSR_ZP:
+	case OPCODE_ROL_ZP:
+	case OPCODE_ROR_ZP:
+	case OPCODE_INC_ZP:
+	case OPCODE_DEC_ZP:
+	case OPCODE_SLO_ZP:
+	case OPCODE_LSE_ZP:
+	case OPCODE_RLA_ZP:
+	case OPCODE_RRA_ZP:
+	case OPCODE_ISC_ZP:
+	case OPCODE_DCP_ZP:
+		memory_rwm_zero_page();
+		break;
+		//Read-Modify-Write instructions - Zero Page Indexed
+	case OPCODE_ASL_ZP_X:
+	case OPCODE_LSR_ZP_X:
+	case OPCODE_ROL_ZP_X:
+	case OPCODE_ROR_ZP_X:
+	case OPCODE_INC_ZP_X:
+	case OPCODE_DEC_ZP_X:
+	case OPCODE_SLO_ZP_X:
+	case OPCODE_LSE_ZP_X:
+	case OPCODE_RLA_ZP_X:
+	case OPCODE_RRA_ZP_X:
+	case OPCODE_ISC_ZP_X:
+	case OPCODE_DCP_ZP_X:
+		memory_rwm_zero_page_indexed_x();
+		break;
+		//Read-Modify-Write instructions - Absolute Indexed
+	case OPCODE_ASL_AB_X:
+	case OPCODE_LSR_AB_X:
+	case OPCODE_ROL_AB_X:
+	case OPCODE_ROR_AB_X:
+	case OPCODE_INC_AB_X:
+	case OPCODE_DEC_AB_X:
+	case OPCODE_SLO_AB_X:
+	case OPCODE_LSE_AB_X:
+	case OPCODE_RLA_AB_X:
+	case OPCODE_RRA_AB_X:
+	case OPCODE_ISC_AB_X:
+	case OPCODE_DCP_AB_X:
+		memory_rmw_absolute_indexed_x();
+		break;
+	case OPCODE_SLO_AB_Y:
+	case OPCODE_LSE_AB_Y:
+	case OPCODE_RLA_AB_Y:
+	case OPCODE_RRA_AB_Y:
+	case OPCODE_ISC_AB_Y:
+	case OPCODE_DCP_AB_Y:
+	case OPCODE_TAS_AB_Y:
+	case OPCODE_AHX_AB_Y:
+	case OPCODE_LAS_AB_Y:
+		memory_rmw_absolute_indexed_y();
+		break;
+		//Read-Modify-Write instructions - Indexed indirect
+	case OPCODE_SLO_IN_X:
+	case OPCODE_LSE_IN_X:
+	case OPCODE_RLA_IN_X:
+	case OPCODE_RRA_IN_X:
+	case OPCODE_ISC_IN_X:
+	case OPCODE_DCP_IN_X:
+		memory_rwm_indexed_indirect();
+		break;
+		//Read-Modify-Write instructions - Indirect Indexed
+	case OPCODE_SLO_IN_Y:
+	case OPCODE_LSE_IN_Y:
+	case OPCODE_RLA_IN_Y:
+	case OPCODE_RRA_IN_Y:
+	case OPCODE_ISC_IN_Y:
+	case OPCODE_DCP_IN_Y:
+	case OPCODE_AHX_IN_Y:
+		memory_rwm_indirect_indexed();
+		break;
+		//Write instructions - Absolute
+	case OPCODE_STA_AB:
+	case OPCODE_STX_AB:
+	case OPCODE_STY_AB:
+	//case OPCODE_SAX_AB:
+		memory_w_absolute();
+		break;
+		//Write instructions - Zero Page
+	case OPCODE_STA_ZP:
+	case OPCODE_STX_ZP:
+	case OPCODE_STY_ZP:
+	case OPCODE_SAX_ZP:
+		memory_w_zero_page();
+		break;
+		//Write instructions - Zero Page Indexed
+	case OPCODE_STA_ZP_X:
+	case OPCODE_STY_ZP_X:
+		memory_w_zero_page_indexed_x();
+		break;
+	case OPCODE_STX_ZP_Y:
+	case OPCODE_SAX_ZP_Y:
+		memory_w_zero_page_indexed_y();
+		break;
+		//Write instructions - Absolute Indexed
+	case OPCODE_STA_AB_X:
+	//case OPCODE_STX_AB_X:
+	//case OPCODE_STY_AB_X:
+	//case OPCODE_SHA_AB_X:
+	//case OPCODE_SHX_AB_X:
+	case OPCODE_SHY_AB_X:
+		memory_w_absolute_indexed_x();
+		break;
+	case OPCODE_STA_AB_Y:
+	//case OPCODE_STX_AB_Y:
+	//case OPCODE_STY_AB_Y:
+	//case OPCODE_SHA_AB_Y:
+	case OPCODE_SHX_AB_Y:
+	//case OPCODE_SHY_AB_Y:
 
+		memory_w_absolute_indexed_y();
+		break;
+		//Write instructions - Indexed indirect
+	case OPCODE_STA_IN_X:
+	//case OPCODE_SAX_IN_X:
+		memory_w_indexed_indirect();
+		break;
+		//Write instructions - Indirect Indexed
+	case OPCODE_STA_IN_Y:
+	//case OPCODE_SHA_IN_Y:
+		memory_w_indirect_indexed();
+		break;
+		//Stack instructions
+	case OPCODE_BRK:
+		cpu_brk();
+		break;
+	case OPCODE_RTI:
+		cpu_rti();
+		break;
+	case OPCODE_RTS:
+		cpu_rts();
+		break;
+	case OPCODE_PHA:
+		cpu_pha();
+		break;
+	case OPCODE_PHP:
+		cpu_php();
+		break;
+	case OPCODE_PLA:
+		cpu_pla();
+		break;
+	case OPCODE_PLP:
+		cpu_plp();
+		break;
+	case OPCODE_JSR_AB:
+		cpu_jsr();
+		break;
+		//Branch Instructions
+	case OPCODE_BCC:
+	case OPCODE_BCS:
+	case OPCODE_BNE:
+	case OPCODE_BEQ:
+	case OPCODE_BPL:
+	case OPCODE_BMI:
+	case OPCODE_BVC:
+	case OPCODE_BVS:
+		memory_rel();
+		break;
+		//Jumps
+	case OPCODE_JMP_AB:
+		memory_jmp_absolute();
+		break;
+	case OPCODE_JMP_IN:
+		memory_jmp_absolute_indirect();
+		break;
+		//Implied or Accumulator
+	case OPCODE_CLC:
+	case OPCODE_CLD:
+	case OPCODE_CLI:
+	case OPCODE_CLV:
+	case OPCODE_DEX:
+	case OPCODE_DEY:
+	case OPCODE_INX:
+	case OPCODE_INY:
+	case OPCODE_NOP:
+	case OPCODE_SEC:
+	case OPCODE_SED:
+	case OPCODE_SEI:
+	case OPCODE_TAX:
+	case OPCODE_TAY:
+	case OPCODE_TSX:
+	case OPCODE_TXA:
+	case OPCODE_TXS:
+	case OPCODE_TYA:
+	case OPCODE_ASL_A:
+	case OPCODE_LSR_A:
+	case OPCODE_ROR_A:
+	case OPCODE_ROL_A:
+	case OPCODE_NOP_1A:
+	case OPCODE_NOP_3A:
+	case OPCODE_NOP_5A:
+	case OPCODE_NOP_7A:
+	case OPCODE_NOP_DA:
+	case OPCODE_NOP_FA:
+		memory_implied_or_accumulator();
+		break;
+	default:
+	{
+		int look = 0;
+	}
+		break;
+	}
+	
+#ifdef USE_LOG
+	VLog().AddLine(" T:[$%016lX]\n", g_Registers.tick_count++);
+#endif
+}
 
+#if 0
 void memory_read_latch()
 {//this is where switches need to go
 	bool bNeedsRead = false;
@@ -1172,7 +1658,9 @@ void memory_read_latch()
 		g_Registers.byteLatch = ext_memory_read(g_Registers.addressLatch);
 	}
 }
+#endif
 
+#if 0
 void memory_write_latch()
 {
 	bool bNeedsWrite = false;
@@ -1215,7 +1703,6 @@ void memory_write_latch()
 	case OPCODE_BPL:
 		break;
 	case OPCODE_ORA_IN_Y:
-		bNeedsWrite = true;
 		break;
 	case 18: break;
 	case OPCODE_SLO_IN_Y: 
@@ -1742,3 +2229,4 @@ void memory_write_latch()
 		ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
 	}
 }
+#endif

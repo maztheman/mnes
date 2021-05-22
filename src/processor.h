@@ -1,8 +1,5 @@
-#ifndef __PROCESSOR_H__
-#define __PROCESSOR_H__
+#pragma once
 
 void InitializeProcessor();
 void Stop();
 void Start();
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __FILE_HPP__
-#define __FILE_HPP__
+#pragma once
 
 #include <string>
 using std::string;
@@ -37,5 +36,3 @@ private:
 	FILE* m_fp;
 
 };
-
-#endif

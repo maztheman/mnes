@@ -44,6 +44,8 @@ bool CFileLoader::LoadRom(const string& sFileName)
 		return false;
 	}
 
+	bool ines20 = (format.rom_control_1 & 0xC) == 0x8;
+
 	//prg + chr + trainer
 	size_t nFileSize = (format.prg_rom_count * 16384 ) + ( format.chr_rom_count * 8192 ) + (( (format.rom_control_1 & 4) == 4) ? 512 : 0);
 	g_arRawData.resize(nFileSize, 0);

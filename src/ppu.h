@@ -1,5 +1,9 @@
-#ifndef __PPU_H__
-#define __PPU_H__
+#pragma once
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef unsigned char uchar;
 typedef unsigned int uint;
@@ -29,5 +33,6 @@ struct spritebmp_t {
 	}
 };
 
-
-#endif;
+#ifdef __cplusplus
+}
+#endif

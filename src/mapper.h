@@ -1,8 +1,6 @@
-#ifndef __MAPPER_HPP__
-#define __MAPPER_HPP__
+#pragma once
 
 #include "ines_format.h"
-
 #include <vector>
 
 #define MAPPER_NROM		0
@@ -56,5 +54,3 @@ void SetOneScreenMirror();
 extern uchar*		g_ROM[8];
 extern vuchar		g_arRawData;
 extern ines_format	g_ines_format;
-
-#endif

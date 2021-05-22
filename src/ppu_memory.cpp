@@ -16,9 +16,10 @@ uint ppu_memory_main_read(uint address)
 
 	address &= 0x3FFF;
 
+	g_mapper->read_ppu_memory(address);//allow mapper to read shit man
+
 	//Pattern Table
 	if (address < 0x2000) {
-		g_mapper->read_ppu_memory(address);//allow mapper to read shit man
 		return g_PPUTable[address >> 0xA][address & 0x3FF];
 	}
 

@@ -7,6 +7,7 @@
 #include "mapper.h"
 
 extern uint nrom_read(uint);
+extern uint	ppu_get_current_scanline_cycle();
 
 static bool						s_bSaveRam;
 static uint						s_Regs[4];
@@ -22,12 +23,16 @@ static uint						s_nCartSize;
 static uint						s_nMaxIRQ;
 static uint						s_nIRQCounter;
 static uint						s_nIRQEnable;
+static uint						mmc1_last_address = ~0U;
+static uint64_t					mmc1_last_cycle = 0;
+static uint64_t					mmc1_mid_write_cycle = 0;
 
 
-void mmc1_set_control();
-void mmc1_set_chr_lo();
-void mmc1_set_chr_hi();
-void mmc1_set_prgrom();
+static void mmc1_set_control();
+static void mmc1_set_chr_lo();
+static void mmc1_set_chr_hi();
+static void mmc1_set_prgrom();
+
 void mmc1_reset();
 void mmc1_write(uint, uint);
 void mmc1_do_cpu_cycle();
@@ -101,6 +106,7 @@ void mmc1_reset()
 	maprMMC1.m_bSaveRam = s_bSaveRam = (g_ines_format.rom_control_1 & 2) == 2;
 }
 
+
 void mmc1_write(uint address, uint value) 
 {
 	if (address >= 0x6000 && address < 0x8000) {
@@ -114,9 +120,13 @@ void mmc1_write(uint address, uint value)
 		return;
 	}
 
-	if (g_Registers.bMidWrite == false) {//fetch-modify-store opcodes cause 2 writes, very quickly.  MMC1 ignores the second write (which happens to be the correct value )
+	if (address == mmc1_last_address && mmc1_mid_write_cycle == mmc1_last_cycle) {//fetch-modify-store opcodes cause 2 writes, very quickly.  MMC1 ignores the second write (which happens to be the correct value )
+		MLOG_PPU("MMC1: RWM ignored PC:$%04X SL:%ld C:%ld\n", g_Registers.pc, ppu_scanline(), ppu_get_current_scanline_cycle())
 		return;
 	}
+
+	mmc1_last_address = address;
+	mmc1_mid_write_cycle = mmc1_last_cycle + 1;
 
 	if (value & 0x80) {
 		s_Regs[0] = s_Regs[0] | 0xC;
@@ -130,6 +140,7 @@ void mmc1_write(uint address, uint value)
 		s_Regs[nRegister] = s_Latch & 0x1F;
 	}
 
+	MLOG_PPU("MMC1 R0:$%02X R1:$%02X R2:$%02X R3:$%02X PC:$%04X SL:%ld C:%ld T:%016lX\n", s_Regs[0], s_Regs[1], s_Regs[2], s_Regs[3], g_Registers.pc, ppu_scanline(), ppu_get_current_scanline_cycle(), g_Registers.tick_count);
 
 	s_Shift = 0;
 	s_Latch = 0;
@@ -147,7 +158,7 @@ void mmc1_write(uint address, uint value)
 	}
 }
 
-void mmc1_set_control()
+static void mmc1_set_control()
 {
 	if ((s_Regs[0] & 2) == 2) {
 		//do h/v mirrow
@@ -161,33 +172,42 @@ void mmc1_set_control()
 		SetOneScreenMirror();
 	}
 }
-void mmc1_set_chr_lo()
+
+//MMC1 R0:$1A R1:$18 R2:$00 R3:$01 PC:$A36A SL:253 C:195 T:0000000000069381
+//Sprite C4: O:$0008 N:$1000 SL:0 PC:$8084 C:261 H:8 T:[$00000000000694DC]
+
+static void mmc1_set_chr_lo()
 {
 	if ((s_Regs[0] & 0x10) == 0) {//switch 8k
-		uint nAddress = ((s_Regs[1] & 0xF) & s_n8KbVRomMask) * 0x2000;
+		//low bit ignored in 8kb mode
+		uint nAddress = ((s_Regs[1] & 0x1E) & s_n8KbVRomMask) * 0x2000;
 		for (uint n = 0; n < 8; n++) {
 			g_PPUTable[n] = &s_pVROM[nAddress + ((0x400) * n)];
 		}
 	} else {//switch 4k
-		uint nAddress = ((s_Regs[1] & 0xF) & s_n4KbVRomMask) * 0x1000;
+		uint nAddress = ((s_Regs[1] & 0x1F) & s_n4KbVRomMask) * 0x1000;
 		for (uint n = 0; n < 4; n++) {
 			g_PPUTable[n] = &s_pVROM[nAddress + ((0x400) * n)];
 		}
 	}
 }
-void mmc1_set_chr_hi()
+
+//MMC1 R0:$1A R1:$18 R2:$00 R3:$01 PC:$A36A SL:253 C:195 T:0000000000069381
+//Sprite C4: O:$0008 N:$1000 SL:0 PC:$8084 C:261 H:8 T:[$00000000000694DC]
+
+static void mmc1_set_chr_hi()
 {
 	if ((s_Regs[0] & 0x10) == 0) {
 		return;
 	}
 	//switch 4k at 0x1000
-	uint nAddress = ((s_Regs[2] & 0xF) & s_n4KbVRomMask) * 0x1000;
+	uint nAddress = ((s_Regs[2] & 0x1F) & s_n4KbVRomMask) * 0x1000;
 	for (uint n = 0; n < 4; n++) {
 		g_PPUTable[n + 4] = &s_pVROM[nAddress + ((0x400) * n)];
 	}
 }
 
-void mmc1_set_prgrom()
+static void mmc1_set_prgrom()
 {
 	uint n256Bank = 0;
 	if (s_nCartSize == 0) {
@@ -249,6 +269,8 @@ void mmc1_set_prgrom()
 
 void mmc1_do_cpu_cycle()
 {
+	mmc1_last_cycle++;
+
 	if (s_nIRQEnable == 0) {
 		return;
 	}

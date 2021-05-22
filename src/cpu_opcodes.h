@@ -1,5 +1,4 @@
-#ifndef __CPU_OPCODES_H__
-#define __CPU_OPCODES_H__
+#pragma once
 
 #define OPCODE_ADC_OP				0x69
 #define OPCODE_ADC_ZP				0x65
@@ -123,6 +122,7 @@
 #define OPCODE_RTI				0x40
 #define OPCODE_RTS				0x60
 #define OPCODE_SBC_OP				0xE9
+#define OPCODE_SBC_IMM_EB			0xEB
 #define OPCODE_SBC_ZP				0xE5
 #define OPCODE_SBC_ZP_X			0xF5
 #define OPCODE_SBC_AB				0xED
@@ -160,6 +160,7 @@
 #define OPCODE_SLO_ZP_X			0x17
 #define OPCODE_SLO_IN_X			0x03
 #define OPCODE_SLO_IN_Y			0x13
+
 #define OPCODE_RLA_AB			0x2F
 #define OPCODE_RLA_AB_X			0x3F
 #define OPCODE_RLA_AB_Y			0x3B
@@ -167,6 +168,7 @@
 #define OPCODE_RLA_ZP_X			0x37
 #define OPCODE_RLA_IN_X			0x23
 #define OPCODE_RLA_IN_Y			0x33
+//aka SRE
 #define OPCODE_LSE_AB			0x4F
 #define OPCODE_LSE_AB_X			0x5F
 #define OPCODE_LSE_AB_Y			0x5B
@@ -198,6 +200,7 @@
 #define OPCODE_DCP_ZP_X			0xD7
 #define OPCODE_DCP_IN_X			0xC3
 #define OPCODE_DCP_IN_Y			0xD3
+//aka ISB
 #define OPCODE_ISC_AB			0xEF
 #define OPCODE_ISC_AB_X			0xFF
 #define OPCODE_ISC_AB_Y			0xFB
@@ -209,13 +212,50 @@
 #define OPCODE_ARR_IMM			0x6B
 #define OPCODE_XAA_IMM			0x8B
 #define OPCODE_OAL_IMM			0xAB
-#define OPCODE_SAX_IMM			0xCB
+#define OPCODE_AXS_IMM			0xCB
 #define OPCODE_NOP_1A			0x1A
 #define OPCODE_NOP_3A			0x3A
 #define OPCODE_NOP_5A			0x5A
 #define OPCODE_NOP_7A			0x7A
 #define OPCODE_NOP_DA			0xDA
 #define OPCODE_NOP_FA			0xFA
+#define OPCODE_NOP_1C_AB_X		0x1C
+#define OPCODE_NOP_3C_AB_X		0x3C
+#define OPCODE_NOP_5C_AB_X		0x5C
+#define OPCODE_NOP_7C_AB_X		0x7C
+#define OPCODE_NOP_DC_AB_X		0xDC
+#define OPCODE_NOP_FC_AB_X		0xFC
+#define OPCODE_NOP_14_ZP_X		0x14
+#define OPCODE_NOP_34_ZP_X		0x34
+#define OPCODE_NOP_54_ZP_X		0x54
+#define OPCODE_NOP_74_ZP_X		0x74
+#define OPCODE_NOP_D4_ZP_X		0xD4
+#define OPCODE_NOP_F4_ZP_X		0xF4
+
+#define OPCODE_NOP_04_ZP		0x04
+#define OPCODE_NOP_44_ZP		0x44
+#define OPCODE_NOP_64_ZP		0x64
+
+//missing for sure:
+#define OPCODE_SHY_AB_X			0x9C
+#define OPCODE_SHX_AB_Y			0x9E
+
+#define OPCODE_TAS_AB_Y			0x9B
+#define OPCODE_LAS_AB_Y			0xBB
+#define OPCODE_AHX_AB_Y			0x9F
+#define OPCODE_AHX_IN_Y			0x93
+
+#define OPCODE_NOP_IMM			0x80
+#define OPCODE_NOP_IMM_82		0x82
+#define OPCODE_NOP_IMM_89		0x89
+#define OPCODE_NOP_IMM_C2		0xC2
+#define OPCODE_NOP_IMM_E2		0xE2
+#define OPCODE_ANC_IMM_0B		0x0B
+#define OPCODE_ANC_IMM_2B		0x2B
+#define OPCODE_LAX_IMM			0xAB
+
+#define OPCODE_SAX_ZP			0x87
+#define OPCODE_SAX_ZP_Y			0x97
 
 struct SDebugOpCode
 {
@@ -230,6 +270,4 @@ struct SDebugOpCodeFormat
 };
 
 extern SDebugOpCode OpCodes[256];
-extern SDebugOpCodeFormat OpCodeFormats[12];
-
-#endif
+extern SDebugOpCodeFormat OpCodeFormats[13];

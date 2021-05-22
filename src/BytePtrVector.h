@@ -1,5 +1,4 @@
-#ifndef __BYTEPTRVECTOR_H__
-#define __BYTEPTRVECTOR_H__
+#pragma once
 
 #include <vector>
 
@@ -25,7 +24,3 @@ public:
 		CBytePtrVector().swap(*this);
 	}
 };
-
-
-
-#endif

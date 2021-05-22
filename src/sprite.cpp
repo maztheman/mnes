@@ -225,7 +225,6 @@ static inline void ppu_sprite_copy_to_secondary(const uint& ppu_cycle)
 			ppu_sprite_process_3();
 		}
 	}
-
 }
 
 static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
@@ -242,9 +241,55 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 
 	uint idx = selected_index * 4;
 
+	/*
+	* 1. Garbage nametable byte 0,1
+	* 2. Garbage nametable byte 2,3
+	* 3. Pattern table tile low 4,5
+	* 4. Pattern table tile high (+8 bytes from pattern table tile low) 6,7
+	* 
+	* 
+	In addition to this, the X positions and attributes for each sprite are loaded from the secondary OAM into their respective counters/latches. 
+	This happens during the second garbage nametable fetch, with the attribute byte loaded during the first tick and the X coordinate during the second.
+	Garbage nametable fetch: 0 - 1
+	Garbase nametable fetch: 2 - 3
+	 - 2: fetch attribute byte
+	 - 3: fetch x coord
+	*/
+
+#if 1
+	static uint pattern_table_addr = 0;
+	//use this switch eventually
+	const uint cuHeight = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
 	//sprite cycle 0, 1, 2, 3 -- Garbage fetches
 	//something must have happen in 0 and 2 but its junk
-	if (sprite_cycle == 1) {
+	switch (sprite_cycle)
+	{
+	//1. Garbage nametable byte
+	case 0:
+		break;
+	case 1:
+		break;
+	//2. Garbage nametable byte
+	case 2:
+		//load attribute byte into latch
+		break;
+	case 3:
+		//load x coord into latch ?
+		break;
+	//3. Pattern table tile low
+	case 4:
+		break;
+	case 5:
+		break;
+	//4. Pattern table tile high (+8 bytes from pattern table tile low)
+	case 6:
+		break;
+	case 7:
+		break;
+	}
+
+	if (sprite_cycle == 0) {
+	} else if (sprite_cycle == 1) {
 		ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
 	} else if (sprite_cycle == 3) {
 		ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
@@ -263,9 +308,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			} else {
 				ptable = (g_MemoryRegisters.r2000 & 0x8) ? 0x1000 : 0x0000;
 			}
-
 			g_MemoryRegisters.ppu_addr_bus = addr = ptable | (tile << 4);
-			
 		} else {
 			uchar tile = oam2nd[idx + 1];
 			uint FineY = ppu_scanline() - oam2nd[idx + 0];
@@ -288,30 +331,46 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 				}
 			}
 
-			g_MemoryRegisters.ppu_addr_bus = ptable | (tile << 4) | (FineY & 0x7);
+			MLOG_PPU("Sprite C4: O:$%04X", g_MemoryRegisters.ppu_addr_bus);
+			pattern_table_addr = g_MemoryRegisters.ppu_addr_bus = ptable | (tile << 4) | (FineY & 0x7);
+			MLOG_PPU(" N:$%04X SL:%ld PC:$%04X C:%ld H:%ld T:[$%016lX]\n", g_MemoryRegisters.ppu_addr_bus, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), height, g_Registers.tick_count)
 
 			sprite_count[selected_index] = oam2nd[idx + 3];
 		}
 	} else if (sprite_cycle == 6) {
+		const uint height = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
 		g_MemoryRegisters.ppu_addr_bus += 8;
+		pattern_table_addr += 8;
+		if (selected_index < sprite_state.oam_2nd_index) {
+			MLOG_PPU("Sprite C6: A:$%04X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), height)
+		}
 	} else if (sprite_cycle == 5) {
+		const uint height = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
 		if (selected_index >= sprite_state.oam_2nd_index) {
 			ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
 			sprite_bmp0[selected_index].set(0);
 		} else {
 			uchar b0 = ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);
+			MLOG_PPU("Sprite C5: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b0, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), height)
+			if (g_MemoryRegisters.ppu_addr_bus != pattern_table_addr) {
+				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", g_MemoryRegisters.ppu_addr_bus, pattern_table_addr)
+			}
 			if (sprite_attribute_latch[selected_index] & 0x40) {
 				b0 = reverse_byte(b0);
 			}
 			sprite_bmp0[selected_index].set(b0);
 		}
 	} else if (sprite_cycle == 7) {
+		const uint height = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
 		if (selected_index >= sprite_state.oam_2nd_index) {
 			ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
 			sprite_bmp1[selected_index].set(0);
 		} else {
 			uchar b1 = ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);
-
+			MLOG_PPU("Sprite C7: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b1, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), height)
+			if (g_MemoryRegisters.ppu_addr_bus != pattern_table_addr) {
+				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", g_MemoryRegisters.ppu_addr_bus, pattern_table_addr)
+			}
 			if (sprite_attribute_latch[selected_index] & 0x40) {
 				b1 = reverse_byte(b1);
 			}
@@ -320,7 +379,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 		}
 		selected_index++;
 	}
-
+#endif
 
 #if 0
 	//sprite cycle 5, 7, read from memory

@@ -1,5 +1,4 @@
-#ifndef __LOG_HPP__
-#define __LOG_HPP__
+#pragma once
 
 #include <string>
 #include <vector>
@@ -104,5 +103,10 @@ inline CLog& VLog() {
 	return *pLog; 
 }
 
+#ifdef USE_LOG
+#define MLOG(x, ...) { VLog().AddLine(x, ## __VA_ARGS__); }
+#define MLOG_PPU(x, ...) { VLog("ppu").AddLine(x, ## __VA_ARGS__); }
+#else
+#define MLOG(x, ...) {}
+#define MLOG_PPU(x, ...) {}
 #endif
-

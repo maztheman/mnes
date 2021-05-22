@@ -1,5 +1,7 @@
 #include "platform.h"
 #include "control_flags.h"
+#include "FileLoader.h"
+#include "processor.h"
 
 using gfx::COpenGLWrapper;
 using gfx::COpenGLWrapperPtrVector;
@@ -29,7 +31,6 @@ COpenGLWrapper::COpenGLWrapper()
 		wsex.lpfnWndProc = &COpenGLWrapper::StaticProc;
 		wsex.lpszClassName = GL_WINDOW_CLASS.c_str();
 		ATOM hum = RegisterClassEx( &wsex );
-		int n = 0;
 	}
 }
 
@@ -116,6 +117,31 @@ void COpenGLWrapper::OnPreDraw()
 	wglMakeCurrent( m_hDC, m_hOpenGLContext ); 
 }
 
+void OpenARom(HWND hWnd)
+{
+	OPENFILENAME ofn;       // common dialog box structure
+	TCHAR szFile[260] = { 0 };       // if using TCHAR macros
+
+	// Initialize OPENFILENAME
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = "*.nes (ines 1.0 format)\0*.nes\0";
+	ofn.nFilterIndex = 1;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+	if (GetOpenFileName(&ofn) == TRUE) {
+		// use ofn.lpstrFile
+		CFileLoader::LoadRom(ofn.lpstrFile);
+	}
+}
+
+
 LRESULT WINAPI COpenGLWrapper::StaticProc( HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam )
 {
 	if (Msg == WM_NCCREATE) {
@@ -146,6 +172,28 @@ LRESULT WINAPI COpenGLWrapper::StaticProc( HWND hWnd, UINT Msg, WPARAM wParam, L
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
+		break;
+	case WM_COMMAND:
+		switch (wParam) {
+		case ID_FILE_EXIT:
+			::DestroyWindow(hWnd);
+			break;
+		case ID_FILE_OPEN:
+			OpenARom(hWnd);
+			break;
+		case ID_EMULATION_START:
+			Start();
+			break;
+		case ID_EMULATION_STOP:
+			Stop();
+			break;
+		case ID_EMULATION_RESET_HARD:
+			Start();
+			break;
+		case ID_EMULATION_RESET_SOFT:
+			Start();
+			break;
+		}
 		break;
 	case WM_KEYDOWN:
 		{

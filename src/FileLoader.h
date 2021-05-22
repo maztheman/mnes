@@ -1,5 +1,4 @@
-#ifndef __FILELOADER_HPP__
-#define __FILELOADER_HPP__
+#pragma once
 
 #include <string>
 using std::string;
@@ -14,4 +13,3 @@ public:
 	static bool LoadRom(const string& sFileName);
 };
 
-#endif

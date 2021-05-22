@@ -1,5 +1,4 @@
-#ifndef __PPU_REGISTERS_H__
-#define __PPU_REGISTERS_H__
+#pragma once
 
 typedef unsigned int uint;
 
@@ -11,6 +10,3 @@ struct ppu_registers {
 extern ppu_registers g_PPURegisters;
 
 uint ppu_scanline();
-
-
-#endif

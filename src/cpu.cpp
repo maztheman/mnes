@@ -7,30 +7,8 @@
 #include "mapper.h"
 #include <algorithm>
 
-
-#define NMILO   0xFFFA
-#define NMIHI   0xFFFB
-#define RESETLO	0xFFFC
-#define RESETHI	0xFFFD
-#define BRKLO	0xFFFE
-#define BRKHI   0xFFFF
-
-
-#include "branches.cpp"
-#include "alu.cpp"
-#include "flag.cpp"
-#include "loadstore.cpp"
-#include "compare.cpp"
-#include "incdec.cpp"
-#include "transfer.cpp"
-#include "stack.cpp"
-#include "system.cpp"
-#include "jump.cpp"
-#include "illegal.cpp"
-
 #include "joystick.cpp"
 #include "log.h"
-
 
 void cpu_initialize(void* hInstance, void* hWnd)
 {
@@ -42,10 +20,9 @@ void cpu_do_cycle()
 {
 	extern mapper_t* g_mapper;
 
-	g_Registers.cycles--;//this might work for now
-	
+	//this is where hijacking a interrupt can happen
 	g_Registers.prev_nmi = g_Registers.nmi;
-	g_Registers.prev_irq = (IF_INTERRUPT() == false) ? g_Registers.irq : 0;
+	//g_Registers.prev_irq = (IF_INTERRUPT() == false) ? g_Registers.irq : 0;
 
 	//1 apu cycles per 2 cpu cycle
 	apu_do_cycle();
@@ -58,47 +35,22 @@ void cpu_do_cycle()
 	g_mapper->do_cpu_cycle();
 }
 
-void cpu_execute_nmi()
-{
-	ext_memory_read(g_Registers.pc++);
-	ext_memory_read(g_Registers.pc++);
-	memory_push_pc();
-	memory_push_byte(g_Registers.status | 0x20);
-	SET_INTERRUPT(true);
-	g_Registers.pc = (ext_memory_read(NMILO)) | (ext_memory_read(NMIHI) << 8);
-#if 1
-	VLog().AddLine("$%04X [NMI]\n", g_Registers.pc);
-#endif
-}
-
-void cpu_execute_irq()
-{
-	ext_memory_read(g_Registers.pc++);
-	ext_memory_read(g_Registers.pc++);
-	//g_Registers.pc += 2;
-	memory_push_pc();
-	memory_push_byte(g_Registers.status | 0x20);
-	SET_INTERRUPT(true);
-	g_Registers.pc = (ext_memory_read(BRKLO)) | (ext_memory_read(BRKHI) << 8);
-#if 1
-	VLog().AddLine("$%04X [BRK/IRQ]\n", g_Registers.pc);
-#endif
-	g_Registers.cycles += 7;
-}
 
 void cpu_reset()
 {
+	g_Registers.tick_count = 0;
+	g_Registers.delayed = delayed_i::empty;
 	g_Registers.a = g_Registers.y = g_Registers.x = 0;
-	g_Registers.cycles = g_Registers.memoryExtraCycles = g_Registers.extraCycles = 0;
-	g_Registers.prev_irq = g_Registers.irq = 0;
-	g_Registers.status = 0x34;
+	g_Registers.irq = 0;
+	g_Registers.status = IRQ_DISABLE_FLAG_MASK;
 	g_Registers.stack = 0xFD;
 	g_Registers.pc = (memory_main_read(RESETLO)) | (memory_main_read(RESETHI) << 8);
-
 	apu_reset();
 	ppu_reset();
 }
 
+
+#if 0
 void cpu_execute() {
 	g_Registers.extraCycles = 0;
 	g_Registers.bMidWrite = false;
@@ -1426,3 +1378,5 @@ void cpu_execute() {
 	}
 
 }
+
+#endif
