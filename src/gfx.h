@@ -1,18 +1,19 @@
 #pragma once
 
-#include "platform.h"
-#include <gl/GLU.h>
+//#include "platform.h"
+//#include <gl/GLU.h>
 
-extern gfx::COpenGLWrapper* g_pMainFrame;
-extern gfx::COpenGLWrapper* g_pPatternTableFrame;
-extern gfx::COpenGLWrapper* g_pNameTableFrame;
+//extern gfx::COpenGLWrapper* g_pMainFrame;
+//extern gfx::COpenGLWrapper* g_pPatternTableFrame;
+//extern gfx::COpenGLWrapper* g_pNameTableFrame;
 
 void DrawFrame();
-void DrawPatternTableFrame();
-void DrawNameTableFrame();
+//void DrawPatternTableFrame();
+//void DrawNameTableFrame();
 
-void SetTextureData(void* pTextureData, GLuint texture);
 
-extern GLuint g_txMainWindow;
-extern GLuint g_txPatternTable;
-extern GLuint g_txNameTable;
+void SetTextureData(void* pTextureData, uint32_t texture);
+
+extern uint32_t g_txMainWindow;
+extern uint32_t g_txPatternTable;
+extern uint32_t g_txNameTable;

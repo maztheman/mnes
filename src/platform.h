@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef _WIN32
+
 #include <Windows.h>
 #include <gl/GLU.h>
 
@@ -176,3 +178,84 @@ public:
 
 extern gfx::CMainframeMenu g_MainframeMenu;
 inline gfx::CMainframeMenu& VMainframeMenu() { return g_MainframeMenu; }
+
+#else
+
+#include <vector>
+#include <memory>
+#include <functional>
+
+using DisplayFunc = std::function<void()>;
+using CalculateFunc = std::function<void()>;
+
+class COpenGLWrapper;
+
+class CGfxManager
+{
+	CGfxManager();
+public:
+	~CGfxManager();
+	
+	static CGfxManager& instance()
+	{
+		static CGfxManager inst;
+		return inst;
+	}
+
+	static uint64_t getMainWindow();
+
+	static void mainLoop();
+};
+
+class COpenGLWrapper
+{
+	uint64_t m_index;
+
+public:
+	explicit COpenGLWrapper(uint64_t index)
+	: m_index(index)
+	{
+
+	}
+
+	void SetDisplayFunc(DisplayFunc function) const;
+	void SetCalculateFunc(CalculateFunc function) const;
+
+	void Resize(int nWidth, int nHeight) const;
+	void GetSize(int& nWidth, int& nHeight) const;
+	void MakeCurrent() const;
+	void Draw() const;
+	void OnCalculate() const;
+	void Swap() const;
+	bool ShouldClose() const;
+
+private:
+
+	void OnPreDraw() const;
+
+};
+
+
+class COpenGLWrapperPtrVector
+{
+	std::vector<std::unique_ptr<COpenGLWrapper>> m_data;
+public:
+
+	auto begin() const -> auto {
+		return m_data.begin();
+	}
+
+	auto end() const -> auto {
+		return m_data.end();
+	}
+
+	void add(std::unique_ptr<COpenGLWrapper> value);
+
+
+
+
+};
+
+
+#endif
+

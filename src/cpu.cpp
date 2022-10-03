@@ -5,14 +5,16 @@
 #include "ppu.h"
 #include "apu.h"
 #include "mapper.h"
-#include <algorithm>
 #include "log.h"
 
-#include "joystick.cpp"
+#include <algorithm>
+
+
+//#include "joystick.cpp"
 
 void cpu_initialize(void* hInstance, void* hWnd)
 {
-	joy1.create(hInstance, hWnd);
+	//joy1.create(hInstance, hWnd);
 }
 
 //tick!

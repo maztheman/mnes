@@ -1,4 +1,7 @@
+#ifdef _WIN32
+
 #include "platform.h"
+
 #include "control_flags.h"
 #include "FileLoader.h"
 #include "processor.h"
@@ -279,3 +282,156 @@ PFNWGLEXTGETSWAPINTERVALPROC wglGetSwapIntervalEXT = NULL;
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); // Linear Filtering
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR); // Linear Filtering
 	*/
+
+#else
+
+#include "platform.h"
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include <mutex>
+#include <functional>
+
+
+constexpr const int WINDOW_WIDTH = 600;
+constexpr const int WINDOW_HEIGHT = 600;
+
+static void nop()
+{
+
+}
+
+struct WindowData
+{
+	GLFWwindow* window = nullptr;
+	std::function<void()> m_Calculate = nop;
+	std::function<void()> m_Display = nop;
+};
+
+struct AllWindowData
+{
+	std::vector<WindowData> windows;
+};
+
+std::vector<WindowData>& windows()
+{
+	static AllWindowData instance;
+	return instance.windows;
+}
+
+CGfxManager::CGfxManager()
+{
+	glfwInit();
+	gladLoadGLLoader(GLADloadproc(glfwGetProcAddress));
+}
+
+CGfxManager::~CGfxManager()
+{
+	windows().clear();//don't dangle
+	glfwTerminate();
+}
+
+
+uint64_t CGfxManager::getMainWindow()
+{
+	static std::once_flag once;
+	static uint64_t mainWindowIndex;
+
+	std::call_once(once, []() {
+		WindowData data;
+		data.window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "mnes 0.3.0", nullptr, nullptr);
+		windows().push_back(data);
+		mainWindowIndex = windows().size();
+	});
+
+
+	return mainWindowIndex;
+}
+
+void CGfxManager::mainLoop()
+{
+	//initialize first
+	(void)CGfxManager::instance();
+
+	COpenGLWrapper main(getMainWindow());
+
+	main.MakeCurrent();
+    while(!main.ShouldClose()) {
+		main.Draw();
+        glfwPollEvents();
+	}
+}
+
+void COpenGLWrapper::GetSize(int& nWidth, int& nHeight) const
+{
+	WindowData& data = windows()[m_index];
+	glfwGetWindowSize(data.window, &nWidth, &nHeight);
+}
+
+void COpenGLWrapper::Resize(int nWidth, int nHeight) const
+{
+	WindowData& data = windows()[m_index];
+	glfwSetWindowSize(data.window, nWidth, nHeight);
+}
+
+void COpenGLWrapper::SetDisplayFunc(DisplayFunc function) const
+{
+	WindowData& data = windows()[m_index];
+	data.m_Display = std::move(function);
+}
+
+void COpenGLWrapper::SetCalculateFunc(CalculateFunc function) const
+{
+	WindowData& data = windows()[m_index];
+	data.m_Calculate = std::move(function);
+}
+
+
+void COpenGLWrapper::MakeCurrent() const
+{
+	WindowData& data = windows()[m_index];
+	glfwMakeContextCurrent(data.window);
+}
+
+void COpenGLWrapper::Draw() const
+{
+	WindowData& data = windows()[m_index];
+	OnPreDraw();
+	data.m_Display();
+}
+
+void COpenGLWrapper::OnCalculate() const
+{
+	WindowData& data = windows()[m_index];
+	data.m_Calculate();
+}
+
+void COpenGLWrapper::Swap() const
+{
+	WindowData& data = windows()[m_index];
+	glfwSwapBuffers(data.window);
+
+}
+
+void COpenGLWrapper::OnPreDraw() const
+{
+	OnCalculate();
+	MakeCurrent();
+}
+
+bool COpenGLWrapper::ShouldClose() const
+{
+	WindowData& data = windows()[m_index];
+	return glfwWindowShouldClose(data.window) != 0;
+}
+
+void COpenGLWrapperPtrVector::add(std::unique_ptr<COpenGLWrapper> value)
+{
+
+
+	m_data.push_back(std::move(value));
+}
+
+
+#endif

@@ -1,19 +1,16 @@
 #include "gfx.h"
 #include "platform.h"
 #include "control_flags.h"
+#include <GLFW/glfw3.h>
 
-GLuint g_txMainWindow = {0};
-GLuint g_txPatternTable = {0};
-GLuint g_txNameTable = {0};
+uint32_t g_txMainWindow = {0};
+uint32_t g_txPatternTable = {0};
+uint32_t g_txNameTable = {0};
 
-gfx::COpenGLWrapper* g_pMainFrame;
-gfx::COpenGLWrapper* g_pPatternTableFrame;
-gfx::COpenGLWrapper* g_pNameTableFrame;
-
-void SetTextureData( void* pTextureData, GLuint texture )
+void SetTextureData( void* pTextureData, uint32_t texture )
 {
-	glBindTexture(GL_TEXTURE_2D, texture );
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, pTextureData );
+	glBindTexture(GL_TEXTURE_2D, GLuint(texture) );
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, pTextureData);
 }
 
 void DrawFrame()
@@ -22,8 +19,10 @@ void DrawFrame()
 	
 	int nWidth = 0;
 	int nHeight = 0;
-	g_pMainFrame->GetSize( nWidth, nHeight );
-	g_pMainFrame->MakeCurrent();
+	COpenGLWrapper mainframe(CGfxManager::getMainWindow());
+
+	mainframe.GetSize( nWidth, nHeight );
+	mainframe.MakeCurrent();
 	glClearColor (0.0,0.0,0.0,1.0);
 	glClear (GL_COLOR_BUFFER_BIT);
 	glBindTexture (GL_TEXTURE_2D, g_txMainWindow);
@@ -33,11 +32,11 @@ void DrawFrame()
 	glTexCoord2i(1,1);glVertex2i(nWidth,nHeight);
 	glTexCoord2i(0,1);glVertex2i(0,nHeight);
 	glEnd();
-	g_pMainFrame->Swap();
+	mainframe.Swap();
 	
 }
 
-void DrawPatternTableFrame()
+/*void DrawPatternTableFrame()
 {
 	if ( !g_bPatternTableReady ) return;
 
@@ -76,3 +75,4 @@ void DrawNameTableFrame()
 	glEnd();
 	g_pNameTableFrame->Swap();
 }
+*/
