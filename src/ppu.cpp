@@ -51,6 +51,8 @@ void ppu_initialize()
 
 void ppu_reset()
 {
+	memset(g_pScreenBuffer, 0xCD, 0x30000);
+
 	PPU_cycles = 0;
 	ppu_update_scanline();
 }

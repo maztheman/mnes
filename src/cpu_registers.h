@@ -4,26 +4,18 @@
 
 typedef unsigned int uint;
 
-namespace delayed_i {
-	enum delayed_i {
-		empty = -1,
-		no = 0,
-		yes = 1,
-	};
-}
+enum class delayed_i {
+	empty = -1,
+	no = 0,
+	yes = 1,
+};
 
-using EDelayedI = delayed_i::delayed_i;
-
-namespace doing_irq {
-	enum doing_irq {
-		none = 0,
-		nmi,
-		irq,
-		brk
-	};
-}
-
-using EDoingIRQ = doing_irq::doing_irq;
+enum class doing_irq {
+	none = 0,
+	nmi,
+	irq,
+	brk
+};
 
 struct Registers
 {
@@ -38,8 +30,8 @@ struct Registers
 	bool prev_nmi;
 
 	uint irq;
-	EDelayedI delayed;
-	EDoingIRQ actual_irq;
+	delayed_i delayed;
+	doing_irq actual_irq;
 	uint64_t tick_count{ 0 };
 };
 

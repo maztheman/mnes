@@ -1,26 +1,26 @@
-static uint s_Noise[16] = {
+static constexpr uint s_Noise[16] = {
   4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068  
 };
 
-static uint s_DMC[16] = {
+static constexpr uint s_DMC[16] = {
     428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106,  84,  72,  54
 };
 
-static uint s_LengthCounter[0x20] = {
+static constexpr uint s_LengthCounter[0x20] = {
 	10,254, 20,  2, 40,  4, 80,  6, 160,  8, 60, 10, 14, 12, 26, 14,
 	12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30
 };
 
-static uint s_Duty[4] = {
+static constexpr uint s_Duty[4] = {
 	0x40, 0x60, 0x78, 0x9F
 };
 
-static uint s_Sequencer[32] = {
+static constexpr uint s_Sequencer[32] = {
 	15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0,
 	0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15
 };
 
-static double s_DMCFreq[16] = {
+static constexpr double s_DMCFreq[16] = {
     4181.71,
     4709.93,
     5264.04,
@@ -41,16 +41,68 @@ static double s_DMCFreq[16] = {
 
 struct sweep_unit_t
 {
-	bool enabled;
-	uint period;
-	bool negative;
+	sweep_unit_t(bool is_pulse_1, uint& target_timer)
+		: pulse_1_fg(is_pulse_1)
+		, timer(target_timer)
+	{
+
+	}
+
+	bool pulse_1_fg{ false };
+	bool enabled{ false };
+	uint period{ 1 };
+	bool negative{ false };
 	uint shift_count;
+	uint& timer;
+	uint divider_count;
+	bool reload_fg{ false };
 
 	void set(uint value) {
 		enabled = (value & 0x80) == 0x80;
 		period = ((value & 0x70) >> 4) + 1;
 		negative = (value & 8) == 8;
 		shift_count = value & 7;
+		reload_fg = true;
+	}
+
+	void update_timer()
+	{
+		if (negative) {
+			if (pulse_1_fg) {
+				timer += -(int)(timer >> shift_count) - 1;
+			} else {
+				timer += -(int)(timer >> shift_count);
+			}
+		} else {
+			timer += (timer >> shift_count);
+		}
+	}
+
+	bool is_muting() const {
+		return timer > 0x7FF || timer < 8;
+	}
+
+	void clock()
+	{
+		if (divider_count == 0 && enabled && is_muting() == false) {
+			update_timer();
+		}
+		if (divider_count == 0 || reload_fg) {
+			divider_count = period;
+			reload_fg = false;
+		} else {
+			divider_count--;
+		}
+	}
+};
+
+struct right_shift_reg8_t
+{
+	uint value{ 0 };
+
+	uint clock() {
+		uint retval = value & 1;
+
 	}
 };
 
@@ -104,9 +156,10 @@ struct square_channel_t
 {
 	//54.6hz to 12400hz
 
-	square_channel_t()
+	square_channel_t(bool is_pulse_1 = false)
 	: enabled(false)
 	, envelope(loop_envelope, envelope_disable)
+	, sweep{ is_pulse_1, timer }
 	, length(0U)
 	{
 
@@ -143,9 +196,28 @@ struct square_channel_t
 		envelope.must_reload = true;
 	}
 
-	uint volume() const {
+	void clock_timer()
+	{
+		timer--;
+		if (timer == 0) {
+			
+		}
+	}
 
-		return 0;
+	uint volume() const 
+	{
+
+		//sweep unit says no no
+		if (timer > 0x7FF) {
+			return 0;
+		}
+
+		//sweet unit says no no
+		if (timer < 8) {
+			return 0;
+		}
+
+		return envelope.reload;
 	}
 
 	void clock_length() {
@@ -154,20 +226,23 @@ struct square_channel_t
 		}
 	}
 
-	bool			enabled;
-	
+	//if initial state is any different bad things will happen ?
+
+	bool			enabled{ false };
+
+	//Register 3
+	uint			timer{ 0 };
+
 	//Register 1
-	uint			duty;
-	bool			loop_envelope;
-	bool			envelope_disable;
+	uint			duty{ 0 };
+	bool			loop_envelope{ false };
+	bool			envelope_disable{ false };
 	envelope_t		envelope;
 	//Register 2
 	sweep_unit_t	sweep;
-	//Register 3
-	uint			timer;
 	//Register 4
-	uint			length_idx;
-	uint			length;
+	uint			length_idx{ 0 };
+	uint			length{ 0 };
 };
 
 struct triangle_channel_t
@@ -209,7 +284,7 @@ struct triangle_channel_t
 	}
 
 	uint volume() const {
-		return 0;
+		return linear_counter_reload & 0xF;
 	}
 
 	void clock_length() {
@@ -229,13 +304,18 @@ struct triangle_channel_t
 		}
 	}
 
+	void clock_timer()
+	{
+		timer--;
+	}
+
 	bool			enabled;
 	//Register 1
 	bool			length_counter_halt;
 	uint			linear_counter_reload;
 	uint			linear_counter;
 	//Register 2
-	uint			timer;
+	uint			timer{ 0 };
 	//Register 3
 	uint			length_idx;
 	uint			length;
@@ -271,6 +351,7 @@ struct noise_channel_t
 	void set1(uint value) {
 		short_mode = (value & 0x80) == 0x80;
 		period_idx = (value & 0xF);
+		timer = s_Noise[period_idx];
 	}
 
 	void set2(uint value) {
@@ -282,7 +363,7 @@ struct noise_channel_t
 	}
 
 	uint volume() const {
-		return 0;
+		return envelope.reload;
 	}
 
 	void clock_length() {
@@ -290,6 +371,12 @@ struct noise_channel_t
 			length--;
 		}
 	}
+
+	void clock_timer()
+	{
+		timer--;
+	}
+	
 
 	bool			enabled;
 	//Register 1
@@ -299,10 +386,23 @@ struct noise_channel_t
 	//Register 2
 	bool			short_mode;
 	uint			period_idx;
-	uint			period;
+	uint			period{ 0 };
+	uint			timer;
 	//Register 3
 	uint			length_idx;
 	uint			length;
+};
+
+struct memory_reader_t
+{
+	uint address;
+	uint remaining;
+	uint sample_byte;
+};
+
+struct dmc_output_unit_t
+{
+
 };
 
 struct dmc_channel_t
@@ -317,6 +417,7 @@ struct dmc_channel_t
 		irq_enable = (value & 0x80) == 0x80;
 		loop = (value & 0x40) == 0x40;
 		frequency_idx = (value & 0xF);
+		timer = s_DMC[frequency_idx];
 	}
 
 	void set1(uint value) {
@@ -324,11 +425,11 @@ struct dmc_channel_t
 	}
 
 	void set2(uint value) {
-		sample_address = value;
+		memory_rdr.address = sample_address = value;
 	}
 
 	void set3(uint value) {
-		sample_length = value;
+		memory_rdr.remaining = sample_length = value;
 	}
 
 	uint actual_address() const {
@@ -342,20 +443,37 @@ struct dmc_channel_t
 	uint volume() const {
 		return 0;
 	}
+
+	void clock_timer()
+	{
+		timer -= 2;
+		if (timer == 0) {
+			output_clock();
+			timer = s_DMC[frequency_idx];
+		}
+	}
+
+	void output_clock()
+	{
+
+	}
 	
 	bool			enabled;
 
 	//Register 1
 	bool			irq_enable;
 	bool			loop;
-	uint			frequency_idx;
+	uint			frequency_idx{ 0 };
 	uint			frequency;
+	uint			timer;
 	//Register 2
 	uint			DAC;
 	//Register 3
 	uint			sample_address;
+	uint			current_address;
 	//Register 4
 	uint			sample_length;
+	memory_reader_t	memory_rdr;
 };
 
 struct soundregs_t
@@ -366,14 +484,14 @@ struct soundregs_t
 
 	}
 
-	square_channel_t		square_1;
+	square_channel_t		square_1{ true };
 	square_channel_t		square_2;
 	triangle_channel_t		triangle;
 	noise_channel_t			noise;
 	dmc_channel_t			dmc;
 	//Register 4017
 	bool					five_frame_cycle;
-	bool					disable_frame_interrupt;
+	bool					disable_frame_interrupt{ false };
 	//frame sequencer
 	uint			seq_counter;
 	bool			should_reset;
@@ -439,11 +557,29 @@ struct soundregs_t
 		noise.clock_length();
 	}
 
+	void clock_sweep() {
+		square_1.sweep.clock();
+		square_2.sweep.clock();
+	}
+
 	void clock_envelope() {
 		square_1.envelope.clock();
 		square_2.envelope.clock();
 		noise.envelope.clock();
 		triangle.clock_linear();
+	}
+
+	void clock_timer() {
+		static bool bEven = false;
+
+		if (bEven) {
+			square_1.clock_timer();
+			square_2.clock_timer();
+		}
+
+		triangle.clock_timer();
+
+		bEven = !bEven;
 	}
 };
 
@@ -473,17 +609,3 @@ struct noise_shift_reg_t
 };
 
 static noise_shift_reg_t noise_regs;
-
-
-
-
-
-
-
-
-
-
-
-
-
-

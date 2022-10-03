@@ -1,6 +1,7 @@
 #include "apu.h"
 #include "cpu_registers.h"
 #include "msound.h"
+#include <array>
 
 void apu_mixer();
 
@@ -11,15 +12,40 @@ static device_format_t		s_audio_format;
 static uint s_HalfCycles;
 static int s_ticks = 0;
 static int s_prev_sound_tick = 0;
+static int s_prev_ticks = 0;
 static uint s_AudioLength;
 
-static double pulse_snd[32] = {0.0};
-static double tnd_snd[204] = {0};
+using pulse_snd_t = std::array<double, 31>;
+
+constexpr std::array<double, 31> pulse_snd_init()
+{
+	std::array<double, 31> retval = { 0.0 };
+	retval[0] = 0.0;
+	for (int i = 1; i < 31; i++) {
+		retval[i] = 95.52 / (8128.0 / i + 100);
+	}
+	return retval;
+}
+
+constexpr std::array<double, 203> tnd_snd_init()
+{
+	std::array<double, 203> retval = { 0.0 };
+	retval[0] = 0.0;
+	for (int i = 1; i < 203; i++) {
+		retval[i] = 163.67 / ((24329.0 / i) + 100.0);
+	}
+	return retval;
+}
+
+static constexpr std::array<double, 31> pulse_snd{pulse_snd_init()};
+static constexpr std::array<double, 203> tnd_snd{ tnd_snd_init()};
 
 #include "sound.cpp"
 
-static const int ciSoundHz = 44100;
-static const int ciNesHz = 1789773;
+static constexpr int ciSoundHz = 44100;
+static constexpr int ciNesHz = 1789773;
+
+static uint32_t s_samples[0x6000];
 
 /*
 							95.88
@@ -36,18 +62,10 @@ tnd_out =		-------------------------------------------------------------
 
 */
 
+
+
 void apu_initialize()
 {
-	pulse_snd[0] = 0.0;
-	for (int i = 1; i < 32; i++) {
-		pulse_snd[i] = (95.52) / ((8128.0 / i) + 100.0);
-	}
-
-	for(int i = 1;i < 204; i++) {
-		tnd_snd[i] = 163.67 / ((24329.0 / i) + 100.0);
-	}
-
-
 	s_HalfCycles = 0;
 	s_prev_sound_tick = 0;
 
@@ -133,7 +151,10 @@ void apu_do_cycle()
 
 	if (bClockLength) {
 		sregs.clock_length();
+		sregs.clock_sweep();
 	}
+
+	sregs.clock_timer();
 
 	if (bResetCycle) {
 		s_HalfCycles = 0;
@@ -141,10 +162,29 @@ void apu_do_cycle()
 
 	//No idea what this does execept that it says samples per second ( x cpu cycles
 	//then if it is a multiple of nes hz, mix the channels for sound
+
 	int sound_tick = ciSoundHz * s_ticks++ / ciNesHz;
 	if (sound_tick != s_prev_sound_tick) {
+		s_prev_ticks = s_ticks - 1;
 		apu_mixer();
 		s_prev_sound_tick = sound_tick;
+	} else {
+		//build up a buffer of 40 samples ? 40 or 41, whatever s_ticks is
+		uint idx = s_ticks - s_prev_ticks;
+
+		uint pulse1 = sregs.square_1.volume(),
+			pulse2 = 3,
+			triangle = 0,
+			noise = 0,
+			dmc = 0;
+
+		auto pulse_out = pulse_snd[pulse1 + pulse2];
+		auto tnd_out = tnd_snd[3 * triangle + 2 * noise + dmc];
+
+		auto output = pulse_out + tnd_out;
+		uint16_t digital = static_cast<uint16_t>(65535 * output);
+
+		s_samples[idx] = digital | digital << 16;
 	}
 
 }

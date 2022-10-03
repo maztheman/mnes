@@ -179,6 +179,7 @@ LRESULT WINAPI COpenGLWrapper::StaticProc( HWND hWnd, UINT Msg, WPARAM wParam, L
 			::DestroyWindow(hWnd);
 			break;
 		case ID_FILE_OPEN:
+			Stop();
 			OpenARom(hWnd);
 			break;
 		case ID_EMULATION_START:
@@ -186,6 +187,9 @@ LRESULT WINAPI COpenGLWrapper::StaticProc( HWND hWnd, UINT Msg, WPARAM wParam, L
 			break;
 		case ID_EMULATION_STOP:
 			Stop();
+			break;
+		case ID_EMULATION_RESUME:
+			Resume();
 			break;
 		case ID_EMULATION_RESET_HARD:
 			Start();

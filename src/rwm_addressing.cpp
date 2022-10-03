@@ -272,10 +272,12 @@ static inline void memory_rwm_zero_page_indexed_x()
 {
     //2
     uint address = ext_memory_read(g_Registers.pc++);
-    //3
+    //3.1 - read from address
     MLOG(" $%02X, X[$%02X]", address, g_Registers.x)
-    cpu_do_cycle();
-    uint effectiveAddress = (address + g_Registers.x) & 0xFF;
+    //this is wrong should read from address and throw away
+    ext_memory_read(address);
+    //3.2 - add index register x to address w/ zero page
+    const uint effectiveAddress = TO_ZERO_PAGE(address + g_Registers.x);
     //4
     g_Registers.byteLatch = ext_memory_read(effectiveAddress);
     MLOG(" R/W:$%02X <- $%02X", effectiveAddress, g_Registers.byteLatch);
@@ -348,13 +350,15 @@ static inline void memory_rwm_indexed_indirect()
 {
     //2
     uint pointer = ext_memory_read(g_Registers.pc++);
-    //3
     MLOG(" ($%02X, X[$%02X])", pointer, g_Registers.x)
-    cpu_do_cycle();//read from the address, add X to it, this simulates that
+    //3.1 - read from pointer address, result thrown away
+    ext_memory_read(pointer);
+    //3.2 - add X to pointer address
+    pointer += g_Registers.x;
     //4
-    uint pcl = ext_memory_read((pointer + g_Registers.x) & 0xFF);
+    uint pcl = ext_memory_read(TO_ZERO_PAGE(pointer));
     //5
-    uint pch = ext_memory_read((pointer + g_Registers.x + 1) & 0xFF);
+    uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + 1));
     g_Registers.addressLatch = pcl | (pch << 8);
     //6
     g_Registers.byteLatch = ext_memory_read(g_Registers.addressLatch);
@@ -421,11 +425,12 @@ static inline void memory_rwm_indirect_indexed()
     //3
     uint pcl = ext_memory_read(pointer);
     //4
-    uint pch = ext_memory_read((pointer + 1) & 0xFF) << 8;
+    uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + 1)) << 8;
     pcl += g_Registers.y;
-    //5
-    MLOG(" DR:$%04X", pch | (pcl & 0xFF))
-    ext_memory_read((pcl & 0xFF) | pch);
+    //5.1 read from effective address, may be invalid
+    MLOG(" DR:$%04X", pch | TO_ZERO_PAGE(pcl))
+    ext_memory_read(TO_ZERO_PAGE(pcl) | pch);
+    //5.2 Fix PCH
     g_Registers.addressLatch = (pch + pcl) & 0xFFFF;
     //6
     g_Registers.byteLatch = ext_memory_read(g_Registers.addressLatch);

@@ -108,33 +108,6 @@
     <ClCompile Include="..\..\..\src\rel_opcodes.cpp">
       <Filter>Source Files\cpu\opcodes</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\alu.cpp">
-      <Filter>Source Files\cpu\opcodes</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\flag.cpp">
-      <Filter>Source Files\cpu\opcodes</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\loadstore.cpp">
-      <Filter>Source Files\cpu\opcodes</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\incdec.cpp">
-      <Filter>Source Files\cpu\opcodes</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\compare.cpp">
-      <Filter>Source Files\cpu\opcodes</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\transfer.cpp">
-      <Filter>Source Files\cpu\opcodes</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\stack.cpp">
-      <Filter>Source Files\cpu\opcodes</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\system.cpp">
-      <Filter>Source Files\cpu\opcodes</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\jump.cpp">
-      <Filter>Source Files\cpu\opcodes</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\src\ppu.cpp">
       <Filter>Source Files\ppu</Filter>
     </ClCompile>
@@ -173,9 +146,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\src\cpu_opcodes.cpp">
       <Filter>Source Files\cpu</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\illegal.cpp">
-      <Filter>Source Files\cpu\opcodes</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\rwm_addressing.cpp">
       <Filter>Source Files\cpu\addressing</Filter>

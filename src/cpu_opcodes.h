@@ -1,13 +1,13 @@
 #pragma once
 
-#define OPCODE_ADC_OP				0x69
-#define OPCODE_ADC_ZP				0x65
-#define OPCODE_ADC_ZP_X				0x75
-#define OPCODE_ADC_AB				0x6D
-#define OPCODE_ADC_AB_X				0x7D
-#define OPCODE_ADC_AB_Y				0x79
-#define OPCODE_ADC_IN_X				0x61
-#define OPCODE_ADC_IN_Y				0x71
+constexpr auto OPCODE_ADC_OP = 0x69;
+constexpr auto OPCODE_ADC_ZP = 0x65;
+constexpr auto OPCODE_ADC_ZP_X = 0x75;
+constexpr auto OPCODE_ADC_AB = 0x6D;
+constexpr auto OPCODE_ADC_AB_X = 0x7D;
+constexpr auto OPCODE_ADC_AB_Y = 0x79;
+constexpr auto OPCODE_ADC_IN_X = 0x61;
+constexpr auto OPCODE_ADC_IN_Y = 0x71;
 #define OPCODE_AND_OP				0x29
 #define OPCODE_AND_ZP				0x25
 #define OPCODE_AND_ZP_X				0x35

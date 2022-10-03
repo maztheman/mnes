@@ -9,9 +9,9 @@ void cpu_initialize(void* hInstance, void* hWnd);
 uint cpu_get_joy1();
 uint cpu_get_joy2();
 
-#define NMILO   0xFFFA
-#define NMIHI   0xFFFB
-#define RESETLO	0xFFFC
-#define RESETHI	0xFFFD
-#define BRKLO	0xFFFE
-#define BRKHI   0xFFFF
+constexpr auto NMILO = 0xFFFA;
+constexpr auto NMIHI = 0xFFFB;
+constexpr auto RESETLO = 0xFFFC;
+constexpr auto RESETHI = 0xFFFD;
+constexpr auto BRKLO = 0xFFFE;
+constexpr auto BRKHI = 0xFFFF;

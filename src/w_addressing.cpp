@@ -88,10 +88,11 @@ static inline void memory_w_zero_page_indexed(const uint& indexRegister)
 {
 	//2
 	uint address = ext_memory_read(g_Registers.pc++);
-	//3
-	cpu_do_cycle();
+	//3.1 read from address
+	ext_memory_read(address);
 	MLOG(" $%02X, I[$%02X]", address, indexRegister);
-	address = (address + indexRegister) & 0xFF;
+	//3.2 add index register to address
+	address = TO_ZERO_PAGE(address + indexRegister);
 	//4.1 Do Operation
 	switch (g_Registers.opCode) {
 	case OPCODE_STA_ZP_X:
@@ -148,13 +149,15 @@ void memory_w_absolute_indexed(const uint& indexRegister)
 {
 	//2
 	uint pcl = ext_memory_read(g_Registers.pc++);
-	//3
+	//3.1 fetch high byte of address
 	uint pch = ext_memory_read(g_Registers.pc++) << 8;
-
 	MLOG(" $%04X, I[$%02X]", pcl | pch, indexRegister);
+	//3.2 add index register to low address byte
 	pcl += indexRegister;
-	//4
-	ext_memory_read((pcl & 0xFF) | pch);
+	//3.3 increase PC (already done)
+	//4.1 read from effective address
+	ext_memory_read(TO_ZERO_PAGE(pcl) | pch);
+	//4.2 fix high byte
 	uint address = (pcl + pch) & 0xFFFF;
 	//5.1 Do Operation
 	switch (g_Registers.opCode)
@@ -212,12 +215,14 @@ void memory_w_indexed_indirect()
 	//2
 	uint pointer = ext_memory_read(g_Registers.pc++);
 	MLOG(" ($%02X, X[$%02X])", pointer, g_Registers.x)
-	//3
-	cpu_do_cycle(); //dummy read OR pointer + x
+	//3.1 read from pointer address, throw away data
+	ext_memory_read(pointer);
+	//3.2 add X to pointer address
+	pointer += g_Registers.x;
 	//4
-	uint pcl = ext_memory_read((pointer + g_Registers.x) & 0xFF);
+	uint pcl = ext_memory_read(TO_ZERO_PAGE(pointer));
 	//5
-	uint pch = ext_memory_read((pointer + g_Registers.x + 1) & 0xFF) << 8;
+	uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + 1)) << 8;
 	//6.1 Do Operation
 	switch (g_Registers.opCode)
 	{
@@ -257,11 +262,13 @@ void memory_w_indirect_indexed()
 	MLOG(" ($%02X), Y[%02X]", pointer, g_Registers.y);
 	//3
 	uint pcl = ext_memory_read(pointer);
-	//4
-	uint pch = ext_memory_read((pointer + 1) & 0xFF) << 8;
+	//4.1 fetch high byte of effective address
+	uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + 1)) << 8;
+	//4.2 add Y to low byte of effective address
 	pcl += g_Registers.y;
-	//5
-	ext_memory_read((pcl & 0xFF) | pch);
+	//5.1 read from effective address could be invalid
+	ext_memory_read(TO_ZERO_PAGE(pcl) | pch);
+	//5.2 fix high byte of effective address
 	uint address = (pcl + pch) & 0xFFFF;
 	//6.1 Do Operation
 	switch (g_Registers.opCode)

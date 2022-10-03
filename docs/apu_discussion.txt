@@ -1,0 +1,104 @@
+<_Q> https://wiki.nesdev.com/w/index.php/APU_Pulse
+<_Q> "Given the timer value t = HHHLLLLLLLL formed by timer high and timer low, this timer is updated every APU cycle (i.e., every second CPU cycle)"...
+<_Q> the Frame Counter page says the same thing - "The sequencer is clocked on every other CPU cycle, so 2 CPU cycles = 1 APU cycle."
+<_Q> As far as I can recall, the only part of the NES APU that *isn't* driven by APU cycles is the Triangle channel - that's updated on every CPU cycle.
+<-- reio-ta has quit (Quit: reio-ta)
+--> reio-ta (~reio@174-081-032-167.res.spectrum.com) has joined #nesdev
+<-- leandro has quit (Ping timeout: 260 seconds)
+--> leandro (~leandro@189-92-239-29.3g.claro.net.br) has joined #nesdev
+<-- reio-ta has quit (Ping timeout: 265 seconds)
+<-- leandro has quit (Read error: Connection reset by peer)
+--> leandro (~leandro@131-0-31-64.static.sumicity.net.br) has joined #nesdev
+--> freem2 (~freem@2600:1702:2fe1:16a0:855c:5c26:f666:5d93) has joined #nesdev
+<-- freem has quit (Ping timeout: 265 seconds)
+<maztheman> i just get lost because there is like 2 names for everything and they are used interchangably
+<maztheman> not literally but my brain hurts 
+--> Mugi (~mugi@dsl-jklbng12-54fba9-166.dhcp.inet.fi) has joined #nesdev
+<wyatt8740> honestly for a second i forgot we were talking about the nes and was thinking "huh, i never realized that the APU has two clock source pins"
+<wyatt8740> (integrated on the die, yeah, yeah, i know)
+<kevtris> the worst part of the nes audio is the frame counter
+--- freem2 is now known as freem
+<wyatt8740> yeah that looks mind-boggling whenever i try to do any low level music stuff
+<-- scrimpy has quit (Remote host closed the connection)
+<theophilu> yeah, frame counter sucks
+<theophilu> but you have to hand it to the NES APU, it is quite powerful compared to the other sound chips being widely used at the time
+<-- smoke_fum has quit (KVIrc 5.0.0 Aria http://www.kvirc.net/)
+<jero32> what do you mean
+<jero32> the atari 2600 had amazing bloops
+<-- Acey has quit ()
+<shawn> albeit a bit outta tune, hehe
+<shawn> only time it ever sounded in tune was in ballblazer
+<_Q> There are limits on what you can do with 5-bit frequency registers...
+<shawn> yheh for realio, but those limits can be contintent on the KEY of the song youre tryin to do
+<shawn> lower registers or higher registers on the atari will screw with that outtatuneness, if you stick to a certain frequency range, it wont sound too bad
+<maztheman> i just have to wrap my head about the timer on the pulse channel
+<maztheman> i see it controls frequence with some formula
+<maztheman> but i just dont see how that relates to the 4bit mono sample byte
+<maztheman> ill get it thru my thick skull at some point
+<maztheman> and how it correlates to the duty
+<_Q> What "4bit mono sample byte"?
+<maztheman> <kevtris> it's a mono, 4 bit sample <-- this thing
+<_Q> https://wiki.nesdev.com/w/index.php/APU_Pulse
+<_Q> Have you read that?
+<maztheman> yes several times
+<maztheman> but i cant figure it out
+<_Q> Which parts of it do you understand?
+<maztheman> writing to the registers 
+<maztheman> from "Duty Cycle Sequences" and below im not sure how to interpret it
+<_Q> It's made of a bunch of different pieces, and each piece is fairly straightforward
+<maztheman> lets talk about duty 0, the waveform table
+<maztheman> what does the bit sequence supposed to signify ?
+<maztheman> it says 12.5% waveform but lists a 8 bits
+<_Q> I'll get there
+<maztheman> ok
+<_Q> First, the channel has a Timer - you write a value N, and then every N cycles it triggers a waveform update
+<_Q> Every waveform update decrements a 3-bit counter (0-7)
+* maztheman nods
+<_Q> and the Duty Cycle bits decide how that 3-bit value is converted into a waveform
+<kevtris> the lol is all that extra garbage on the nes audio generally isn't used by anything and they just do it all in software later on
+<White_Fla> the "output waveform" is a time series of 8 consecutive samples, not an 8-bit number
+<_Q> Duty cycle 0 makes the waveform 0 0 0 0 0 0 0 V
+<_Q> Duty cyvle 1 makes the waveform 0 0 0 0 0 0 V V
+<_Q> Duty cycle 2 makes the waveform 0 0 0 0 V V V V
+<_Q> Duty cycle 3 makes the waveform V V V V V V 0 0
+<_Q> where V is the channel's current output Volume
+<_Q> Due to a quirk, the above duty cycles play back in mostly reverse-order
+<_Q> so 0 gives you 0 V 0 0 0 0 0 0
+<_Q> and 1 gives you 0 V V 0 0 0 0 0
+<maztheman> V is a value between 0-15 ?
+<_Q> (the 3-bit duty cycle counter initializes to zero but then *decrements)
+<_Q> Yes, V is the output volume
+<_Q> Depending on what you write to $4000, the bottom 4 bits can be used directly as the volume
+<_Q> or they can be used as a volume fade-out rate
+<maztheman> 0 0 0 0 0 0 0 V <-- each one of these things is a byte ?
+<_Q> (in which case it will start at full volume and then gradually fade away)
+<_Q> No, each one of those is an *output sample*
+<maztheman> ok pause
+<_Q> If you're playing audio back at 44100Hz, then you need to _check_ the output sample value for each channel at least that often
+<White_Fla> x axis is time across the sample
+<_Q> (ideally you'll want to check it _much_ more often, then downsample it)
+<_Q> (it won't matter much for square waves, but it can make a big difference for the Noise channel)
+<maztheman> im not sure what the waveform data looks like
+<White_Fla> 0 1 1 0 0 0 0 0 => _--_____
+<_Q> a 50% duty-cycle square wave looks like ____~~~~____~~~~____~~~~____~~~~
+<White_Fla> 0111100 => _----__ = 50% square wave
+<maztheman> ok each tick is a sample ?
+<White_Fla> (oops I missed a zero, but whatever)
+<_Q> that's what I said above, yes
+<maztheman> each sample is 4bit ?
+<_Q> For the pulse, triangle, and noise channels, yes
+<_Q> 4 bits _each_, for a total of 6 bits overall, _mostly_
+<maztheman> how do i convert a 4bit sample into a 16bit sample ?
+<_Q> Multiply by a fairly large number?
+<White_Fla> multiply by %0001000100010001
+<_Q> I multiply by 256 or so, and it sounds decent
+<White_Fla> so the 4 bit number is repeated 4 times
+<White_Fla> that way %0000 becomes $0000, and %1111 becomes $ffff
+<White_Fla> well, 0 => 0000, 1 => 1111, ... f => ffff
+<_Q> That would be if you wanted to normalize it all the way to +0.0dB
+<White_Fla> right
+<_Q> I can tell you right now that that'd be a rather poor idea
+<maztheman> okay i have to drive home now
+<White_Fla> but a lot of people do <<12, which always leaves the low bits clear and never reaches the high value
+<maztheman> this is making a little more sense now
+<_Q> You don't *need* to occupy the entire dynamic range - you're not competing in the Loudness War, after all.

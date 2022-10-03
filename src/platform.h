@@ -15,16 +15,17 @@ typedef void  (__cdecl *CalculateFunc)();
 
 void mazMainLoop();
 
-const unsigned int ID_FILE					= WM_USER + 1;
-const unsigned int ID_FILE_OPEN				= WM_USER + 2;
-const unsigned int ID_FILE_EXIT				= WM_USER + 3;
-const unsigned int ID_EMULATION				= WM_USER + 4;
-const unsigned int ID_VIDEO					= WM_USER + 5;
-const unsigned int ID_EMULATION_START		= WM_USER + 6;
-const unsigned int ID_EMULATION_STOP		= WM_USER + 7;
-const unsigned int ID_EMULATION_RESET		= WM_USER + 8;
-const unsigned int ID_EMULATION_RESET_HARD	= WM_USER + 9;
-const unsigned int ID_EMULATION_RESET_SOFT	= WM_USER + 10;
+constexpr unsigned int ID_FILE					= WM_USER + 1;
+constexpr unsigned int ID_FILE_OPEN				= WM_USER + 2;
+constexpr unsigned int ID_FILE_EXIT				= WM_USER + 3;
+constexpr unsigned int ID_EMULATION				= WM_USER + 4;
+constexpr unsigned int ID_VIDEO					= WM_USER + 5;
+constexpr unsigned int ID_EMULATION_START		= WM_USER + 6;
+constexpr unsigned int ID_EMULATION_STOP		= WM_USER + 7;
+constexpr unsigned int ID_EMULATION_RESUME		= WM_USER + 8;
+constexpr unsigned int ID_EMULATION_RESET		= WM_USER + 9;
+constexpr unsigned int ID_EMULATION_RESET_HARD	= WM_USER + 10;
+constexpr unsigned int ID_EMULATION_RESET_SOFT	= WM_USER + 11;
 
 
 namespace gfx {
@@ -71,6 +72,7 @@ private:
 
 		::InsertMenuA(m_hEmulationMenu, emulationMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_STRING, ID_EMULATION_START, "&Start");
 		::InsertMenuA(m_hEmulationMenu, emulationMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_STRING, ID_EMULATION_STOP, "&Stop");
+		::InsertMenuA(m_hEmulationMenu, emulationMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_STRING, ID_EMULATION_RESUME, "&Resume");
 		::InsertMenuItemA(m_hEmulationMenu, emulationMenuPos++, MF_BYPOSITION | MF_ENABLED | MF_POPUP | MF_STRING, &resetMenu);
 
 		MENUITEMINFOA emulationMenu = { 0 };

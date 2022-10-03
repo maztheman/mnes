@@ -6,9 +6,9 @@
 #include "apu.h"
 #include "mapper.h"
 #include <algorithm>
+#include "log.h"
 
 #include "joystick.cpp"
-#include "log.h"
 
 void cpu_initialize(void* hInstance, void* hWnd)
 {

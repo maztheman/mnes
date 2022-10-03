@@ -38,7 +38,7 @@ void memory_rel()
 {
     //2.1
     uint operand = ext_memory_read(g_Registers.pc++);
-    MLOG(" $%02X %ld", operand, (signed char)operand);
+    MLOG(" $%02X %ld", operand, (int)operand);
     //2.2 Do Operation
     bool bTakeBranch = false;
     switch (g_Registers.opCode) 
@@ -69,18 +69,21 @@ void memory_rel()
         break;
     }
     if (bTakeBranch) {
-        //3
-        cpu_do_cycle();
-        int pcl = (g_Registers.pc & 0xFF) + (signed char)operand;
-        uint pch = g_Registers.pc & 0xFF00;
-        pch += pcl;
-        pch &= 0xFFFF;
-        if ((pch & 0xFF00) != (g_Registers.pc & 0xFF00)) {
-            //4
-            cpu_do_cycle();
+        //Before 3rd cycle, we split the pc into pcl and pch
+        int pcl = (int)(g_Registers.pc & 0xFF);
+        int pch = (int)(g_Registers.pc & 0xFF00);
+        //3.1
+        ext_memory_read(g_Registers.pc);
+        //3.2 add operand to PCL
+        pcl += (int)operand;
+        //4.1 - read, could be invalid, this is how CPU fixes PCL zero page boundaries.
+        ext_memory_read(TO_ZERO_PAGE(pcl) | pch);
+        //4.2 Fix PCH
+        pch = (pcl + pch) & 0xFFFF;
+        if ((pch & 0xFF00) == (g_Registers.pc & 0xFF00)) {
+            //4.3 if they didnt change increase PC
+            pch = (pch + 1) & 0xFFFF;
         }
         g_Registers.pc = pch;
-    } else {
-        //g_Registers.pc++;
     }
 }

@@ -3,6 +3,7 @@
 using uint = unsigned int;
 using uchar = unsigned char;
 
+void memory_intialize();
 uint ext_memory_read(uint address);
 void ext_memory_write(uint address, uint value);
 

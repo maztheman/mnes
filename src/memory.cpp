@@ -22,13 +22,20 @@ static inline void memory_dec_stack();
 void memory_push_byte(uint nValue);
 void memory_push_pc();
 
+
+template<type T>
+static uint TO_ZERO_PAGE(T address)
+{
+	return address & 0xFF;
+}
+
+
 //opcodes 
 #include "imp_opcodes.cpp"
 #include "rwm_opcodes.cpp"
 #include "r_opcodes.cpp"
 #include "w_opcodes.cpp"
 #include "stack_opcodes.cpp"
-#include "jump.cpp"
 #include "rel_opcodes.cpp"
 
 #include "imp_addressing.cpp"
@@ -76,10 +83,15 @@ uchar g_SPR_RAM[0x100] = {0};
 uchar g_TMP_SPR_RAM[32] = {0};
 
 #include "addressing_modes.cpp"
-
-
 #include "rwm_addressing.cpp"
 
+void memory_intialize()
+{
+	std::fill(&g_MainMemory[0], &g_MainMemory[0x800], 0);
+	std::fill(&g_SRAM[0], &g_SRAM[0x2000], 0);
+	std::fill(&g_SPR_RAM[0], &g_SPR_RAM[0x100], 0);
+	std::fill(&g_TMP_SPR_RAM[0], &g_TMP_SPR_RAM[32], 0);
+}
 
 uint memory_pc_peek(uint address)
 {
@@ -840,9 +852,10 @@ void memory_pc_process()
 		break;
 	}
 	
-#ifdef USE_LOG
-	VLog().AddLine(" T:[$%016lX]\n", g_Registers.tick_count++);
-#endif
+
+	MLOG(" T:[$%016lX]\n", g_Registers.tick_count);
+
+	g_Registers.tick_count++;
 }
 
 #if 0

@@ -71,9 +71,16 @@ void Stop()
 
 void Start()
 {
+	memory_intialize();
 	cpu_reset();
 	g_bCpuRunning = true;
 }
+
+void Resume()
+{
+	g_bCpuRunning = true;
+}
+
 
 void PatternTableProcess()
 {

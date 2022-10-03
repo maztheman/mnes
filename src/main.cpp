@@ -10,10 +10,10 @@
 
 #ifdef _DEBUG
 #pragma comment(lib, "libminputd.lib")
-#pragma comment(lib , "msound32d.lib")
+#pragma comment(lib , "libmsound32d.lib")
 #else
 #pragma comment(lib, "libminput.lib")
-#pragma comment(lib , "msound32.lib")
+#pragma comment(lib , "libmsound32.lib")
 #endif
 
 class CMainMenu
@@ -91,7 +91,7 @@ private:
 	}
 
 
-	int m_nMenuID;
+	int m_nMenuID{ -1 };
 };
 
 extern mapper_t* g_mapper;
@@ -111,7 +111,6 @@ int main( int argc, char* argv[] )
 	msound_initialize();
 
 	InitializeProcessor();
-
 
 	if (bLoaded) {
 		CMainMenu menu;

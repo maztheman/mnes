@@ -7,7 +7,14 @@
 #include "mapper.h"
 
 extern uint nrom_read(uint);
-extern uint	ppu_get_current_scanline_cycle();
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+	uint ppu_get_current_scanline_cycle();
+#ifdef __cplusplus
+}
+#endif
 
 static bool						s_bSaveRam;
 static uint						s_Regs[4];

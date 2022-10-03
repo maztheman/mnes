@@ -1,6 +1,6 @@
 #pragma once
 
-typedef unsigned int uint;
+using uint = unsigned int;
 
 #ifdef __cplusplus
 extern "C" {

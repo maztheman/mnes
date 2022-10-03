@@ -254,7 +254,7 @@ static inline void memory_r_zero_page_indexed(const uint& indexRegister)
     //2
     uint address = ext_memory_read(g_Registers.pc++);
     //3
-    cpu_do_cycle();
+    ext_memory_read(address);
     //4.1
     g_Registers.byteLatch = ext_memory_read((address + indexRegister) & 0xFF);
     MLOG(" $%02X, I[%02X] A:$%02X <- $%02X", address, indexRegister, (address + indexRegister) & 0xFF, g_Registers.byteLatch);
@@ -419,11 +419,11 @@ void memory_r_indexed_indirect()
     uint pointer = ext_memory_read(g_Registers.pc++);
     MLOG(" ($%02X, X[$%02X])", pointer, g_Registers.x)
     //3
-    cpu_do_cycle(); //pointer + x ? could be a dummy reader to pointer?
+    ext_memory_read(pointer);
     //4
-    uint pcl = ext_memory_read((pointer + g_Registers.x) & 0xFF);
+    uint pcl = ext_memory_read(TO_ZERO_PAGE(pointer + g_Registers.x));
     //5
-    uint pch = ext_memory_read((pointer + g_Registers.x + 1) & 0xFF) << 8;
+    uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + g_Registers.x + 1)) << 8;
     //6.1
     g_Registers.byteLatch = ext_memory_read(pcl | pch);
     MLOG(" A:$%04X <- $%02X", pcl | pch, g_Registers.byteLatch)
@@ -489,16 +489,17 @@ void memory_r_indirect_indexed()
     //3
     uint pcl = ext_memory_read(pointer);
     //4
-    uint pch = ext_memory_read((pointer + 1) & 0xFF) << 8;
+    uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + 1)) << 8;
     pcl += g_Registers.y;
     //5
-    g_Registers.byteLatch = ext_memory_read((pcl & 0xFF) | pch);
+    //Could be invalid read
+    g_Registers.byteLatch = ext_memory_read(TO_ZERO_PAGE(pcl) | pch);
     if (pcl > 0xFF) {
-        //6*
+        //6*, we are here because the effective address was off by $100
         g_Registers.byteLatch = ext_memory_read((pcl + pch) & 0xFFFF);
         MLOG(" A:$%04X < $%02X", (pcl + pch) & 0xFFFF, g_Registers.byteLatch);
     } else {
-        MLOG(" A:$%04X < $%02X", (pcl & 0xFF) | pch, g_Registers.byteLatch);
+        MLOG(" A:$%04X < $%02X", TO_ZERO_PAGE(pcl) | pch, g_Registers.byteLatch);
     }
     //Do Operation
     switch (g_Registers.opCode)
