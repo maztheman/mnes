@@ -1,8 +1,9 @@
 
-#include "mapper.h"
-#include "FileLoader.h"
+#include <gfx/platform.h>
+
+#include <common/FileLoader.h>
+
 #include "processor.h"
-#include "platform.h"
 
 //extern mapper_t* g_mapper;
 
