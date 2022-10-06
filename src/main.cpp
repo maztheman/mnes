@@ -2,6 +2,9 @@
 #include <gfx/platform.h>
 
 #include <common/FileLoader.h>
+#include <common/global.h>
+
+#include <sound/apu.h>
 
 #include "processor.h"
 
@@ -27,6 +30,11 @@ int main(int argc, char* argv[])
     }
 
     CGfxManager::mainLoop();
+
+    VBufferCollection().ResetContent();
+	VLogCollection().ResetContent();
+	
+	apu_destroy();
 
     return 0;
 }
