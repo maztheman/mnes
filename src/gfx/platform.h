@@ -229,6 +229,7 @@ public:
 	void OnCalculate() const;
 	void Swap() const;
 	bool ShouldClose() const;
+	int GetKeyState(int key);
 
 private:
 
@@ -255,6 +256,8 @@ public:
 
 void InitializeRenderer();
 void UpdateMainWindowTexture();
+
+const std::array<int, 8>& getKeysInOrder();
 
 #endif
 

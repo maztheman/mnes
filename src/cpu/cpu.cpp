@@ -3,8 +3,6 @@
 #include "cpu_registers.h"
 #include "memory.h"
 
-
-
 #include <ppu/ppu.h>
 #include <sound/apu.h>
 
@@ -12,8 +10,7 @@
 
 #include <algorithm>
 
-
-//#include "joystick.cpp"
+#include "joystick.cpp"
 
 void cpu_initialize(void* hInstance, void* hWnd)
 {

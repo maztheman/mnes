@@ -302,6 +302,18 @@ PFNWGLEXTGETSWAPINTERVALPROC wglGetSwapIntervalEXT = NULL;
 constexpr const int WINDOW_WIDTH = 800;
 constexpr const int WINDOW_HEIGHT = 600;
 
+
+const std::array<int, 8>& getKeysInOrder()
+{
+    static std::array<int, 8> s_Keys = {
+        GLFW_KEY_APOSTROPHE, GLFW_KEY_SEMICOLON,  //A, B
+        GLFW_KEY_K, GLFW_KEY_L, //select, start
+        GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D //up, down, left, right
+    };
+
+    return s_Keys;
+}
+
 static void nop()
 {
 
@@ -537,15 +549,15 @@ void CGfxManager::mainLoop()
 	setupProjection(WINDOW_WIDTH, WINDOW_HEIGHT);
 		
 	WindowData& data = windows()[getMainWindow()];
-	glfwSetFramebufferSizeCallback(data.window, [](GLFWwindow* window, int width, int height)
+	glfwSetFramebufferSizeCallback(data.window, [](GLFWwindow*, int width, int height)
 	{
 		glViewport(0,0,width,height);
 		setupProjection(width,height);
 	});
 		
     while(!main.ShouldClose()) {
-		main.Draw();
         glfwPollEvents();
+		main.Draw();
 	}
 }
 
@@ -611,6 +623,12 @@ bool COpenGLWrapper::ShouldClose() const
 {
 	WindowData& data = windows()[m_index];
 	return glfwWindowShouldClose(data.window) != 0;
+}
+
+int COpenGLWrapper::GetKeyState(int key)
+{
+	WindowData& data = windows()[m_index];
+	return glfwGetKey(data.window, key) == GLFW_PRESS ? 1 : 0;
 }
 
 void COpenGLWrapperPtrVector::add(std::unique_ptr<COpenGLWrapper> value)

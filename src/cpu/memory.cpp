@@ -360,8 +360,8 @@ void memory_main_write(uint address, uint value)
 					strobe = 1;
 				}
 				if ((value & 1) == 0 && strobe == 1) {
-					//g_joy1.set(cpu_get_joy1());
-					//g_joy2.set(cpu_get_joy2());
+					g_joy1.set(cpu_get_joy1());
+					g_joy2.set(cpu_get_joy2());
 					strobe = -1;
 				}
 			}
@@ -784,6 +784,7 @@ void memory_pc_process()
 		cpu_rts();
 		break;
 	case OPCODE_PHA:
+		MLOG(" | A:$%02X ->", g_Registers.a)
 		cpu_pha();
 		break;
 	case OPCODE_PHP:
@@ -791,6 +792,7 @@ void memory_pc_process()
 		break;
 	case OPCODE_PLA:
 		cpu_pla();
+		MLOG(" | A:$%02X ->", g_Registers.a)
 		break;
 	case OPCODE_PLP:
 		cpu_plp();

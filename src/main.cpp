@@ -15,8 +15,8 @@ int main(int argc, char* argv[])
 		loaded = CFileLoader::LoadRom(argv[1]);
 	} else {
         //loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/bin/roms/smb1.nes");
-        //loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/bin/roms/C1.nes");
-        loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/data/roms/Ark.nes");
+        loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/bin/roms/C1.nes");
+        //loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/data/roms/Ark.nes");
     }
 
     InitializeProcessor();
