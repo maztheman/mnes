@@ -85,9 +85,14 @@ void memory_rel()
         //3.2 add operand to PCL
         pcl += static_cast<int>(operand);
         MLOG(" pcl: %d [%04X]", pcl, pcl);
-        //4.1 - read, could be invalid, this is how CPU fixes PCL zero page boundaries.
-        ext_memory_read(TO_ZERO_PAGE(pcl) | static_cast<uint>(pch));
-        //4.2 Fix PCH
+
+        //If the next opcode is in a different page, then read that open code (use a cycle)
+        if (pcl < 0 || pcl > 0xFF)
+        {
+            //4.1 - read, could be invalid, this is how CPU fixes PCL zero page boundaries.
+            ext_memory_read(TO_ZERO_PAGE(pcl) | static_cast<uint>(pch));
+            //4.2 Fix PCH
+        }
         pch = (static_cast<int>(g_Registers.pc) + operand) & 0xFFFF;
         //pch = (pcl | pch) & 0xFFFF;
         MLOG(" pch: %04X", pch);
