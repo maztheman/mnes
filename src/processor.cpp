@@ -19,15 +19,9 @@
 
 #include <sound/apu.h>
 
-#include <GLFW/glfw3.h>
+#include <cstring>
 
 #define FIRST   0
-
-//56
-//45
-//75
-//88
-//98
 
 extern void cpu_reset();
 
@@ -35,19 +29,17 @@ vuchar g_pPatternTableBuffer(0x30000);
 
 void CPUProcess();
 
-
 static COpenGLWrapper& mainframe()
 {
     static COpenGLWrapper instance(CGfxManager::getMainWindow());
     return instance;
 }
 
-void draw_frame()
+void UpdateTextureFromPPU()
 {
-    
 	g_bDisplayReady = g_bPatternTableReady = g_bNameTableReady = true;
 	mainframe().MakeCurrent();
-	SetTextureData(g_pScreenBuffer, g_txMainWindow);
+	UpdateMainWindowTexture();
 }
 
 static void Process()
@@ -63,18 +55,14 @@ static void Process()
 
 void InitializeProcessor()
 {
+	memset(&g_pScreenBuffer[0], 128, 0x30000);
+	printf("InitializeProcessor\n");
     mainframe().MakeCurrent();
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_POINT_SMOOTH);
-	glGenTextures(1, &g_txMainWindow );
-	glBindTexture(GL_TEXTURE_2D, g_txMainWindow );
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, 256, 256, 0, GL_RGB, GL_UNSIGNED_BYTE, g_pScreenBuffer );
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR); // Linear Filtering
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR); // Linear Filtering
+	printf("make current\n");
+	InitializeRenderer();
 	mainframe().SetCalculateFunc( Process );
 	mainframe().SetDisplayFunc( DrawFrame );
-
+	printf("InitializeProcessor gl setup\n");
     cpu_initialize(nullptr, nullptr);
 	ppu_initialize();
 	apu_initialize();
@@ -87,6 +75,7 @@ void Stop()
 
 void Start()
 {
+	printf("Starting emulation\n");
     memory_intialize();
 	cpu_reset();
 	g_bCpuRunning = true;

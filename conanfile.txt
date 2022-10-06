@@ -7,6 +7,7 @@ spdlog/1.10.0
 glad/0.1.36
 glfw/3.3.8
 sdl/2.24.0
+glm/cci.20220420
 
 [generators]
 cmake_find_package_multi

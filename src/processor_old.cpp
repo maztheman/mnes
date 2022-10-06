@@ -21,7 +21,7 @@ vuchar g_pPatternTableBuffer(0x30000);
 
 void CPUProcess();
 
-void draw_frame()
+void UpdateTextureFromPPU()
 {
 	g_bDisplayReady = g_bPatternTableReady = g_bNameTableReady = true;
 	g_pMainFrame->MakeCurrent();

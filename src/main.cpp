@@ -9,11 +9,22 @@
 
 int main(int argc, char* argv[])
 {
+    bool loaded = false;
 	if (argc == 2) {
-		CFileLoader::LoadRom(argv[1]);
-	}
+        printf("loading rom %s\n", argv[1]);
+		loaded = CFileLoader::LoadRom(argv[1]);
+	} else {
+        //loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/bin/roms/smb1.nes");
+        //loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/bin/roms/C1.nes");
+        loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/data/roms/Ark.nes");
+    }
 
     InitializeProcessor();
+
+    if (loaded)
+    {
+        Start();
+    }
 
     CGfxManager::mainLoop();
 

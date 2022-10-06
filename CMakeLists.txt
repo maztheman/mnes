@@ -135,7 +135,7 @@ add_library(mnes_project::project_options INTERFACE IMPORTED)
 add_library(mnes_project::project_warnings INTERFACE IMPORTED)
 
 # configure files based on CMake configuration options
-add_subdirectory(configured_files)
+#add_subdirectory(configured_files)
 
 # Adding the src:
 add_subdirectory(src)
