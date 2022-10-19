@@ -1,6 +1,8 @@
 SET(SRCS
     application.cpp
     application.h
+    FileBrowser.cpp
+    FileBrowser.h
     input.cpp
     input.h
     Renderer.cpp

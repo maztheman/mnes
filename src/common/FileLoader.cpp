@@ -1,16 +1,18 @@
 #include "FileLoader.h"
 
-#include <cstdio>
-
 #include "ines_format.h"
 #include "File.h"
 
 #include <mappers/mapper.h>
 
+#include <fstream>
+
 //mappers
 vuchar		g_arRawData;
 ines_format	g_ines_format;
 mapper_t*	g_mapper;
+
+//maybe attach the mapper to the application instead of global variable ?
 
 CFileLoader::CFileLoader()
 {
@@ -20,21 +22,22 @@ CFileLoader::~CFileLoader()
 {
 }
 
-bool CFileLoader::LoadRom(const string& sFileName)
+bool CFileLoader::LoadRom(const std::filesystem::path& fileName)
 {
-	CFile file(sFileName, "rb");
+	std::ifstream file(fileName, std::ios::binary | std::ios::in);
 
-	if (!file.IsOpen()) {
-		printf("could not open rom %s\n", sFileName.c_str());
+	if (!file)
+	{
+		fmt::print(stderr, "Could not open rom {}\n", fileName.generic_string());
 		return false;
 	}
 
 	ines_format& format = g_ines_format;
 
-	//count be aligned funny.
-	file.Read(&format.reserved, 16, 1);
+	file.read(reinterpret_cast<char*>(&format), 16);
 
-	if (!(format.reserved[0] == 'N' && format.reserved[1] == 'E' && format.reserved[2] == 'S' && format.file_version == 0x1A)) {
+	if (!(format.reserved[0] == 'N' && format.reserved[1] == 'E' && format.reserved[2] == 'S' && format.file_version == 0x1A)) 
+	{
 		return false;//wrong format i guess
 	}
 
@@ -42,8 +45,9 @@ bool CFileLoader::LoadRom(const string& sFileName)
 
 	g_mapper = get_mapper(nMapperNo);
 
-	if (g_mapper == nullptr) {
-		printf("mapper %d is not supported\n", nMapperNo);
+	if (g_mapper == nullptr) 
+	{
+		fmt::print(stderr, "mapper {} is not supported\n", nMapperNo);
 		return false;
 	}
 
@@ -55,7 +59,8 @@ bool CFileLoader::LoadRom(const string& sFileName)
 	printf("detected rom size of %ld\n", nFileSize);
 
 	g_arRawData.resize(nFileSize, 0);
-	file.Read(&g_arRawData[0], 1, nFileSize);
+
+	file.read(reinterpret_cast<char*>(g_arRawData.data()), nFileSize);
 
 	g_mapper->reset();
 

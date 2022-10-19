@@ -63,6 +63,9 @@ void ppu_reset()
 	auto& screenBuffer = Application:: getApplication()->getScreenBuffer();
 	memset(screenBuffer.data(), 0xCD, screenBuffer.size());
 
+	g_PPURegisters.last_2002_read = -5;
+	g_PPURegisters.scanline = 241;
+
 	PPU_cycles = 0;
 	ppu_update_scanline();
 }

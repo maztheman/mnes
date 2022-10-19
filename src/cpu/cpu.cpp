@@ -48,5 +48,5 @@ void cpu_reset()
 	g_Registers.pc = (memory_main_read(RESETLO)) | (memory_main_read(RESETHI) << 8);
 	apu_reset();
 	ppu_reset();
-	printf("cpu reset\n");
+	fmt::print(stderr, "cpu reset\n");
 }

@@ -91,6 +91,7 @@ uchar g_TMP_SPR_RAM[32] = {0};
 
 void memory_intialize()
 {
+	memset(&g_MemoryRegisters, 0, sizeof(MemoryRegisters));
 	std::fill(&g_MainMemory[0], &g_MainMemory[0x800], 0);
 	std::fill(&g_SRAM[0], &g_SRAM[0x2000], 0);
 	std::fill(&g_SPR_RAM[0], &g_SPR_RAM[0x100], 0);

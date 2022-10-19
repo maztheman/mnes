@@ -54,6 +54,7 @@ void Stop()
 void Start()
 {
 	printf("init memory\n");
+	g_bDisplayReady = g_bPatternTableReady = g_bNameTableReady = false;
     memory_intialize();
 	g_bCpuRunning = true;
 }

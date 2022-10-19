@@ -1,6 +1,8 @@
 #pragma once
 
-using std::string;
+#include <filesystem>
+
+//re-write this using std::filesystem and istream::read() no c!
 
 class CFileLoader
 {
@@ -9,6 +11,6 @@ public:
 
 	~CFileLoader();
 
-	static bool LoadRom(const string& sFileName);
+	static bool LoadRom(const std::filesystem::path& fileName);
 };
 

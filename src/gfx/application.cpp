@@ -15,6 +15,7 @@
 #include <imgui.h>
 
 #include <thread>
+#include <common/FileLoader.h>
 
 #include <imgui_impl_glfw.cpp>
 #include <imgui_impl_opengl3.cpp>
@@ -39,6 +40,9 @@ const std::array<int, 8>& getKeysInOrder()
 void Application::reset()
 {
     cpu_reset();
+    ppu_initialize();
+    apu_initialize();
+    cpu_initialize();
 }
 
 void Application::init()
@@ -58,20 +62,66 @@ int Application::getKeyState(int key)
     return glfwGetKey(m_window, key) == GLFW_PRESS ? 1 : 0;
 }
 
+void Application::showFileBrowser()
+{
+    if (m_bShowFileBrowser)
+    {
+        if (ImGui::Begin("FileRom", &m_bShowFileBrowser))
+        {
+            if (ImGui::BeginListBox("CurrentFiles"))
+            {
+                if (ImGui::Selectable(".."))
+                {
+                    m_Browser.moveTo(std::filesystem::directory_entry(m_Browser.getCurrentPath().parent_path()));
+                }
+                else
+                {
+                    for(const auto& entry : m_Browser.getFilesFromCurrent())
+                    {
+                        if (entry.is_regular_file() && (entry.path().extension() == ".nes" || entry.path().extension() == ".NES"))
+                        {
+                            if (ImGui::Selectable(entry.path().filename().c_str()))
+                            {
+                                Stop();
+                                if (CFileLoader::LoadRom(entry.path()))
+                                {
+                                    reset();
+                                    Start();
+                                    m_bShowFileBrowser = false;
+                                    break;
+                                }
+                            }
+                        } 
+                        else if (entry.is_directory())
+                        {
+                            if (ImGui::Selectable(fmt::format("[D] {}", entry.path().filename().c_str()).c_str()))
+                            {
+                                m_Browser.moveTo(entry);
+                                break;
+                            }
+                        }
+                    }
+                }
+                ImGui::EndListBox();
+            }
+            ImGui::End();
+        }
+    }
+}
+
 
 void Application::GUIStuff()
 {
-    extern bool g_bDisplayReady;
     static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGuiWindowFlags outputFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysVerticalScrollbar;
+    addMenu();
+    showFileBrowser();
 
+    ImGuiWindowFlags outputFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysVerticalScrollbar;
 
     if (ImGui::Begin("Output", nullptr, outputFlags))
     {
@@ -114,10 +164,39 @@ void Application::updateMainTexture()
 }
 
 
+void Application::addMenu()
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Open", nullptr, &m_bShowFileBrowser))
+            {
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Emulation"))
+        {
+            if (ImGui::MenuItem("Start"))
+            {
+                Start();
+            }
+            if (ImGui::MenuItem("Stop"))
+            {
+                Stop();
+            }
+            if (ImGui::MenuItem("Resume"))
+            {
+                Resume();
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+}
+
 int Application::run()
 {
-    Start();
-    
     init();
 
     m_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "mnes 0.3.0", nullptr, nullptr);
@@ -141,16 +220,9 @@ int Application::run()
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    ppu_initialize();
-    apu_initialize();
-    cpu_initialize();
-
-    reset();
-
     m_Renderer.init();
 
     while(glfwWindowShouldClose(m_window) == 0) {
-        
         glfwPollEvents();
         glfwMakeContextCurrent(m_window);
         Process();
