@@ -5,14 +5,14 @@
 
 #include <ppu/ppu.h>
 #include <sound/apu.h>
-
 #include <common/Log.h>
+#include <gfx/input.h>
 
 #include <algorithm>
 
 #include "joystick.cpp"
 
-void cpu_initialize(void* hInstance, void* hWnd)
+void cpu_initialize()
 {
 	//joy1.create(hInstance, hWnd);
 }
@@ -48,4 +48,5 @@ void cpu_reset()
 	g_Registers.pc = (memory_main_read(RESETLO)) | (memory_main_read(RESETHI) << 8);
 	apu_reset();
 	ppu_reset();
+	printf("cpu reset\n");
 }

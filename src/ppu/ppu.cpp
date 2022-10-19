@@ -6,6 +6,8 @@
 #include <queue>
 #include <vector>
 
+#include <gfx/application.h>
+
 #include <common/control_flags.h>
 #include <common/File.h>
 #include <common/global.h>
@@ -16,12 +18,11 @@
 #include <cpu/memory.h>
 #include <cpu/memory_registers.h>
 
-
 extern void UpdateTextureFromPPU();
 
 uchar	g_RGBPalette[64][3] = { 0 };
 uint	g_aBGColor[256] = { 0 };
-uchar*	g_pScreenBuffer = new uchar[0x30000];
+//uchar*	g_pScreenBuffer = new uchar[0x30000];
 uint	PPU_cycles = 0;
 
 #include "ppuaddr.cpp"
@@ -42,7 +43,7 @@ void ppu_initialize()
 		return;
 	}
 	file.Read( &g_RGBPalette[0][0], 1, 192 );
-	VBufferCollection().push_back(g_pScreenBuffer);
+	//VBufferCollection().push_back(g_pScreenBuffer);
 
 	for (int i = 0; i < 262; i++) {
 		for (int x = 0; x < 341; x++) {
@@ -59,7 +60,8 @@ void ppu_initialize()
 
 void ppu_reset()
 {
-	memset(g_pScreenBuffer, 0xCD, 0x30000);
+	auto& screenBuffer = Application:: getApplication()->getScreenBuffer();
+	memset(screenBuffer.data(), 0xCD, screenBuffer.size());
 
 	PPU_cycles = 0;
 	ppu_update_scanline();

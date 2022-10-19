@@ -1,10 +1,9 @@
 #pragma once
 
-using uint = unsigned int;
-
 void cpu_do_cycle();
 
-void cpu_initialize(void* hInstance, void* hWnd);
+void cpu_reset();
+void cpu_initialize();
 
 uint cpu_get_joy1();
 uint cpu_get_joy2();

@@ -22,6 +22,18 @@
 #define MMC2		9
 #define MMC4		10
 
+
+class Mapper
+{
+public:
+
+
+private:
+
+
+};
+
+
 struct mapper_t {
 	uint (*read_memory)(uint address);
 	uint (*read_ppu_memory)(uint address);

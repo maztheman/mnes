@@ -515,13 +515,14 @@ static inline void ppu_sprite_draw(const uint& ppu_cycle)
 		return;
 	}
 
+	auto* bits = Application:: getApplication()->getScreenBuffer().data();
+
 	for (int i = 0; i < 8; i++) {
 		if (sprite_active[i]) {
 
 			uint RealX = (ppu_cycle - 1);
 			uint RealY = ppu_scanline();
 			uint index = (768 * RealY) + (RealX * 3);
-			uchar *bits = g_pScreenBuffer;
 			uchar *Palette = &g_Palette[0];
 
 			uchar b0 = sprite_bmp0[i].fetch();

@@ -1,12 +1,9 @@
 
-#include <gfx/platform.h>
-
 #include <common/FileLoader.h>
-#include <common/global.h>
-
-#include <sound/apu.h>
 
 #include "processor.h"
+
+#include <gfx/application.h>
 
 //extern mapper_t* g_mapper;
 
@@ -18,23 +15,17 @@ int main(int argc, char* argv[])
 		loaded = CFileLoader::LoadRom(argv[1]);
 	} else {
         //loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/bin/roms/smb1.nes");
-        loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/bin/roms/C1.nes");
+        loaded = CFileLoader::LoadRom("/run/media/ksucre/MIX TAPE/mnes/data/roms/C1.nes");
         //loaded = CFileLoader::LoadRom("/home/kevin/source/mnes/data/roms/Ark.nes");
     }
-
-    InitializeProcessor();
 
     if (loaded)
     {
         Start();
     }
 
-    CGfxManager::mainLoop();
-
-    VBufferCollection().ResetContent();
-	VLogCollection().ResetContent();
-	
-	apu_destroy();
-
-    return 0;
+    //create the application
+    Application app;
+    //run it
+    return app.run();
 }

@@ -1,16 +1,13 @@
 #include "input.h"
 
-#include "platform.h"
+#include "application.h"
 
-std::array<uint32_t, 8> getKeyStates()
+void getKeyStates(std::array<uint32_t, 8>& keyStates)
 {
-    static COpenGLWrapper mainframe(CGfxManager::getMainWindow());
-    std::array<uint32_t, 8> retval = {0};
+    static Application* pApplication = Application::getApplication();
 
     for(uint index = 0; auto key : getKeysInOrder())
     {
-        retval[index++] = static_cast<uint32_t>(mainframe.GetKeyState(key));
+        keyStates[index++] = static_cast<uint32_t>(pApplication->getKeyState(key));
     }
-
-    return retval;
 }

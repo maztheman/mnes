@@ -1,10 +1,10 @@
 SET(SRCS
-    gfx.cpp
-    gfx.h
+    application.cpp
+    application.h
     input.cpp
     input.h
-    platform.cpp
-    platform.h
+    Renderer.cpp
+    Renderer.h
 )
 
 target_sources(mnes PRIVATE ${SRCS})

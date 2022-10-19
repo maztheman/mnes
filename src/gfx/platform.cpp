@@ -507,6 +507,7 @@ CGfxManager::~CGfxManager()
 	glfwTerminate();
 }
 
+// should probably rethink how we create this window. Maybe use ImGui to
 
 uint64_t CGfxManager::getMainWindow()
 {

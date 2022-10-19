@@ -1,8 +1,9 @@
-#include <gfx/input.h>
 
-uint cpu_get_joy1()
+uint32_t cpu_get_joy1()
 {
-	auto keyStates = getKeyStates();
+	static std::array<uint32_t, 8> keyStates;
+
+	getKeyStates(keyStates);
 
 	uint ret = 0;
 
@@ -14,7 +15,7 @@ uint cpu_get_joy1()
 	return ret;
 }
 
-uint cpu_get_joy2()
+uint32_t cpu_get_joy2()
 {
 	return 0;
 }

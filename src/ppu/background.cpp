@@ -121,7 +121,7 @@ static inline void ppu_bg_post_process_shift_regs(const uint& ppu_cycle)
 static inline void ppu_bg_draw(const uint& ppu_cycle)
 {
 	//drawing uses the scanline.front() to get the current lines data
-	uchar *bits = g_pScreenBuffer;
+	auto *bits = Application:: getApplication()->getScreenBuffer().data();
 	uchar *Palette = &g_Palette[0];
 	uint RealX = (ppu_cycle - 1);
 	uint RealY = g_PPURegisters.scanline;

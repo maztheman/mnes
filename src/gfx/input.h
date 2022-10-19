@@ -2,4 +2,4 @@
 
 #include <array>
 
-std::array<uint32_t, 8> getKeyStates();
+void getKeyStates(std::array<uint32_t, 8>& keyStates);
