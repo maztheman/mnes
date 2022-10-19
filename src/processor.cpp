@@ -37,10 +37,12 @@ void UpdateTextureFromPPU()
 
 void Process()
 {
-	if (!g_bCpuRunning) {
+	if (!g_bCpuRunning) 
+	{
 		return;
 	}
-	if (g_PPURegisters.scanline == FIRST) {
+	if (g_PPURegisters.scanline == FIRST) 
+	{
 		g_bDisplayReady = g_bPatternTableReady = g_bNameTableReady = false;
 	} 
 	CPUProcess();

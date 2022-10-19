@@ -15,6 +15,8 @@
 #include <imgui.h>
 
 #include <thread>
+#include <fstream>
+
 #include <common/FileLoader.h>
 
 #include <imgui_impl_glfw.cpp>
@@ -68,10 +70,12 @@ void Application::showFileBrowser()
     {
         if (ImGui::Begin("FileRom", &m_bShowFileBrowser))
         {
-            if (ImGui::BeginListBox("CurrentFiles"))
+            if (ImGui::BeginListBox("##CurrentFiles", ImVec2{-1.0f, -1.0f}))
             {
                 if (ImGui::Selectable(".."))
                 {
+                    std::ofstream settings("mnes.ini", std::ios::out | std::ios::ate);
+                    settings << m_Browser.getCurrentPath().parent_path().generic_string();
                     m_Browser.moveTo(std::filesystem::directory_entry(m_Browser.getCurrentPath().parent_path()));
                 }
                 else
@@ -97,6 +101,8 @@ void Application::showFileBrowser()
                             if (ImGui::Selectable(fmt::format("[D] {}", entry.path().filename().c_str()).c_str()))
                             {
                                 m_Browser.moveTo(entry);
+                                std::ofstream settings("mnes.ini", std::ios::out | std::ios::ate);
+                                settings << entry.path().generic_string();
                                 break;
                             }
                         }
@@ -198,6 +204,20 @@ void Application::addMenu()
 int Application::run()
 {
     init();
+
+    
+    {
+        std::ifstream settings("mnes.ini", std::ios::in | std::ios::app);
+        if (settings)
+        {
+            std::string lastDir;
+            std::getline(settings, lastDir);
+            if (!lastDir.empty())
+            {
+                m_Browser.moveTo(std::filesystem::directory_entry{lastDir});
+            }
+        }
+    }
 
     m_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "mnes 0.3.0", nullptr, nullptr);
 
