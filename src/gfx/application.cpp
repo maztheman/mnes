@@ -116,6 +116,8 @@ void Application::updateMainTexture()
 
 int Application::run()
 {
+    Start();
+    
     init();
 
     m_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "mnes 0.3.0", nullptr, nullptr);

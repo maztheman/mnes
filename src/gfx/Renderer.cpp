@@ -10,6 +10,8 @@
 #include "fragment.cpp"
 #include "vertex.cpp"
 
+//most of this stuff is not needed since imgui is drawing the texture, thanks ImGui!
+
 void Renderer::initVertexBuffers()
 {
     unsigned int VBO;

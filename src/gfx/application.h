@@ -35,11 +35,6 @@ public:
 
     int getKeyState(int key);
 
-    /*void updateProjection(int width, int height)
-    {
-        m_Renderer.updateProjection(width, height);
-    }*/
-
     void updateMainTexture();
 
 private:

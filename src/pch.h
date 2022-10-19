@@ -7,3 +7,5 @@ using uchar = unsigned char;
 using vuchar = std::vector<uchar>;
 
 #include <mappers/mapper.h>
+
+#include <fmt/format.h>

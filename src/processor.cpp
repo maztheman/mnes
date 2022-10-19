@@ -10,7 +10,6 @@
 #include <cpu/memory_registers.h>
 #include <cpu/cpu_opcodes.h>
 
-#include <gfx/gfx.h>
 #include <gfx/application.h>
 
 #include <ppu/ppu.h>
