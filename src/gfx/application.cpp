@@ -68,15 +68,17 @@ void Application::showFileBrowser()
 {
     if (m_bShowFileBrowser)
     {
+        bool shouldMoveDir = false;
+        std::filesystem::directory_entry movedDir;
+
         if (ImGui::Begin("FileRom", &m_bShowFileBrowser))
         {
             if (ImGui::BeginListBox("##CurrentFiles", ImVec2{-1.0f, -1.0f}))
             {
                 if (ImGui::Selectable(".."))
                 {
-                    std::ofstream settings("mnes.ini", std::ios::out | std::ios::ate);
-                    settings << m_Browser.getCurrentPath().parent_path().generic_string();
-                    m_Browser.moveTo(std::filesystem::directory_entry(m_Browser.getCurrentPath().parent_path()));
+                    shouldMoveDir = true;
+                    movedDir = std::filesystem::directory_entry(m_Browser.getCurrentPath().parent_path());
                 }
                 else
                 {
@@ -92,7 +94,6 @@ void Application::showFileBrowser()
                                     reset();
                                     Start();
                                     m_bShowFileBrowser = false;
-                                    break;
                                 }
                             }
                         } 
@@ -100,10 +101,8 @@ void Application::showFileBrowser()
                         {
                             if (ImGui::Selectable(fmt::format("[D] {}", entry.path().filename().c_str()).c_str()))
                             {
-                                m_Browser.moveTo(entry);
-                                std::ofstream settings("mnes.ini", std::ios::out | std::ios::ate);
-                                settings << entry.path().generic_string();
-                                break;
+                                shouldMoveDir = true;
+                                movedDir = entry;
                             }
                         }
                     }
@@ -111,6 +110,15 @@ void Application::showFileBrowser()
                 ImGui::EndListBox();
             }
             ImGui::End();
+        }
+
+        if (shouldMoveDir)
+        {
+            if (movedDir.is_directory())
+            {
+                m_Browser.moveTo(movedDir);
+                writeIni(movedDir.path());
+            }
         }
     }
 }
@@ -201,24 +209,30 @@ void Application::addMenu()
     }
 }
 
+void Application::readIni()
+{
+    if (std::ifstream settings("mnes.ini", std::ios::in | std::ios::app); settings)
+    {
+        std::string lastDir;
+        std::getline(settings, lastDir);
+        if (!lastDir.empty())
+        {
+            m_Browser.moveTo(std::filesystem::directory_entry{lastDir});
+        }
+    }
+}
+
+void Application::writeIni(std::filesystem::path lastDir)
+{
+    std::ofstream settings("mnes.ini", std::ios::out | std::ios::ate);
+    settings << lastDir.generic_string();
+}
+
+
 int Application::run()
 {
     init();
-
-    
-    {
-        std::ifstream settings("mnes.ini", std::ios::in | std::ios::app);
-        if (settings)
-        {
-            std::string lastDir;
-            std::getline(settings, lastDir);
-            if (!lastDir.empty())
-            {
-                m_Browser.moveTo(std::filesystem::directory_entry{lastDir});
-            }
-        }
-    }
-
+    readIni();
     m_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "mnes 0.3.0", nullptr, nullptr);
 
     glfwMakeContextCurrent(m_window);

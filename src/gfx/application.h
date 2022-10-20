@@ -48,6 +48,8 @@ private:
     void GUIStuff();
     void addMenu();
     void showFileBrowser();
+    void readIni();
+    void writeIni(std::filesystem::path lastDir);
 
     static Application* mainApplication;
 

@@ -13,6 +13,7 @@ const std::vector<std::filesystem::directory_entry>& FileBrowser::getFilesFromCu
     m_LastPath = m_CurrentPath;
 
     m_Files.clear();
+    m_Files.reserve(256);
     for(auto entry : std::filesystem::directory_iterator(m_CurrentPath))
     {
         if (entry.is_directory() || entry.is_regular_file())
@@ -21,7 +22,21 @@ const std::vector<std::filesystem::directory_entry>& FileBrowser::getFilesFromCu
         }
     }
 
-    
+    std::sort(m_Files.begin(), m_Files.end(), [](const auto& l, const auto& r) -> bool {
+        if (l.is_directory() && r.is_directory())
+        {
+            return l.path() < r.path();
+        }
+        if (l.is_directory())
+        {
+            return true;
+        }
+        if (r.is_directory())
+        {
+            return false;
+        }
+        return l.path() < r.path();
+    });
 
     return m_Files;
 }
