@@ -18,6 +18,9 @@
 #include <cpu/memory.h>
 #include <cpu/memory_registers.h>
 
+#include <filesystem>
+#include <fstream>
+
 extern void UpdateTextureFromPPU();
 
 uchar	g_RGBPalette[64][3] = { 0 };
@@ -37,13 +40,12 @@ static bool s_bEvenFrame = true;
 
 void ppu_initialize()
 {
-	CFile file("bnes.pal", "r" );
-	if (file.IsOpen() == false) {
-		printf("bnes.pal is not found, cannot run\n");
-		return;
+	std::filesystem::path pall = std::filesystem::current_path() / "bnes.pal";
+
+	if (std::ifstream file(pall, std::ios::in | std::ios::binary); file)
+	{
+		file.read((char*)&g_RGBPalette[0][0], 192);
 	}
-	file.Read( &g_RGBPalette[0][0], 1, 192 );
-	//VBufferCollection().push_back(g_pScreenBuffer);
 
 	for (int i = 0; i < 262; i++) {
 		for (int x = 0; x < 341; x++) {
@@ -60,7 +62,7 @@ void ppu_initialize()
 
 void ppu_reset()
 {
-	auto& screenBuffer = Application:: getApplication()->getScreenBuffer();
+	auto screenBuffer = getScreenData();
 	memset(screenBuffer.data(), 0xCD, screenBuffer.size());
 
 	g_PPURegisters.last_2002_read = -5;

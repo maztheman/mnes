@@ -4,62 +4,13 @@
 #include <functional>
 #include <mutex>
 
-#include "Renderer.h"
-
-#include "FileBrowser.h"
-
-struct GLFWwindow;
+#include <Core/Application.h>
+#include <Core/LayerT.h>
 
 //add some sort of rom state struct to keep some of the globals locally here.
-
-class Application
+class MnesApplication : public GfxEngine::Core::Application<ApplicationPlatform>
 {
 public:
-    Application()
-    {
-        mainApplication = this;
-    }
-    Application(const Application&) = delete;
-    Application(Application&&) = delete;
+    MnesApplication();
 
-    //later we can add something to the application to add pattern buffer table stuff
-
-    //blocks until end
-    int run();
-
-    static Application* getApplication() 
-    {
-        return mainApplication;
-    }
-
-    std::vector<uint8_t>& getScreenBuffer()
-    {
-        return m_Renderer.screenBuffer();
-    }
-
-    int getKeyState(int key);
-
-    void updateMainTexture();
-
-private:
-
-    void reset();
-    void init();
-    void GUIStuff();
-    void addMenu();
-    void showFileBrowser();
-    void readIni();
-    void writeIni(std::filesystem::path lastDir);
-
-    static Application* mainApplication;
-
-    GLFWwindow* m_window;
-    Renderer m_Renderer;
-    std::mutex m_mutex;
-    bool m_bShowFileBrowser{false};
-    FileBrowser m_Browser;
 };
-
-const std::array<int, 8>& getKeysInOrder();
-
-

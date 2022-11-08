@@ -61,7 +61,7 @@ void aorom_reset()
 		g_PPUTable[n] = &s_arVRAM[(0x400 * n)];
 	}
 
-	s_n32kBankMask = (g_ines_format.prg_rom_count * 8) - 1;
+	s_n32kBankMask = (g_ines_format.prg_rom_count * 8) - 1U;
 
 	if ((g_ines_format.rom_control_1 & 8) == 8) {
 		//don't do this

@@ -12,6 +12,9 @@
 
 #include "joystick.cpp"
 
+static int64_t cpu_cycle = 0;
+
+
 void cpu_initialize()
 {
 	//joy1.create(hInstance, hWnd);
@@ -35,6 +38,23 @@ void cpu_do_cycle()
 	ppu_do_cycle();
 
 	g_mapper->do_cpu_cycle();
+
+	cpu_cycle--;
+}
+
+void cpu_cycle_reset(int64_t count)
+{
+	cpu_cycle += count;
+}
+
+void cpu_cycle_set(int64_t count)
+{
+	cpu_cycle = count;
+}
+
+int64_t cpu_get_cycle()
+{
+	return cpu_cycle;
 }
 
 void cpu_reset()

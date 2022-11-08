@@ -20,13 +20,13 @@ add_executable(mnes ${SRCS})
 target_link_libraries(
   mnes
   PUBLIC project_options project_warnings
-  PRIVATE CLI11::CLI11 fmt::fmt spdlog::spdlog glad::glad glfw::glfw glm::glm imgui::imgui)
+  PRIVATE CLI11::CLI11 fmt::fmt spdlog::spdlog glm::glm imgui::imgui GfxEngine)
 
-target_include_directories(mnes PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include" "." "${CMAKE_BINARY_DIR}/bindings")
-target_compile_definitions(mnes PRIVATE IMGUI_IMPL_OPENGL_LOADER_CUSTOM)
+target_include_directories(mnes PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include" ".")
 
 target_precompile_headers(mnes PRIVATE "pch.h")
 
+add_subdirectory(GfxEngine)
 add_subdirectory(common)
 add_subdirectory(cpu)
 add_subdirectory(gfx)

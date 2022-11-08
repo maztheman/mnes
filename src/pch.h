@@ -9,3 +9,9 @@ using vuchar = std::vector<uchar>;
 #include <mappers/mapper.h>
 
 #include <fmt/format.h>
+
+#include <PlatformType.h>
+#include <Platform/OpenGL330/OpenGLPlatform.h>
+
+using ApplicationPlatform = GfxEngine::Platform::OpenGL330::OpenGL330Platform;
+

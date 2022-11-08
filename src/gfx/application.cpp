@@ -1,8 +1,5 @@
 #include "application.h"
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 #include <mutex>
 #include <functional>
 
@@ -19,51 +16,20 @@
 
 #include <common/FileLoader.h>
 
-#include <imgui_impl_glfw.cpp>
-#include <imgui_impl_opengl3.cpp>
-
+#include "MainLayer.h"
 
 constexpr const int WINDOW_WIDTH = 800;
 constexpr const int WINDOW_HEIGHT = 600;
 
+using namespace std::string_view_literals;
 
-Application* Application::mainApplication = nullptr;
-
-const std::array<int, 8>& getKeysInOrder()
+MnesApplication::MnesApplication()
+: GfxEngine::Core::Application<ApplicationPlatform>(WINDOW_WIDTH, WINDOW_HEIGHT, "mnes 1.0.0"sv)
 {
-    static std::array<int, 8> s_Keys = {
-        GLFW_KEY_APOSTROPHE, GLFW_KEY_SEMICOLON,  //A, B
-        GLFW_KEY_K, GLFW_KEY_L, //select, start
-        GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D //up, down, left, right
-    };
-    return s_Keys;
+    
 }
 
-void Application::reset()
-{
-    cpu_reset();
-    ppu_initialize();
-    apu_initialize();
-    cpu_initialize();
-}
-
-void Application::init()
-{
-    printf("glfwInit()\n");
-	if (GLFW_FALSE == glfwInit())
-	{
-		printf("Error initting glfw\n");
-	}
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-}
-
-int Application::getKeyState(int key)
-{
-    return glfwGetKey(m_window, key) == GLFW_PRESS ? 1 : 0;
-}
-
+#if 0
 void Application::showFileBrowser()
 {
     if (m_bShowFileBrowser)
@@ -146,22 +112,7 @@ void Application::GUIStuff()
         ImGui::End();
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0.0f,0.0f});
-    if (ImGui::Begin("GameWindow", nullptr, ImGuiWindowFlags_NoTitleBar))
-    {
-        // Using a Child allow to fill all the space of the window.
-        // It also alows customization
-        if (ImGui::BeginChild("GameRender"))
-        {
-            // Get the size of the child (i.e. the whole draw size of the windows).
-            ImVec2 wsize = ImGui::GetWindowSize();
-            // Because I use the texture from OpenGL, I need to invert the V from the UV.
-            ImGui::Image((ImTextureID)m_Renderer.getMainTextureID(), wsize);
-            ImGui::EndChild();
-        }
-        ImGui::End();
-    }
-    ImGui::PopStyleVar();
+    
 
     ImGui::Render();
     int display_w, display_h;
@@ -279,3 +230,6 @@ int Application::run()
 
     return 0;
 }
+
+
+#endif

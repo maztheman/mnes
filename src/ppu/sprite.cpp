@@ -259,7 +259,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 #if 1
 	static uint pattern_table_addr = 0;
 	//use this switch eventually
-	const uint cuHeight = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
+	//const uint cuHeight = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
 	//sprite cycle 0, 1, 2, 3 -- Garbage fetches
 	//something must have happen in 0 and 2 but its junk
 	switch (sprite_cycle)
@@ -338,20 +338,18 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			sprite_count[selected_index] = oam2nd[idx + 3];
 		}
 	} else if (sprite_cycle == 6) {
-		const uint height = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
 		g_MemoryRegisters.ppu_addr_bus += 8;
 		pattern_table_addr += 8;
 		if (selected_index < sprite_state.oam_2nd_index) {
-			MLOG_PPU("Sprite C6: A:$%04X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), height)
+			MLOG_PPU("Sprite C6: A:$%04X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8))
 		}
 	} else if (sprite_cycle == 5) {
-		const uint height = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
 		if (selected_index >= sprite_state.oam_2nd_index) {
 			ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
 			sprite_bmp0[selected_index].set(0);
 		} else {
 			uchar b0 = ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);
-			MLOG_PPU("Sprite C5: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b0, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), height)
+			MLOG_PPU("Sprite C5: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b0, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8))
 			if (g_MemoryRegisters.ppu_addr_bus != pattern_table_addr) {
 				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", g_MemoryRegisters.ppu_addr_bus, pattern_table_addr)
 			}
@@ -361,13 +359,12 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			sprite_bmp0[selected_index].set(b0);
 		}
 	} else if (sprite_cycle == 7) {
-		const uint height = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
 		if (selected_index >= sprite_state.oam_2nd_index) {
 			ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
 			sprite_bmp1[selected_index].set(0);
 		} else {
 			uchar b1 = ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);
-			MLOG_PPU("Sprite C7: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b1, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), height)
+			MLOG_PPU("Sprite C7: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b1, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8))
 			if (g_MemoryRegisters.ppu_addr_bus != pattern_table_addr) {
 				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", g_MemoryRegisters.ppu_addr_bus, pattern_table_addr)
 			}
@@ -515,7 +512,7 @@ static inline void ppu_sprite_draw(const uint& ppu_cycle)
 		return;
 	}
 
-	auto* bits = Application:: getApplication()->getScreenBuffer().data();
+	auto bits = getScreenData();
 
 	for (int i = 0; i < 8; i++) {
 		if (sprite_active[i]) {

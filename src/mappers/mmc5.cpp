@@ -15,7 +15,7 @@ static bool s_bInFrame{ false };
 static uint s_ScanLineCount = 0;
 static bool s_bIRQPending = false;
 static bool s_bPPUIsReading = false;
-static uint s_LastAddr = ~0UL;
+static uint s_LastAddr = ~0U;
 
 
 /// <summary>
@@ -206,7 +206,7 @@ uint mmc5_read(uint address)
 {
 	if (address == 0xFFFA || address == 0xFFFB) {
 		s_bInFrame = false;
-		s_LastAddr = ~0UL;
+		s_LastAddr = ~0U;
 	}
 
 	if (address < 0x6000) {
@@ -255,7 +255,7 @@ void mmc5_write(uint address, uint value)
 {
 	if (address == 0x2001 && (value & 0x18) == 0) {
 		s_bInFrame = false;
-		s_LastAddr = ~0UL;
+		s_LastAddr = ~0U;
 	}
 
 	if (address == 0x5100) {
@@ -307,7 +307,7 @@ void mmc5_write(uint address, uint value)
 		//
 		s_r5C00[address & 0x3FF] = value & 0xFF;
 	} else {
-		int look = 0;
+		
 	}
 
 	mmc5_setup_prg();
@@ -487,5 +487,5 @@ static uint mmc5_mode_3_read(uint address)
 		return g_arRawData[address];
 	}
 
-	return ~0;//basically a bad null 
+	return ~0U;//basically a bad null 
 }

@@ -2,6 +2,8 @@
 
 #include <functional>
 
+#include "gfx/data.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,7 +18,7 @@ void ppu_reset();
 uint ppu_get_cycle();
 uint ppu_get_current_scanline_cycle();
 
-extern uchar* g_pScreenBuffer;
+//extern uchar* g_pScreenBuffer;
 extern uchar g_RGBPalette[64][3];
 
 struct spritebmp_t {
@@ -29,8 +31,8 @@ struct spritebmp_t {
 		reg &= 0x7F;
 		reg <<= 1;
 	}
-	uint fetch() {
-		return (reg >> 7) & 1;
+	uchar fetch() {
+		return static_cast<uchar>((reg >> 7) & 1);
 	}
 };
 

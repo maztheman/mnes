@@ -1,15 +1,11 @@
 
 uint32_t cpu_get_joy1()
 {
-	static std::array<uint32_t, 8> keyStates;
-
-	getKeyStates(keyStates);
-
 	uint ret = 0;
 
-	for(uint key = 0; auto keyState : keyStates)
+	for(auto& myKey : KEYS)
 	{
-		ret |= (keyState & 1) << key++;
+		ret |= (myKey.second.second ? 1 : 0) << myKey.second.first;
 	}
 
 	return ret;

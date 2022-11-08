@@ -1,9 +1,13 @@
 #include <gfx/application.h>
+#include <gfx/MainLayer.h>
 
 int main()
 {
     //create the application
-    Application app;
+    MnesApplication app;
+    app.AddLayer(Main());
     //run it
-    return app.run();
+    app.Run();
+
+    return 0;
 }

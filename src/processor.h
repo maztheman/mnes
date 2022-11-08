@@ -3,4 +3,4 @@
 void Stop();
 void Start();
 void Resume();
-void Process();
+void Process(int64_t cyclesToExecute);

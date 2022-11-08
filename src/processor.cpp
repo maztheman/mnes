@@ -18,6 +18,8 @@
 
 #include <sound/apu.h>
 
+#include <gfx/MainLayer.h>
+
 #include <cstring>
 
 #define FIRST   0
@@ -26,26 +28,22 @@ extern void cpu_reset();
 
 vuchar g_pPatternTableBuffer(0x30000);
 
-void CPUProcess();
+void CPUProcess(int64_t cyclesToExecute);
 
 void UpdateTextureFromPPU()
 {
-	static Application* app = Application::getApplication();
 	g_bDisplayReady = g_bPatternTableReady = g_bNameTableReady = true;
-	app->updateMainTexture();
+	Main()->UpdateTexture();
 }
 
-void Process()
+void Process(int64_t cyclesToExecute)
 {
 	if (!g_bCpuRunning) 
 	{
 		return;
 	}
-	if (g_PPURegisters.scanline == FIRST) 
-	{
-		g_bDisplayReady = g_bPatternTableReady = g_bNameTableReady = false;
-	} 
-	CPUProcess();
+	
+	CPUProcess(cyclesToExecute);
 }
 
 void Stop()
@@ -66,11 +64,21 @@ void Resume()
     g_bCpuRunning = true;
 }
 
-void CPUProcess()
+void CPUProcess(int64_t cyclesToExecute)
 {
-	//gotta process until the display is ready. hopefully works in all cases
-	while(g_bDisplayReady == false)
+	//we want to execute #cyclesToExecute, but realistically we will overflow by a certain amount, we will borrow for next time
+	cpu_cycle_reset(cyclesToExecute);
+
+	while(cpu_get_cycle() > 0)
 	{
 		memory_pc_process(); //should be cycle accurate
+
+		if (g_bDisplayReady)
+		{
+			g_bDisplayReady = g_bPatternTableReady = g_bNameTableReady = false;
+			//at the end of the frame lets just not care ? maybe we never care?
+			break;//so we can write the texture
+		}
 	}
+	cpu_cycle_set(0);
 }
