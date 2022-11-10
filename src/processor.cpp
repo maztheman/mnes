@@ -66,7 +66,7 @@ void Resume()
 
 void CPUProcess(int64_t cyclesToExecute)
 {
-	//we want to execute #cyclesToExecute, but realistically we will overflow by a certain amount, we will borrow for next time
+	//we want to execute #cyclesToExecute, but realistically we will overflow by a certain amount
 	cpu_cycle_reset(cyclesToExecute);
 
 	while(cpu_get_cycle() > 0)

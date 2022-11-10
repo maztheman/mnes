@@ -12,6 +12,7 @@
 #include <imgui.h>
 
 #include <fstream>
+#include <execution>
 
 const std::shared_ptr<MainLayer>& Main()
 {
@@ -34,6 +35,7 @@ MainLayer::~MainLayer()
 
 void MainLayer::OnAttach(WindowHandle window)
 {
+    m_Window = window;
     m_Texture = std::make_shared<TextureType>(GfxEngine::PixelType::RGB8, 256, 256);
     readIni();
 }
@@ -53,9 +55,13 @@ void MainLayer::OnDetach()
 
 }
 
+bool MainLayer::IsKeyPressed(Key key) const
+{
+    return API::IsKeyPressed(m_Window, key);
+}
+
 void MainLayer::OnKeyEvent(Key key, int action, int extra, bool& handled)
 {
-    KEYS[key].second = action == 1 ? true : false;
     handled = true;
 }
 
@@ -186,8 +192,11 @@ void MainLayer::OnImGui()
         {
             // Get the size of the child (i.e. the whole draw size of the windows).
             ImVec2 wsize = ImGui::GetWindowSize();
+            static constexpr ImVec2 txTL = {0.0f, 8.0f / 256.0f};
+            static constexpr ImVec2 txBR = {1.0f, 231.0 / 256.0f};
+
             // Because I use the texture from OpenGL, I need to invert the V from the UV.
-            ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<intptr_t>(m_Texture->GetTextureID())), wsize);
+            ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<intptr_t>(m_Texture->GetTextureID())), wsize, txTL, txBR);
             ImGui::EndChild();
         }
         ImGui::End();
@@ -197,6 +206,8 @@ void MainLayer::OnImGui()
 
 void MainLayer::UpdateTexture()
 {
+    auto tx = getScreenData().subspan(256 * 240 * 3, 256 * 16 * 3);
+    memset(tx.data(), 0, tx.size_bytes());
     m_Texture->SetData(getScreenData());
 }
 

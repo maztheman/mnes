@@ -19,6 +19,8 @@ public:
 
     void UpdateTexture();
 
+    bool IsKeyPressed(Key key) const;
+
 private:
 
     void OnKeyEvent(Key key, int action, int extra, bool& handled) override;
@@ -29,6 +31,7 @@ private:
 
     bool m_bShowFileBrowser;
     std::shared_ptr<TextureType> m_Texture;
+    WindowHandle m_Window;
     FileBrowser m_Browser;
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
     std::chrono::high_resolution_clock::time_point last = now;

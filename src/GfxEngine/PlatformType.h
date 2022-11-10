@@ -3,6 +3,8 @@
 #include <concepts>
 #include <string_view>
 
+#include "KeyType.h"
+
 namespace GfxEngine
 {
     using namespace std::string_view_literals;
@@ -31,6 +33,7 @@ namespace GfxEngine
             T::ImGuiBeginRender();
             T::ImGuiEndRender();
             T::Clear();
+            { T::IsKeyPressed(Handle, Key::A) } -> std::same_as<bool>;
         };
     }
 

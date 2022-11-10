@@ -10,6 +10,8 @@
 
 #include <algorithm>
 
+#include "gfx/MainLayer.h"
+
 #include "joystick.cpp"
 
 static int64_t cpu_cycle = 0;

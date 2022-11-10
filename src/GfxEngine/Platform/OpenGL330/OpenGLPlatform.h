@@ -43,6 +43,8 @@ public:
     static void Clear();
 
     static void SwapBuffers(WindowHandle window);
+
+    static bool IsKeyPressed(WindowHandle window, Key key);
 };
 
 }

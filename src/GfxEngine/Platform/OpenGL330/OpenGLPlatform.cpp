@@ -91,6 +91,24 @@ void OpenGL330Platform::SwapBuffers(WindowHandle window)
     glfwSwapBuffers(window);
 }
 
+static constexpr std::array<int, 78> KEY_MAP = {
+    GLFW_KEY_A,
+    GLFW_KEY_W,
+    GLFW_KEY_D,
+    GLFW_KEY_S,
+    GLFW_KEY_APOSTROPHE,
+    GLFW_KEY_SEMICOLON,
+    GLFW_KEY_L,
+    GLFW_KEY_K
+};
+
+
+bool OpenGL330Platform::IsKeyPressed(WindowHandle window, Key key)
+{
+    return glfwGetKey(window, KEY_MAP[key]) == GLFW_PRESS;
+}
+
+
 void OpenGL330Platform::SetClearColor(const glm::vec4& color)
 {
     glClearColor(color.x, color.y, color.z, color.w);
@@ -112,16 +130,6 @@ static void WindowCloseCallback(GLFWwindow* window)
     }
 }
 
-static constexpr std::array<int, 78> KEY_MAP = {
-    GLFW_KEY_A,
-    GLFW_KEY_W,
-    GLFW_KEY_D,
-    GLFW_KEY_S,
-    GLFW_KEY_APOSTROPHE,
-    GLFW_KEY_SEMICOLON,
-    GLFW_KEY_L,
-    GLFW_KEY_K
-};
 
 static constexpr Key GLFWKeyToKey(int key)
 {

@@ -1,5 +1,6 @@
 #pragma once
 
+#if 0
 #include <unordered_map>
 
 #include <KeyType.h>
@@ -16,7 +17,7 @@ static std::unordered_map<KEY, std::pair<const int, bool>> KEYS = {
     std::make_pair(KEY::A, std::make_pair(6, false)),
     std::make_pair(KEY::D, std::make_pair(7, false))
 };
-
+#endif
 
 void cpu_do_cycle();
 void cpu_cycle_reset(int64_t count);

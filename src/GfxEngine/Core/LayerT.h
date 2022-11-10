@@ -21,6 +21,7 @@ template<PlatformType T>
 class LayerT
 {
 public:
+    using API = T;
     using WindowHandle = typename T::WindowHandle;
     using Timediff = GfxEngine::Timediff;
     using TextureType = typename T::TextureType;
