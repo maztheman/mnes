@@ -35,6 +35,9 @@ private:
     FileBrowser m_Browser;
     std::chrono::high_resolution_clock::time_point now = std::chrono::high_resolution_clock::now();
     std::chrono::high_resolution_clock::time_point last = now;
+    int m_ZoomLevel{1};
+    bool m_bFileLoaded{false};
+    std::string m_RomName;
 };
 
 

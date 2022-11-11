@@ -111,8 +111,43 @@ void MainLayer::addMenu()
             }
             ImGui::EndMenu();
         }
+        if (ImGui::BeginMenu("Zoom"))
+        {
+            if (ImGui::MenuItem("1X"))
+            {
+                m_ZoomLevel = 1;
+            }
+            if (ImGui::MenuItem("2X"))
+            {
+                m_ZoomLevel = 2;
+            }
+            if (ImGui::MenuItem("3X"))
+            {
+                m_ZoomLevel = 3;
+            }
+            if (ImGui::MenuItem("4X"))
+            {
+                m_ZoomLevel = 4;
+            }
+
+            ImGui::EndMenu();
+        }
         ImGui::EndMainMenuBar();
     }
+}
+
+
+
+static void KeepAspectRatio(ImGuiSizeCallbackData* data)
+{ 
+    float aspect_ratio = *(float*)data->UserData;
+    data->DesiredSize.x = std::max(data->CurrentSize.x, data->CurrentSize.y);
+    data->DesiredSize.y = std::round((data->DesiredSize.x / aspect_ratio) + 0.5f);
+}
+
+static void KeepItASquare(ImGuiSizeCallbackData* data)
+{
+    data->DesiredSize.x = data->DesiredSize.y = std::max(data->CurrentSize.x, data->CurrentSize.y);
 }
 
 void MainLayer::OnImGui()
@@ -121,6 +156,7 @@ void MainLayer::OnImGui()
     {
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Text("Tick: %ld  ", g_Registers.tick_count);
+        ImGui::SliderInt("Zoom", &m_ZoomLevel, 1, 4);
         ImGui::End();
     }
 
@@ -154,6 +190,8 @@ void MainLayer::OnImGui()
                                     reset();
                                     Start();
                                     m_bShowFileBrowser = false;
+                                    m_bFileLoaded = true;
+                                    m_RomName = entry.path().stem().generic_string();
                                 }
                             }
                         } 
@@ -182,26 +220,28 @@ void MainLayer::OnImGui()
         }
     }
 
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0.0f,0.0f});
-    if (ImGui::Begin("GameWindow", nullptr, ImGuiWindowFlags_NoTitleBar))
+    if (m_bFileLoaded)
     {
-        // Using a Child allow to fill all the space of the window.
-        // It also alows customization
-        if (ImGui::BeginChild("GameRender"))
-        {
-            // Get the size of the child (i.e. the whole draw size of the windows).
-            ImVec2 wsize = ImGui::GetWindowSize();
-            static constexpr ImVec2 txTL = {0.0f, 8.0f / 256.0f};
-            static constexpr ImVec2 txBR = {1.0f, 231.0 / 256.0f};
+        ImGui::SetNextWindowSize(ImVec2(256.0f * m_ZoomLevel, 224.0f * m_ZoomLevel));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0.0f,0.0f});
+        ImGui::Begin(m_RomName.c_str(), &m_bFileLoaded, 0); //ImGuiWindowFlags_NoTitleBar
+        ImGui::PopStyleVar();
+        // Get the size of the child (i.e. the whole draw size of the windows).
+        ImVec2 wsize = ImGui::GetWindowSize();
+        wsize.y -= ImGui::GetFrameHeight();
+        
+        static constexpr ImVec2 txTL = {0.0f, 8.0f / 256.0f};
+        static constexpr ImVec2 txBR = {1.0f, 231.0f / 256.0f};
 
-            // Because I use the texture from OpenGL, I need to invert the V from the UV.
-            ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<intptr_t>(m_Texture->GetTextureID())), wsize, txTL, txBR);
-            ImGui::EndChild();
-        }
+        // Because I use the texture from OpenGL, I need to invert the V from the UV.
+        ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<intptr_t>(m_Texture->GetTextureID())), wsize, txTL, txBR);
         ImGui::End();
+
+        if (m_bFileLoaded == false)
+        {
+            Stop();
+        }
     }
-    ImGui::PopStyleVar();
 }
 
 void MainLayer::UpdateTexture()
