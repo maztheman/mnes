@@ -1,6 +1,6 @@
 #include "cpu_registers.h"
 
-Registers g_Registers = {0};
+Registers g_Registers;
 
 void set_dpcm_irq()
 {

@@ -5,7 +5,7 @@
 #include <span>
 #include <array>
 
-static constexpr auto VRAM_SIZE = 64 + 0x800;
+using namespace mnes::memory;
 
 struct ppu_memory_t
 {
@@ -18,19 +18,19 @@ struct ppu_memory_t
 	};
 	std::unique_ptr<uint8_t[]> VRAM = std::make_unique<uint8_t[]>(VRAM_SIZE);
 
-	std::span<uint8_t> VRAMSPAN()
+	vram_memory_t VRAMSPAN()
 	{
-		return std::span<uint8_t>(VRAM.get(), VRAM_SIZE);
+		return vram_memory_t(VRAM.get(), VRAM_SIZE);
 	}
 
-	std::span<uint8_t> Palette()
+	palette_memory_t Palette()
 	{
-		return VRAMSPAN().subspan(0, 64);
+		return palette_memory_t(VRAMSPAN().subspan(PALETTE_OFFSET, PALETTE_SIZE));
 	}
 
-	std::span<uint8_t> NTRam()
+	ntram_memory_t NTRam()
 	{
-		return VRAMSPAN().subspan(64, 0x800);
+		return ntram_memory_t(VRAMSPAN().subspan(NTRAM_OFFSET, NTRAM_SIZE));
 	}
 };
 
@@ -50,12 +50,12 @@ std::array<uint8_t*, 4>& Tables()
 	return ppu_memory().Tables;
 }
 
-std::span<uint8_t> Palette()
+palette_memory_t Palette()
 {
 	return ppu_memory().Palette();
 }
 
-std::span<uint8_t> NTRam()
+ntram_memory_t NTRam()
 {
 	return ppu_memory().NTRam();
 }
@@ -94,14 +94,14 @@ void ppu_memory_main_write(uint address, uint value)
 
 	//Pattern Table
 	if (address < 0x2000) {
-		ppu_memory().PPUTable[address >> 0xAU][address & 0x3FF] = value;
+		ppu_memory().PPUTable[address >> 0xAU][address & 0x3FF] = TO_BYTE(value);
 		return;
 	}
 
 	//Name Table
 	if (address < 0x3F00) {
 		size_t index = (address&0xC00)>>10;
-		ppu_memory().Tables[index][address & 0x3FF] = value;
+		ppu_memory().Tables[index][address & 0x3FF] = TO_BYTE(value);
 		return;
 	}
 
@@ -112,10 +112,10 @@ void ppu_memory_main_write(uint address, uint value)
 	if (auto palette = ppu_memory().Palette(); tmp <= 0x10)
 	{
 		tmp &= 0xF;
-		palette[tmp] = val;
+		palette[tmp] = TO_BYTE(val);
 		palette[0xC] = palette[0x8] = palette[0x4] = palette[0x0];
 		palette[0x10] = palette[0x1C] = palette[0x18] = palette[0x14] = palette[0x0];
 	} else {
-		palette[tmp] = val;
+		palette[tmp] = TO_BYTE(val);
 	}
 }

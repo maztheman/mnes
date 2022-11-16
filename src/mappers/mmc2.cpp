@@ -93,34 +93,43 @@ static void mmc2_reset()
 	s_nLatchSelector = 0xFE;
 	s_pVROM = nullptr;
 
-	s_n8KbPRomMask = (format.prg_rom_count * 2) - 1;
+	s_n8KbPRomMask = (format.prg_rom_count * 2U) - 1U;
 
 	for (uint n = 0; n < 2; n++) {
 		romData[n] = rawData.subspan((0x1000) * n).data();
 	}
 
-	uint nLastBank = ((format.prg_rom_count * 2) - 3) * 0x2000;
+	uint nLastBank = ((format.prg_rom_count * 2U) - 3U) * 0x2000U;
 	uint tmp = 0x0000;
-	for (uint n = 2; n < 8; n++, tmp += 0x1000) {
+	for (uint n = 2; n < 8; n++, tmp += 0x1000)
+	{
 		romData[n] = rawData.subspan(nLastBank + tmp).data();
 	}
 
 	nLastBank += 0x6000;
 
-	if (format.chr_rom_count > 0) {
-		s_n4KbVRomMask = (format.chr_rom_count * 2) - 1;
+	if (format.chr_rom_count > 0)
+	{
+		s_n4KbVRomMask = (format.chr_rom_count * 2U) - 1U;
 		s_pVROM = rawData.subspan(nLastBank).data();
-	} else {
+	}
+	else
+	{
 		s_n4KbVRomMask = 15;
 		s_arVRAM.resize(0x2000);
 		s_pVROM = &s_arVRAM[0];
 	}
 
-	if ((format.rom_control_1 & 8) == 8) {
+	if ((format.rom_control_1 & 8) == 8)
+	{
 		//SetFourScreenMirror();
-	} else if ((format.rom_control_1 & 1) == 1) {
+	}
+	else if ((format.rom_control_1 & 1) == 1)
+	{
 		SetVerticalMirror();
-	} else {
+	}
+	else
+	{
 		SetHorizontalMirror();
 	}
 }
@@ -128,10 +137,13 @@ static void mmc2_reset()
 static uint mmc2_ppu_read(uint address)
 {
 	uint test = address & 0xFFF;
-	if (test >= 0xFD0 && test <= 0xFDF) {
+	if (test >= 0xFD0 && test <= 0xFDF)
+	{
 		s_nLatchSelector = 0xFD;
 		mmc2_sync();
-	} else if (test >= 0xFE0 && test <= 0xFEF) {
+	}
+	else if (test >= 0xFE0 && test <= 0xFEF)
+	{
 		s_nLatchSelector = 0xFE;
 		mmc2_sync();
 	}

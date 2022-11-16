@@ -81,7 +81,7 @@ bool show_sprite_leftmost_8px()
 	return (g_MemoryRegisters.r2001 & 0x4) == 0x4;
 }
 
-uint ppu_addr_bus()
+uint32_t ppu_addr_bus()
 {
 	return g_MemoryRegisters.ppu_addr_bus;
 }

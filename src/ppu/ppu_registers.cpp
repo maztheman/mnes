@@ -2,7 +2,7 @@
 
 ppu_registers& PPURegs()
 {
-	static ppu_registers instance = {241, (uint)-5};
+	static ppu_registers instance = {241, NULL_LAST_READ};
 	return instance;
 }
 

@@ -1,5 +1,8 @@
 #pragma once
 
+
+static constexpr uint32_t NULL_LAST_READ = static_cast<uint32_t>(-5);
+
 struct ppu_registers 
 {
 	uint32_t scanline;

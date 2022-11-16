@@ -28,14 +28,17 @@ static uint nrom_read(uint address)
 {
 	static auto& romData = RomData();
 
-	if (address >= 0x6000 && address < 0x8000) {
-		if (current_mapper()->m_bSaveRam) {
+	if (address >= 0x6000 && address < 0x8000)
+	{
+		if (current_mapper()->m_bSaveRam)
+		{
 			return SRam()[address & 0x1FFF];
 		}
 	}
 
-	if (address >= 0x8000 && address <= 0xFFFF) {
-		uint bank = (address >> 0xC) - 8;
+	if (address >= 0x8000 && address <= 0xFFFF)
+	{
+		uint bank = (address >> 0xCU) - 8U;
 		return romData[bank][address & 0xFFF];
 	}
 

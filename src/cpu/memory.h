@@ -33,3 +33,5 @@ mnes::memory::main_memory_t MainMemory();
 mnes::memory::sram_memory_t SRam();
 mnes::memory::spr_ram_t SPRRam();
 mnes::memory::tmp_spr_ram_t TmpSPRRam();
+
+

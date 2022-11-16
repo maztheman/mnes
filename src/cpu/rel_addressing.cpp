@@ -43,6 +43,7 @@ void memory_rel()
     bool bTakeBranch = false;
     switch (g_Registers.opCode) 
     {
+        using namespace mnes::opcodes;
     case OPCODE_BCC:
         bTakeBranch = cpu_bcc();
         break;

@@ -18,6 +18,7 @@ void memory_w_absolute()
 	//4.1 Do Operation
 	switch (g_Registers.opCode)
 	{
+	using namespace mnes::opcodes;
 	case OPCODE_STA_AB:
 		cpu_sta();
 		break;
@@ -48,7 +49,9 @@ void memory_w_zero_page()
 	//2
 	uint address = ext_memory_read(g_Registers.pc++);
 	//3.1
-	switch (g_Registers.opCode) 	{
+	switch (g_Registers.opCode)
+	{
+		using namespace mnes::opcodes;
 	case OPCODE_STA_ZP:
 		cpu_sta();
 		break;
@@ -94,7 +97,9 @@ static inline void memory_w_zero_page_indexed(const uint& indexRegister)
 	//3.2 add index register to address
 	address = TO_ZERO_PAGE(address + indexRegister);
 	//4.1 Do Operation
-	switch (g_Registers.opCode) {
+	switch (g_Registers.opCode)
+	{
+	using namespace mnes::opcodes;		
 	case OPCODE_STA_ZP_X:
 		cpu_sta();
 		break;
@@ -162,6 +167,7 @@ void memory_w_absolute_indexed(const uint& indexRegister)
 	//5.1 Do Operation
 	switch (g_Registers.opCode)
 	{
+	using namespace mnes::opcodes;
 	case OPCODE_STA_AB_X:
 	case OPCODE_STA_AB_Y:
 		cpu_sta();
@@ -226,6 +232,7 @@ void memory_w_indexed_indirect()
 	//6.1 Do Operation
 	switch (g_Registers.opCode)
 	{
+	using namespace mnes::opcodes;		
 	case OPCODE_STA_IN_X:
 		cpu_sta();
 		break;
@@ -273,6 +280,7 @@ void memory_w_indirect_indexed()
 	//6.1 Do Operation
 	switch (g_Registers.opCode)
 	{
+	using namespace mnes::opcodes;		
 	case OPCODE_STA_IN_Y:
 		cpu_sta();
 		break;

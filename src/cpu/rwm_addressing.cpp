@@ -29,6 +29,7 @@ Notes: * The high byte of the effective address may be invalid
 */
 static inline void memory_rmw_absolute_indexed(const uint& indexRegister)
 {
+    using namespace mnes::opcodes;
     //2
     uint pcl = ext_memory_read(g_Registers.pc++);
     //3
@@ -146,7 +147,9 @@ static inline void memory_rwm_absolute()
     //5.1
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
     //5.1 Do the operation
-    switch (g_Registers.opCode)     {
+    switch (g_Registers.opCode)
+    {
+    using namespace mnes::opcodes;        
     case OPCODE_ASL_AB:
         cpu_asl();
         break;
@@ -210,7 +213,9 @@ static inline void memory_rwm_zero_page()
     MLOG(" $%02X <- $%02X", g_Registers.addressLatch, g_Registers.byteLatch);
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
     //4.2 Do the operation
-    switch (g_Registers.opCode) {
+    switch (g_Registers.opCode)
+    {
+    using namespace mnes::opcodes;        
     case OPCODE_ASL_ZP:
         cpu_asl();
         break;
@@ -284,7 +289,9 @@ static inline void memory_rwm_zero_page_indexed_x()
     //5.1
     ext_memory_write(effectiveAddress, g_Registers.byteLatch);
     //5.2 Do Operation
-    switch (g_Registers.opCode) {
+    switch (g_Registers.opCode)
+    {
+    using namespace mnes::opcodes;        
     case OPCODE_ASL_ZP_X:
         cpu_asl();
         break;
@@ -368,6 +375,7 @@ static inline void memory_rwm_indexed_indirect()
     //7.2
     switch (g_Registers.opCode)
     {
+    using namespace mnes::opcodes;        
     case OPCODE_SLO_IN_X:
         cpu_slo();
         break;
@@ -438,7 +446,9 @@ static inline void memory_rwm_indirect_indexed()
     //7.1
     ext_memory_write(g_Registers.addressLatch, g_Registers.byteLatch);
     //7.2 - Do Operation
-    switch (g_Registers.opCode)     {
+    switch (g_Registers.opCode)
+    {
+    using namespace mnes::opcodes;        
     case OPCODE_SLO_IN_Y:
         cpu_slo();
         break;

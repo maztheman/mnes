@@ -3,6 +3,7 @@ static inline void memory_implied_or_accumulator()
 	ext_memory_read(g_Registers.pc);
 	switch (g_Registers.opCode)
 	{
+		using namespace mnes::opcodes;
 	case OPCODE_CLC:
 		cpu_clc();
 		break;

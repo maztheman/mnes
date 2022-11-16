@@ -47,15 +47,15 @@ static uint8_t ppu_render_latch[4] = { 0 };
 
 static inline uint8_t get_attribute_byte(uint value, uint screen)
 {
-	return (((value & (3 << (screen << 1))) >> (screen << 1)))/* << 2*/;
+	return TO_BYTE(((value & (3 << (screen << 1))) >> (screen << 1)));
 }
 
 static inline uint8_t ppu_memory_main_read_byte(uint address)
 {
-	return static_cast<uint8_t>(ppu_memory_main_read(address));
+	return TO_BYTE(ppu_memory_main_read(address));
 }
 
-static inline void ppu_bg_pre_process_shift_regs(const uint ppu_cycle, const uint first_reload) 
+static inline void ppu_bg_pre_process_shift_regs(const uint ppu_cycle, const uint) 
 {
 
 	const uint& v = g_MemoryRegisters.r2006;
@@ -146,7 +146,7 @@ static inline void ppu_bg_draw(const uint& ppu_cycle)
 		uint chrcolor = b0 | b1 << 1;
 		uint b2 = ab1.fetch(bitoff);
 		uint b3 = ab2.fetch(bitoff);
-		uint8_t color = chrcolor | (b2 << 2) | (b3 << 3);
+		uint8_t color = TO_BYTE(chrcolor | (b2 << 2) | (b3 << 3));
 
 		g_aBGColor[RealX] = (chrcolor != 0) ? 1 : 0;
 

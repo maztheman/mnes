@@ -24,8 +24,8 @@ constexpr std::array<double, 31> pulse_snd_init()
 {
 	std::array<double, 31> retval = { 0.0 };
 	retval[0] = 0.0;
-	for (int i = 1; i < 31; i++) {
-		retval[i] = 95.52 / (8128.0 / i + 100);
+	for (size_t i = 1; i < 31; i++) {
+		retval[i] = 95.52 / (8128.0 / static_cast<double>(i) + 100.0);
 	}
 	return retval;
 }
@@ -34,8 +34,8 @@ constexpr std::array<double, 203> tnd_snd_init()
 {
 	std::array<double, 203> retval = { 0.0 };
 	retval[0] = 0.0;
-	for (int i = 1; i < 203; i++) {
-		retval[i] = 163.67 / ((24329.0 / i) + 100.0);
+	for (size_t i = 1; i < 203; i++) {
+		retval[i] = 163.67 / ((24329.0 / static_cast<double>(i)) + 100.0);
 	}
 	return retval;
 }
@@ -179,7 +179,7 @@ void apu_do_cycle()
 		s_prev_sound_tick = sound_tick;
 	} else {
 		//build up a buffer of 40 samples ? 40 or 41, whatever s_ticks is
-		uint idx = s_ticks - s_prev_ticks;
+		uint idx = static_cast<uint32_t>(s_ticks - s_prev_ticks);
 
 		uint pulse1 = sregs.square_1.volume(),
 			pulse2 = 3,
@@ -193,7 +193,7 @@ void apu_do_cycle()
 		auto output = pulse_out + tnd_out;
 		uint16_t digital = static_cast<uint16_t>(65535 * output);
 
-		s_samples[idx] = digital | digital << 16;
+		s_samples[idx] = digital | digital << 16U;
 	}
 
 }

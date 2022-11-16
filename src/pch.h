@@ -19,3 +19,8 @@ using fixed_span_bytes = std::span<uint8_t, SZ>;
 
 using ApplicationPlatform = GfxEngine::Platform::OpenGL330::OpenGL330Platform;
 
+template<typename T>
+static inline uint8_t TO_BYTE(T value)
+{
+	return static_cast<uint8_t>(value & 255U);
+}

@@ -29,14 +29,14 @@ static void cnrom_write(uint address, uint value)
 		return;
 	}
 
-	uint nBankAddress = (value * 0x2000) + s_nOffset;
+	size_t nBankAddress = (value * 0x2000) + s_nOffset;
 
 	static auto& pputable = PPUTable();
 
 	auto rawData = RawData();
 
 	//ppu pages are 1k or 0x400
-	for (uint n = 0; n < 8; n++)
+	for (size_t n = 0; n < 8; n++)
 	{
 		pputable[n] = rawData.subspan(nBankAddress + (0x400 * n)).data();
 	}

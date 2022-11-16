@@ -59,7 +59,7 @@ static void unrom_reset()
 	romData[2] = rawData.subspan(0x2000).data();
 	romData[3] = rawData.subspan(0x3000).data();
 
-	uint nLastBank = (format.prg_rom_count - 1) * 0x4000;
+	uint nLastBank = (format.prg_rom_count - 1U) * 0x4000U;
 
 	romData[4] = rawData.subspan(nLastBank + 0x0000).data();
 	romData[5] = rawData.subspan(nLastBank + 0x1000).data();

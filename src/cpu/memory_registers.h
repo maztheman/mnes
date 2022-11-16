@@ -1,21 +1,19 @@
 #pragma once
 
-typedef unsigned int uint;
-
 struct MemoryRegisters
 {
-	uint	r2000;
-	uint	r2001;
-	uint	r2002;
-	uint	r2003;
-	uint	r2006;
-	bool	r2006Latch;
-	uint	r2006Temp;
-	uint	r2006ByteLatch;
-	uint	TileXOffset;
-	bool	oam_clear_reads;
-	uint	ppu_addr_bus;
-	uint	ppu_latch_byte;
+	uint32_t	r2000{0U};
+	uint32_t	r2001{0U};
+	uint32_t	r2002{0U};
+	uint32_t	r2003{0U};
+	uint32_t	r2006{0U};
+	bool		r2006Latch{false};
+	uint32_t	r2006Temp{0U};
+	uint32_t	r2006ByteLatch{0U};
+	uint32_t	TileXOffset{0U};
+	bool		oam_clear_reads{false};
+	uint32_t	ppu_addr_bus{0U};
+	uint32_t	ppu_latch_byte{0U};
 };
 
 extern MemoryRegisters g_MemoryRegisters;
@@ -39,4 +37,4 @@ bool is_sprite_zero_hit();
 bool show_bg_leftmost_8px();
 bool show_sprite_leftmost_8px();
 
-uint ppu_addr_bus();
+uint32_t ppu_addr_bus();

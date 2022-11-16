@@ -3,7 +3,6 @@
 #include "cpu_registers.h"
 #include "cpu_opcodes.h"
 
-
 #include <common/Log.h>
 
 #include <ppu/ppu.h>
@@ -33,6 +32,7 @@ static uint TO_ZERO_PAGE(T address)
 {
 	return address & 0xFF;
 }
+
 
 
 //opcodes 
@@ -121,7 +121,7 @@ tmp_spr_ram_t TmpSPRRam()
 
 void memory_intialize()
 {
-	memset(&g_MemoryRegisters, 0, sizeof(MemoryRegisters));
+	g_MemoryRegisters = MemoryRegisters{};
 	g_Registers.tick_count = 0;
 	memset(MemoryData().memory.get(), 0, MEMORY_SIZE);
 }
@@ -246,7 +246,7 @@ void memory_main_write(uint address, uint value)
 	//g_pCurrentMapper->WriteMemory(address, value);
 
 	if (address < 0x2000) {
-		MainMemory()[address & 0x7FF] = value & 0xFF;
+		MainMemory()[address & 0x7FF] = TO_BYTE(value);
 		return;
 	}
 	if (address < 0x4000) {
@@ -278,7 +278,7 @@ void memory_main_write(uint address, uint value)
 			g_MemoryRegisters.ppu_latch_byte =  g_MemoryRegisters.r2003 = value;
 			break;
 		case 4://RW
-			SPRRam()[ g_MemoryRegisters.r2003++ ] = value & 0xFF;
+			SPRRam()[ g_MemoryRegisters.r2003++ ] = TO_BYTE(value);
 			g_MemoryRegisters.r2003 &= 0xFF;
 			break;
 		case 5://W
@@ -404,7 +404,7 @@ void memory_main_write(uint address, uint value)
 	}
 
 	if (address < 0x8000 && current_mapper()->m_bSaveRam) {//SRAM man..
-		SRam()[ address & 0x1FFF ] = value & 0xFF;
+		SRam()[ address & 0x1FFF ] = TO_BYTE(value);
 		return;
 	}
 }
@@ -490,7 +490,7 @@ static inline void check_for_hardware_irq()
 static inline void check_for_software_irq()
 {
 	if (g_Registers.actual_irq == doing_irq::none) {
-		if (g_Registers.opCode == OPCODE_BRK) {
+		if (g_Registers.opCode == mnes::opcodes::OPCODE_BRK) {
 			g_Registers.actual_irq = doing_irq::brk;
 		}
 	}
@@ -528,6 +528,7 @@ void memory_pc_process()
 	memory_read_opcode();
 	switch (g_Registers.opCode)
 	{
+		using namespace mnes::opcodes;
 		//Read Instructions - Immediate
 	case OPCODE_ADC_OP:
 	case OPCODE_AND_OP:

@@ -49,8 +49,8 @@ uint32_t	PPU_cycles = 0;
 
 static inline void ppu_update_scanline();
 
-static std::vector<uint> s_arMod341(89342, 0);
-static std::vector<signed int> s_arCycle2Scanline(89342, 0);
+static std::vector<uint32_t> s_arMod341(89342, 0);
+static std::vector<int32_t> s_arCycle2Scanline(89342, 0);
 static bool s_bEvenFrame = true;
 
 void ppu_initialize()
@@ -59,20 +59,24 @@ void ppu_initialize()
 
 	if (std::ifstream file(pall, std::ios::in | std::ios::binary); file)
 	{
-		file.read((char*)&g_RGBPalette[0][0], 192);
+		file.read(reinterpret_cast<char*>(&g_RGBPalette[0][0]), 192);
 	}
 
-	for (int i = 0; i < 262; i++) {
-		for (int x = 0; x < 341; x++) {
-			int index = i * 341 + x;
+	for (uint32_t i = 0U; i < 262U; i++) 
+	{
+		for (uint32_t x = 0U; x < 341U; x++) 
+		{
+			size_t index = i * 341U + x;
 			s_arMod341[index] = x;
 		}
 	}
 
-	for (int i = 0; i < 89342; i++) {
-		s_arCycle2Scanline[i] = (i / 341) - 21;
+	for(int32_t i = 0; auto& value : s_arCycle2Scanline)
+	{
+		value = (i / 341) - 21;
+		i++;
 	}
-	printf("ppu initialize finished\n");
+	fmt::print(stderr, "ppu initialize finished\n");
 }
 
 void ppu_reset()
@@ -80,7 +84,7 @@ void ppu_reset()
 	auto screenBuffer = getScreenData();
 	memset(screenBuffer.data(), 0xCD, screenBuffer.size());
 
-	PPURegs().last_2002_read = -5;
+	PPURegs().last_2002_read = NULL_LAST_READ;
 	PPURegs().scanline = 241;
 
 	PPU_cycles = 0;
@@ -184,7 +188,7 @@ static inline void ppu_inc_cycle()
 	if (PPU_cycles >= 89342U) {
 		PPU_cycles -= 89342U;
 		s_bEvenFrame = !s_bEvenFrame;
-		PPURegs().last_2002_read = -5;
+		PPURegs().last_2002_read = NULL_LAST_READ;
 	}
 	ppu_update_scanline();
 }

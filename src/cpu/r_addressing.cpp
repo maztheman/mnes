@@ -8,6 +8,7 @@ void memory_r_immediate()
     //2.2 Do Operation
     switch (g_Registers.opCode)
     {
+        using namespace mnes::opcodes;
     case OPCODE_ADC_OP:
         cpu_adc();
         break;
@@ -121,8 +122,9 @@ void memory_r_absolute()
     g_Registers.byteLatch = ext_memory_read(pcl | (pch << 8));
     MLOG(" $%04X <- $%02X", pcl | (pch << 8), g_Registers.byteLatch);
     //4.2 - Do Operation
-    switch (g_Registers.opCode) {
-
+    switch (g_Registers.opCode)
+    {
+    using namespace mnes::opcodes;
     case OPCODE_LDA_AB:
         cpu_lda();
         break;
@@ -184,7 +186,9 @@ void memory_r_zero_page()
     g_Registers.byteLatch = ext_memory_read(address);
     MLOG(" $%02X <- $%02X", address, g_Registers.byteLatch);
     //3.2
-    switch (g_Registers.opCode) {
+    switch (g_Registers.opCode)
+    {
+    using namespace mnes::opcodes;        
     case OPCODE_LDA_ZP:
         cpu_lda();
         break;
@@ -256,8 +260,9 @@ static inline void memory_r_zero_page_indexed(const uint& indexRegister)
     g_Registers.byteLatch = ext_memory_read((address + indexRegister) & 0xFF);
     MLOG(" $%02X, I[%02X] A:$%02X <- $%02X", address, indexRegister, (address + indexRegister) & 0xFF, g_Registers.byteLatch);
     //4.2
-    switch (g_Registers.opCode) {
-
+    switch (g_Registers.opCode)
+    {
+    using namespace mnes::opcodes;
     case OPCODE_LDA_ZP_X:
         cpu_lda();
         break;
@@ -343,7 +348,9 @@ static inline void memory_r_absolute_indexed(const uint& indexRegister)
         MLOG(" A:$%04X <- $%02X", (pcl & 0xFF) | pch, g_Registers.byteLatch);
     }
     //Do Operation
-    switch (g_Registers.opCode) {
+    switch (g_Registers.opCode)
+    {
+    using namespace mnes::opcodes;
     case OPCODE_LDA_AB_X:
     case OPCODE_LDA_AB_Y:
         cpu_lda();
@@ -425,7 +432,9 @@ void memory_r_indexed_indirect()
     g_Registers.byteLatch = ext_memory_read(pcl | pch);
     MLOG(" A:$%04X <- $%02X", pcl | pch, g_Registers.byteLatch)
     //6.2 Do Operation
-    switch (g_Registers.opCode) {
+    switch (g_Registers.opCode)
+    {
+    using namespace mnes::opcodes;
     case OPCODE_LDA_IN_X:
         cpu_lda();
         break;
@@ -501,6 +510,7 @@ void memory_r_indirect_indexed()
     //Do Operation
     switch (g_Registers.opCode)
     {
+    using namespace mnes::opcodes;        
     case OPCODE_LDA_IN_Y:
         cpu_lda();
         break;

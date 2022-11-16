@@ -229,7 +229,7 @@ static inline void ppu_sprite_copy_to_secondary(const uint& ppu_cycle)
 
 static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 {
-	const uint tmp = ppu_cycle & 7;
+//	const uint tmp = ppu_cycle & 7;
 	static uint selected_index = 0;
 	static uint8_t* oam2nd = &oam_secondary[0];
 
@@ -348,7 +348,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
 			sprite_bmp0[selected_index].set(0);
 		} else {
-			uint8_t b0 = ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);
+			uint8_t b0 = TO_BYTE(ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus));
 			MLOG_PPU("Sprite C5: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b0, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8))
 			if (g_MemoryRegisters.ppu_addr_bus != pattern_table_addr) {
 				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", g_MemoryRegisters.ppu_addr_bus, pattern_table_addr)
@@ -363,7 +363,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
 			sprite_bmp1[selected_index].set(0);
 		} else {
-			uint8_t b1 = ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);
+			uint8_t b1 = TO_BYTE(ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus));
 			MLOG_PPU("Sprite C7: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b1, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8))
 			if (g_MemoryRegisters.ppu_addr_bus != pattern_table_addr) {
 				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", g_MemoryRegisters.ppu_addr_bus, pattern_table_addr)

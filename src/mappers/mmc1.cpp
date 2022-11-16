@@ -90,8 +90,8 @@ static void mmc1_reset()
 	romData[6] = rawData.subspan(nLastBank + 0x2000).data();
 	romData[7] = rawData.subspan(nLastBank + 0x3000).data();
 
-	s_n16KbPRomMask = (format.prg_rom_count * 16) - 1;
-	s_n32KbPRomMask = (format.prg_rom_count * 8) - 1;
+	s_n16KbPRomMask = (format.prg_rom_count * 16U) - 1U;
+	s_n32KbPRomMask = (format.prg_rom_count * 8U) - 1U;
 
 	nLastBank += 0x4000U;
 
@@ -110,8 +110,8 @@ static void mmc1_reset()
 
 	if (format.chr_rom_count > 0)
 	{
-		s_n8KbVRomMask = (format.chr_rom_count * 8) - 1;
-		s_n4KbVRomMask = (format.chr_rom_count * 16) - 1;
+		s_n8KbVRomMask = (format.chr_rom_count * 8U) - 1U;
+		s_n4KbVRomMask = (format.chr_rom_count * 16U) - 1U;
 		s_pVROM = rawData.subspan(nLastBank).data();
 	}
 	else
@@ -150,7 +150,7 @@ static void mmc1_write(uint address, uint value)
 {
 	if (address >= 0x6000 && address < 0x8000) {
 		if (s_bSaveRam) {
-			SRam()[address & 0x1FFF] = value & 0xFF;
+			SRam()[address & 0x1FFF] =  value & 0xFF;
 		}
 	}
 
@@ -170,7 +170,7 @@ static void mmc1_write(uint address, uint value)
 	if (value & 0x80) {
 		s_Regs[0] = s_Regs[0] | 0xC;
 	} else {
-		s_Latch &= ~(1 << s_Shift);
+		s_Latch &= ~(1U << s_Shift);
 		s_Latch |= (value & 0x1) << s_Shift++;
 		if (s_Shift < 5) {
 			return;
@@ -289,7 +289,7 @@ static void mmc1_set_prgrom()
 				romData[n] = rawData.subspan(nAddress + (0x1000 * n)).data();
 			}
 
-			uint nLastBank = (format.prg_rom_count - 1) * 0x4000;
+			uint nLastBank = (format.prg_rom_count - 1U) * 0x4000U;
 			if (s_nCartSize == 1 || s_nCartSize == 2) {
 				nLastBank = n256Bank + 0x3C000;
 			}

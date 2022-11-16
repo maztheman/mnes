@@ -9,7 +9,7 @@
 #include <cpu/memory.h>
 #include <common/Log.h>
 
-static bool		s_bSaveRam;
+//static bool		s_bSaveRam;
 static uint		s_nLatchSelector0;
 static uint		s_nLatchSelector1;
 static uint		s_nLatchReg0;
@@ -81,14 +81,14 @@ static void mmc4_reset()
 	s_nLatchSelector0 = 0xFE;
 	s_nLatchSelector1 = 0xFE;
 
-	s_n16KbPRomMask = (format.prg_rom_count) - 1;
+	s_n16KbPRomMask = (format.prg_rom_count) - 1U;
 
 	romData[0] = rawData.subspan(0x0000).data();
 	romData[1] = rawData.subspan(0x1000).data();
 	romData[2] = rawData.subspan(0x2000).data();
 	romData[3] = rawData.subspan(0x3000).data();
 
-	uint nLastBank = (format.prg_rom_count - 1) * 0x4000;
+	uint nLastBank = (format.prg_rom_count - 1U) * 0x4000U;
 
 	romData[4] = rawData.subspan(nLastBank + 0x0000).data();
 	romData[5] = rawData.subspan(nLastBank + 0x1000).data();
@@ -98,7 +98,7 @@ static void mmc4_reset()
 	nLastBank += 0x4000;
 
 	if (format.chr_rom_count > 0) {
-		s_n4KbVRomMask = (format.chr_rom_count * 2) - 1;
+		s_n4KbVRomMask = (format.chr_rom_count * 2U) - 1U;
 		s_pVROM = rawData.subspan(nLastBank).data();
 	} else {
 		s_n4KbVRomMask = 15;

@@ -72,7 +72,6 @@ static void mmc3_write(uint address, uint value)
 {
 	static auto& ppuTable = PPUTable();
 	static auto& romData = RomData();
-	auto& format = nes_format();
 	auto rawData = RawData();
 
 	//could handle writes to save ram here to keep the save ram local to mapper butt fuck it for now.
@@ -132,7 +131,7 @@ static void mmc3_write(uint address, uint value)
 			break;
 			case 6:
 			{
-				int nBank = 0;
+				size_t nBank = 0;
 				uint nHardWire = (s_nPRGCount - 1) * 0x4000;
 				if ((s_r8000 & 0x40) == 0x40) {
 					romData[0] = rawData.subspan(nHardWire).data();//0x8000-9FFF is hardwires to 2nd last bank
@@ -144,9 +143,9 @@ static void mmc3_write(uint address, uint value)
 					nBank = 0;//0x8000
 				}
 
-				uint nRomBank = 0x2000 * (s_r8001 & ((s_nPRGCount * 2) - 1));
+				size_t nRomBank = 0x2000 * (s_r8001 & ((s_nPRGCount * 2) - 1));
 				romData[nBank] = rawData.subspan(nRomBank).data();
-				romData[nBank + 1] = rawData.subspan(nRomBank + 0x1000).data();
+				romData[nBank + 1] = rawData.subspan(nRomBank + 0x1000UL).data();
 			}
 			break;
 			case 7:
@@ -249,7 +248,7 @@ static void mmc3_reset()
 	romData[7] = rawData.subspan(s_nLastBank + 0x3000).data();
 
 	if (format.chr_rom_count > 0) {
-		s_nVromMask = (8 * format.chr_rom_count) - 1;
+		s_nVromMask = (8 * format.chr_rom_count) - 1U;
 		s_nLastBank += 0x4000;
 		s_pVROM = rawData.subspan(s_nLastBank).data();
 		for (uint n = 0; n < 8; n++) {
