@@ -25,7 +25,7 @@ static bool						s_bSaveRam;
 static uint						s_Regs[4];
 static uint						s_Latch;
 static uint						s_Shift;
-static uchar*					s_pVROM;
+static uint8_t*					s_pVROM;
 static vuchar					s_arVRAM;
 static uint						s_n8KbVRomMask;
 static uint						s_n4KbVRomMask;
@@ -150,7 +150,7 @@ static void mmc1_write(uint address, uint value)
 {
 	if (address >= 0x6000 && address < 0x8000) {
 		if (s_bSaveRam) {
-			g_SRAM[address & 0x1FFF] = value & 0xFF;
+			SRam()[address & 0x1FFF] = value & 0xFF;
 		}
 	}
 

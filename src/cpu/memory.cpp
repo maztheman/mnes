@@ -50,6 +50,7 @@ static uint TO_ZERO_PAGE(T address)
 #include "jump_addressing.cpp"
 #include "rel_addressing.cpp"
 
+
 struct joystick_shift_reg_t
 {
 	uint reg = 0;
@@ -76,13 +77,45 @@ struct joystick_shift_reg_t
 	}
 };
 
-joystick_shift_reg_t g_joy1;
-joystick_shift_reg_t g_joy2;
+using namespace mnes::memory;
 
-uchar g_MainMemory[0x800] = {0};
-uchar g_SRAM[0x2000] = {0};
-uchar g_SPR_RAM[0x100] = {0};
-uchar g_TMP_SPR_RAM[32] = {0};
+struct memory_data_t
+{
+	joystick_shift_reg_t joy1;
+	joystick_shift_reg_t joy2;
+	std::unique_ptr<uint8_t[]> memory = std::make_unique<uint8_t[]>(MEMORY_SIZE);
+
+	memory_t Memory()
+	{
+		return memory_t(memory.get(), MEMORY_SIZE);
+	}
+};
+
+memory_data_t& MemoryData()
+{
+	static memory_data_t instance;
+	return instance;
+}
+
+main_memory_t MainMemory()
+{
+	return main_memory_t(MemoryData().Memory().subspan(MAIN_MEMORY_OFFSET, MAIN_MEMORY_SIZE));
+}
+
+sram_memory_t SRam()
+{
+	return sram_memory_t(MemoryData().Memory().subspan(SRAM_OFFSET, SRAM_SIZE));
+}
+
+spr_ram_t SPRRam()
+{
+	return spr_ram_t(MemoryData().Memory().subspan(SPR_RAM_OFFSET, SPR_RAM_SIZE));
+}
+
+tmp_spr_ram_t TmpSPRRam()
+{
+	return tmp_spr_ram_t(MemoryData().Memory().subspan(TMP_SPR_RAM_OFFSET, TMP_SPR_RAM_SIZE));
+}
 
 #include "rwm_addressing.cpp"
 
@@ -90,10 +123,7 @@ void memory_intialize()
 {
 	memset(&g_MemoryRegisters, 0, sizeof(MemoryRegisters));
 	g_Registers.tick_count = 0;
-	std::fill(&g_MainMemory[0], &g_MainMemory[0x800], 0);
-	std::fill(&g_SRAM[0], &g_SRAM[0x2000], 0);
-	std::fill(&g_SPR_RAM[0], &g_SPR_RAM[0x100], 0);
-	std::fill(&g_TMP_SPR_RAM[0], &g_TMP_SPR_RAM[32], 0);
+	memset(MemoryData().memory.get(), 0, MEMORY_SIZE);
 }
 
 uint memory_pc_peek(uint address)
@@ -106,7 +136,7 @@ uint memory_main_read(uint address)
 	uint nMapperAnswer = current_mapper()->read_memory(address);
 
 	if (address < 0x2000) {
-		return g_MainMemory[address & 0x7FF];
+		return MainMemory()[address & 0x7FF];
 	}
 
 	uint nRetval = 0;
@@ -144,7 +174,7 @@ uint memory_main_read(uint address)
 			if (g_MemoryRegisters.oam_clear_reads) {
 				nRetval = 0xFF;
 			} else {
-				nRetval = g_SPR_RAM[g_MemoryRegisters.r2003];
+				nRetval = SPRRam()[g_MemoryRegisters.r2003];
 			}
 			break;
 		case 5://W
@@ -190,12 +220,12 @@ uint memory_main_read(uint address)
 			nRetval = open_bus; //open bus !!
 			break;
 		case 0x16://rw - joystick #0 - hardcode to say its connected but no button pressed.
-			nRetval = (open_bus & 0xE0) | g_joy1.fetch();
-			g_joy1.shift();
+			nRetval = (open_bus & 0xE0) | MemoryData().joy1.fetch();
+			MemoryData().joy1.shift();
 			break;
 		case 0x17://rw - joystick #1 - hardcode to say its not connected
-			nRetval = (open_bus & 0xE0) | g_joy2.fetch();
-			g_joy2.shift();
+			nRetval = (open_bus & 0xE0) | MemoryData().joy2.fetch();
+			MemoryData().joy2.shift();
 			break;
 		default:
 			nRetval = open_bus;
@@ -216,7 +246,7 @@ void memory_main_write(uint address, uint value)
 	//g_pCurrentMapper->WriteMemory(address, value);
 
 	if (address < 0x2000) {
-		g_MainMemory[address & 0x7FF] = value & 0xFF;
+		MainMemory()[address & 0x7FF] = value & 0xFF;
 		return;
 	}
 	if (address < 0x4000) {
@@ -248,7 +278,7 @@ void memory_main_write(uint address, uint value)
 			g_MemoryRegisters.ppu_latch_byte =  g_MemoryRegisters.r2003 = value;
 			break;
 		case 4://RW
-			g_SPR_RAM[ g_MemoryRegisters.r2003++ ] = value & 0xFF;
+			SPRRam()[ g_MemoryRegisters.r2003++ ] = value & 0xFF;
 			g_MemoryRegisters.r2003 &= 0xFF;
 			break;
 		case 5://W
@@ -359,8 +389,8 @@ void memory_main_write(uint address, uint value)
 					strobe = 1;
 				}
 				if ((value & 1) == 0 && strobe == 1) {
-					g_joy1.set(cpu_get_joy1());
-					g_joy2.set(cpu_get_joy2());
+					MemoryData().joy1.set(cpu_get_joy1());
+					MemoryData().joy2.set(cpu_get_joy2());
 					strobe = -1;
 				}
 			}
@@ -374,7 +404,7 @@ void memory_main_write(uint address, uint value)
 	}
 
 	if (address < 0x8000 && current_mapper()->m_bSaveRam) {//SRAM man..
-		g_SRAM[ address & 0x1FFF ] = value & 0xFF;
+		SRam()[ address & 0x1FFF ] = value & 0xFF;
 		return;
 	}
 }

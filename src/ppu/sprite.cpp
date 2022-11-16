@@ -19,8 +19,8 @@ struct spritedata_t {
 	void set_count(uint val) { attribute = val & 0xFF; }
 
 
-	uchar color() {
-		uchar retval = (bit0 & 0x80) ? 1 : 0;
+	uint8_t color() {
+		uint8_t retval = (bit0 & 0x80) ? 1 : 0;
 		retval |= (bit1 & 0x80) ? 2 : 0;
 		retval |= (attribute & 3) << 2;
 		return retval;
@@ -46,7 +46,7 @@ struct spritedata_t {
 
 struct ppu_sprite_state_t
 {
-	uchar	oam_latch[4];
+	uint8_t	oam_latch[4];
 	uint	oam_index;
 	uint	oam_m_index;
 	uint	oam_2nd_index;
@@ -95,11 +95,11 @@ struct ppu_sprite_state_t
 
 ppu_sprite_state_t	sprite_state;
 spritedata_t		sprite_cache[8];
-uchar				oam_secondary[32];
+uint8_t				oam_secondary[32];
 
-static inline uchar reverse_byte(uchar x)
+static inline uint8_t reverse_byte(uint8_t x)
 {
-	static const uchar table[] = {
+	static const uint8_t table[] = {
 		0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
 		0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
 		0x08, 0x88, 0x48, 0xc8, 0x28, 0xa8, 0x68, 0xe8,
@@ -165,7 +165,7 @@ static inline bool is_sprite_in_range(uint scanline, uint sprite_top)
 
 static inline void ppu_sprite_process_1()
 {
-	static uchar* oam2nd = &oam_secondary[0];
+	static uint8_t* oam2nd = &oam_secondary[0];
 	uint idx = sprite_state.oam_2nd_index * 4;
 	oam2nd[idx + 0] = sprite_state.oam_latch[0];
 	if (is_sprite_in_range(ppu_scanline(), sprite_state.oam_latch[0])) {
@@ -184,7 +184,7 @@ static inline void ppu_sprite_process_1()
 
 static inline void ppu_sprite_process_2()
 {
-	static const uchar* oam = &g_SPR_RAM[0];
+	static const uint8_t* oam = SPRRam().data();
 	uint idx = sprite_state.oam_index * 4;
 	if (is_sprite_in_range(ppu_scanline(), oam[idx + sprite_state.oam_m_index])) {
 		set_sprite_overflow();
@@ -214,7 +214,7 @@ static inline void ppu_sprite_copy_to_secondary(const uint& ppu_cycle)
 	}
 
 	if (!even_cycle) {
-		static const uchar* oam = &g_SPR_RAM[0];
+		static const uint8_t* oam = SPRRam().data();
 		memcpy(&sprite_state.oam_latch[0], oam + (4 * sprite_state.oam_index), 4);
 	} else {
 		if (sprite_state.process_type == 1) {
@@ -231,7 +231,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 {
 	const uint tmp = ppu_cycle & 7;
 	static uint selected_index = 0;
-	static uchar* oam2nd = &oam_secondary[0];
+	static uint8_t* oam2nd = &oam_secondary[0];
 
 	uint sprite_cycle = (ppu_cycle - 257) & 7;
 
@@ -299,7 +299,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			sprite_attribute_latch[selected_index] = 0xFF;
 			sprite_count[selected_index] = 0xFF;
 
-			uchar tile = 0xFF;
+			uint8_t tile = 0xFF;
 			uint ptable = 0;
 			uint addr = 0;
 
@@ -310,7 +310,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			}
 			g_MemoryRegisters.ppu_addr_bus = addr = ptable | (tile << 4);
 		} else {
-			uchar tile = oam2nd[idx + 1];
+			uint8_t tile = oam2nd[idx + 1];
 			uint FineY = ppu_scanline() - oam2nd[idx + 0];
 			uint ptable = 0;
 			sprite_attribute_latch[selected_index] = oam2nd[idx + 2];
@@ -318,7 +318,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			if (height == 16) {
 				ptable = (tile & 1) ? 0x1000 : 0x0000;
 				tile &= 0xFE;
-				uchar bottom_tile = (FineY > 7) ? 1 : 0;
+				uint8_t bottom_tile = (FineY > 7) ? 1 : 0;
 				if (sprite_attribute_latch[selected_index] & 0x80) {
 					bottom_tile ^= 1;
 					FineY = 15 - FineY;
@@ -348,7 +348,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
 			sprite_bmp0[selected_index].set(0);
 		} else {
-			uchar b0 = ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);
+			uint8_t b0 = ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);
 			MLOG_PPU("Sprite C5: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b0, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8))
 			if (g_MemoryRegisters.ppu_addr_bus != pattern_table_addr) {
 				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", g_MemoryRegisters.ppu_addr_bus, pattern_table_addr)
@@ -363,7 +363,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
 			sprite_bmp1[selected_index].set(0);
 		} else {
-			uchar b1 = ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);
+			uint8_t b1 = ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);
 			MLOG_PPU("Sprite C7: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b1, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8))
 			if (g_MemoryRegisters.ppu_addr_bus != pattern_table_addr) {
 				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", g_MemoryRegisters.ppu_addr_bus, pattern_table_addr)
@@ -405,7 +405,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			sprite_attribute_latch[selected_index] = 0xFF;
 			sprite_count[selected_index] = 0xFF;
 
-			uchar tile = 0xFF;
+			uint8_t tile = 0xFF;
 			uint ptable = 0;
 			uint addr = 0;
 
@@ -423,14 +423,14 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 		} else {
 			sprite_attribute_latch[selected_index] = oam2nd[idx + 2];
 
-			uchar tile = oam2nd[idx + 1];
+			uint8_t tile = oam2nd[idx + 1];
 			uint FineY = ppu_scanline() - oam2nd[idx + 0];
 			uint ptable = 0, addr = 0, addr2 = 0;
 
 			if (height == 16) {
 				ptable = (tile & 1) ? 0x1000 : 0x0000;
 				tile &= 0xFE;
-				uchar bottom_tile = (FineY > 7) ? 1 : 0;
+				uint8_t bottom_tile = (FineY > 7) ? 1 : 0;
 				if (sprite_attribute_latch[selected_index] & 0x80) {
 					bottom_tile ^= 1;
 					FineY = 15 - FineY;
@@ -447,11 +447,11 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 
 			sprite_count[selected_index] = oam2nd[idx + 3];
 
-			uchar b0 = ppu_memory_main_read(addr);
+			uint8_t b0 = ppu_memory_main_read(addr);
 			
 			g_MemoryRegisters.ppu_addr_bus = addr2 = addr | 8;
 
-			uchar b1 = ppu_memory_main_read(addr2);
+			uint8_t b1 = ppu_memory_main_read(addr2);
 
 			if (sprite_attribute_latch[selected_index] & 0x40) {
 				b0 = reverse_byte(b0);
@@ -522,11 +522,11 @@ static inline void ppu_sprite_draw(const uint& ppu_cycle)
 			uint index = (768 * RealY) + (RealX * 3);
 			auto palette = Palette();
 
-			uchar b0 = sprite_bmp0[i].fetch();
-			uchar b1 = sprite_bmp1[i].fetch();
-			uchar b23 = sprite_attribute_latch[i] & 3;
-			uchar chrcolor = b0 | b1 << 1;
-			uchar color = chrcolor | b23 << 2;
+			uint8_t b0 = sprite_bmp0[i].fetch();
+			uint8_t b1 = sprite_bmp1[i].fetch();
+			uint8_t b23 = sprite_attribute_latch[i] & 3;
+			uint8_t chrcolor = b0 | b1 << 1;
+			uint8_t color = chrcolor | b23 << 2;
 
 			if (i == 0 && /*sprite_state.sprite0_in_range &&*/ is_bg_enabled()) {//redundant check for bg enabled, bgcolor array should be 0..
 																			 //could be sprite 0 hit

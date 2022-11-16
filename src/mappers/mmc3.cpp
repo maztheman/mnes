@@ -45,10 +45,10 @@ static uint		s_rE000;
 static uint		s_rE001;
 
 static uint		s_nPRGCount;
-static uchar	s_VRAM[0x2000];
+static uint8_t	s_VRAM[0x2000];
 static uint		s_nLastBank;
 static uint		s_nScanlineCount;
-static uchar*	s_pVROM;
+static uint8_t*	s_pVROM;
 static uint		s_nVromMask;
 static vuchar	s_arNTRAM;
 
@@ -84,7 +84,7 @@ static void mmc3_write(uint address, uint value)
 
 	if (address < 0x8000) {
 		if (s_bSaveRam) {
-			g_SRAM[address & 0x1FFF] = value & 0xFF;
+			SRam()[address & 0x1FFF] = value & 0xFF;
 		}
 		return;
 	}

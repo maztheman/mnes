@@ -23,10 +23,25 @@
 
 extern void UpdateTextureFromPPU();
 
-uchar	g_RGBPalette[64][3] = { 0 };
-uint	g_aBGColor[256] = { 0 };
-//uchar*	g_pScreenBuffer = new uchar[0x30000];
-uint	PPU_cycles = 0;
+struct spritebmp_t 
+{
+	uint32_t reg;
+	void set(uint32_t value) {
+		reg = value & 0xFF;
+	}
+	void shift() {
+		//clear top bit, then shift
+		reg &= 0x7F;
+		reg <<= 1;
+	}
+	uint8_t fetch() {
+		return static_cast<uint8_t>((reg >> 7) & 1);
+	}
+};
+
+uint8_t	g_RGBPalette[64][3] = { 0 };
+uint32_t	g_aBGColor[256] = { 0 };
+uint32_t	PPU_cycles = 0;
 
 #include "ppuaddr.cpp"
 #include "sprite.cpp"

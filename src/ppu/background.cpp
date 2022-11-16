@@ -43,16 +43,16 @@ bitshift16_t test1;
 bitshift16_t test2;
 bitshift8_t ab1;
 bitshift8_t ab2;
-static uchar ppu_render_latch[4] = { 0 };
+static uint8_t ppu_render_latch[4] = { 0 };
 
-static inline uchar get_attribute_byte(uint value, uint screen)
+static inline uint8_t get_attribute_byte(uint value, uint screen)
 {
 	return (((value & (3 << (screen << 1))) >> (screen << 1)))/* << 2*/;
 }
 
-static inline uchar ppu_memory_main_read_byte(uint address)
+static inline uint8_t ppu_memory_main_read_byte(uint address)
 {
-	return static_cast<uchar>(ppu_memory_main_read(address));
+	return static_cast<uint8_t>(ppu_memory_main_read(address));
 }
 
 static inline void ppu_bg_pre_process_shift_regs(const uint ppu_cycle, const uint first_reload) 
@@ -84,8 +84,8 @@ static inline void ppu_bg_pre_process_shift_regs(const uint ppu_cycle, const uin
 		//get at byte
 		//uint ntable = (v >> 10) & 3;
 		//uint addr = 0x3C0 + ((v >> 4) & 0x38) | ((v >> 2) & 0x7);
-		//uchar ab = g_Tables[ntable][addr];//ppu_memory_main_read(addr); ///g_Tables[ntable][addr];
-		uchar ab = ppu_memory_main_read_byte(g_MemoryRegisters.ppu_addr_bus);
+		//uint8_t ab = g_Tables[ntable][addr];//ppu_memory_main_read(addr); ///g_Tables[ntable][addr];
+		uint8_t ab = ppu_memory_main_read_byte(g_MemoryRegisters.ppu_addr_bus);
 		uint sno = (v & 0x40) >> 5 | ((v & 2) >> 1);
 		ppu_render_latch[1] = get_attribute_byte(ab, sno);
 	} else if (tmp == 6) {
@@ -146,7 +146,7 @@ static inline void ppu_bg_draw(const uint& ppu_cycle)
 		uint chrcolor = b0 | b1 << 1;
 		uint b2 = ab1.fetch(bitoff);
 		uint b3 = ab2.fetch(bitoff);
-		uchar color = chrcolor | (b2 << 2) | (b3 << 3);
+		uint8_t color = chrcolor | (b2 << 2) | (b3 << 3);
 
 		g_aBGColor[RealX] = (chrcolor != 0) ? 1 : 0;
 

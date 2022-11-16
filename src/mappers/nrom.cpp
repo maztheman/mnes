@@ -30,7 +30,7 @@ static uint nrom_read(uint address)
 
 	if (address >= 0x6000 && address < 0x8000) {
 		if (current_mapper()->m_bSaveRam) {
-			return g_SRAM[address & 0x1FFF];
+			return SRam()[address & 0x1FFF];
 		}
 	}
 

@@ -32,7 +32,6 @@ inline uint ppu_read_nop(uint)
 	return 0;
 }
 
-mapper_t* get_mapper(uint mapper_no);
 void set_mapper(uint mapper_no);
 mapper_t* current_mapper();
 

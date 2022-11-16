@@ -13,7 +13,7 @@
 
 
 static bool					s_bSaveRam = false;
-static std::vector<uchar>	s_arVRAM;
+static std::vector<uint8_t>	s_arVRAM;
 static uint					s_n32kBankMask;
 
 static void aorom_reset();
@@ -43,7 +43,7 @@ static void aorom_write(uint address, uint value)
 	{
 		if (s_bSaveRam)
 		{
-			g_SRAM[address & 0x1FFF] = value & 0xFF;
+			SRam()[address & 0x1FFF] = value & 0xFF;
 		}
 	}
 

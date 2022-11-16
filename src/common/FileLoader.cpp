@@ -55,8 +55,7 @@ bool CFileLoader::LoadRom(const std::filesystem::path& fileName)
 	//prg + chr + trainer
 	std::streamsize nFileSize = (format.prg_rom_count * 16384 ) + ( format.chr_rom_count * 8192 ) + (( (format.rom_control_1 & 4) == 4) ? 512 : 0);
 
-	printf("detected rom size of %ld\n", nFileSize);
-
+	fmt::print(stderr, "Detected rom size of {}\n", nFileSize);
 
 	set_romdata_from_stream(file, nFileSize);
 

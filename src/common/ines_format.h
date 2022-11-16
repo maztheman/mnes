@@ -1,6 +1,6 @@
 #pragma once
 
-using uchar = unsigned char;
+using uint8_t = unsigned char;
 /*
 +--------+------+------------------------------------------+
     | Offset | Size | Content(s)                               |
@@ -31,21 +31,21 @@ using uchar = unsigned char;
 */
 
 struct ines_format_t {
-	uchar reserved[3];
-	uchar file_version;
-	uchar prg_rom_count;
-	uchar chr_rom_count;
-	uchar rom_control_1;
-	uchar rom_control_2;
-	uchar alignment[8];
+	uint8_t reserved[3];
+	uint8_t file_version;
+	uint8_t prg_rom_count;
+	uint8_t chr_rom_count;
+	uint8_t rom_control_1;
+	uint8_t rom_control_2;
+	uint8_t alignment[8];
 };
 
 struct ines_format2 {
-    uchar reserved[3];
-    uchar file_version;
-    uchar prg_rom_count;
-    uchar chr_rom_count;
-    uchar rom_control_1;
-    uchar rom_control_2;
-    uchar alignment[8];
+    uint8_t reserved[3];
+    uint8_t file_version;
+    uint8_t prg_rom_count;
+    uint8_t chr_rom_count;
+    uint8_t rom_control_1;
+    uint8_t rom_control_2;
+    uint8_t alignment[8];
 };

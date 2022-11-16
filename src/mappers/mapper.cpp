@@ -17,6 +17,8 @@
 #include <cstring>
 #include <fstream>
 
+static mapper_t* get_mapper(uint mapper_no);
+
 struct nes_data
 {
 	mapper_t* mapper;
@@ -28,8 +30,6 @@ struct nes_data
 		nullptr, nullptr, nullptr, nullptr
 	};
 };
-
-
 
 static inline nes_data& GNesData()
 {
@@ -52,7 +52,17 @@ std::array<uint8_t*, 8>& RomData()
 	return GNesData().rom;
 }
 
-mapper_t* get_mapper(uint mapper_no)
+void set_mapper(uint mapper_no)
+{
+	GNesData().mapper = get_mapper(mapper_no);
+}
+
+mapper_t* current_mapper()
+{
+	return GNesData().mapper;
+}
+
+static mapper_t* get_mapper(uint mapper_no)
 {
 	fmt::print(stderr, "using mapper no {}\n", mapper_no);
 
@@ -79,16 +89,6 @@ mapper_t* get_mapper(uint mapper_no)
 			return &mapperAOROM();
 	}
 	return nullptr;
-}
-
-void set_mapper(uint mapper_no)
-{
-	GNesData().mapper = get_mapper(mapper_no);
-}
-
-mapper_t* current_mapper()
-{
-	return GNesData().mapper;
 }
 
 void set_romdata_from_stream(std::ifstream& stream, std::streamsize size)

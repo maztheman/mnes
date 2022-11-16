@@ -185,7 +185,7 @@ static uint s_r5206;
 /// <para>Mode 2 - Readable and writable</para>
 /// <para>Mode 3 - Read - only</para>
 /// </summary>
-static uchar s_r5C00[0x400];
+static uint8_t s_r5C00[0x400];
 
 static uint mmc5_read(uint address);
 static void mmc5_write(uint address, uint value);
@@ -225,7 +225,7 @@ static uint mmc5_read(uint address)
 
 
 		if (s_bSaveRam) {
-			return g_SRAM[address & 0x1FFF];
+			return SRam()[address & 0x1FFF];
 		}
 		return 0;
 	}

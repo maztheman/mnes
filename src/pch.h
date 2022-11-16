@@ -4,8 +4,11 @@
 #include <span>
 
 using uint = unsigned int;
-using uchar = unsigned char;
-using vuchar = std::vector<uchar>;
+using vuchar = std::vector<uint8_t>;
+using span_bytes = std::span<uint8_t>;
+
+template<size_t SZ>
+using fixed_span_bytes = std::span<uint8_t, SZ>;
 
 #include <mappers/mapper.h>
 

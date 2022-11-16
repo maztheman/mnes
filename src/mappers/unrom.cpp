@@ -10,7 +10,7 @@
 #include <vector>
 
 
-static uchar s_VRAM[0x2000];
+static uint8_t s_VRAM[0x2000];
 
 static void unrom_write(uint address, uint value);
 static void unrom_nop();

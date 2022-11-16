@@ -16,7 +16,7 @@ static uint		s_nLatchReg0;
 static uint		s_nLatchReg1;
 static uint		s_nLatchReg2;
 static uint		s_nLatchReg3;
-static uchar*	s_pVROM;
+static uint8_t*	s_pVROM;
 static vuchar	s_arVRAM;
 static uint		s_n4KbVRomMask;
 static uint		s_n16KbPRomMask;

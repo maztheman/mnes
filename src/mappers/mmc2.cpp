@@ -14,8 +14,8 @@ static uint					s_nLatchReg0;
 static uint					s_nLatchReg1;
 static uint					s_n8KbPRomMask;
 static uint					s_n4KbVRomMask;
-static uchar*				s_pVROM;
-static std::vector<uchar>	s_arVRAM;
+static uint8_t*				s_pVROM;
+static std::vector<uint8_t>	s_arVRAM;
 
 static void mmc2_sync();
 static void mmc2_write(uint address, uint value);
