@@ -71,6 +71,10 @@ mapper_t& mapperMMC3()
 static void mmc3_write(uint address, uint value)
 {
 	static auto& ppuTable = PPUTable();
+	static auto& romData = RomData();
+	auto& format = nes_format();
+	auto rawData = RawData();
+
 	//could handle writes to save ram here to keep the save ram local to mapper butt fuck it for now.
 
 	//before sram man
@@ -131,25 +135,25 @@ static void mmc3_write(uint address, uint value)
 				int nBank = 0;
 				uint nHardWire = (s_nPRGCount - 1) * 0x4000;
 				if ((s_r8000 & 0x40) == 0x40) {
-					g_ROM[0] = &g_arRawData[nHardWire];//0x8000-9FFF is hardwires to 2nd last bank
-					g_ROM[1] = &g_arRawData[nHardWire + 0x1000];
+					romData[0] = rawData.subspan(nHardWire).data();//0x8000-9FFF is hardwires to 2nd last bank
+					romData[1] = rawData.subspan(nHardWire + 0x1000).data();
 					nBank = 4;//0xC000
 				} else {
-					g_ROM[4] = &g_arRawData[nHardWire];//0xC000-DFFF is hardwires to 2nd last bank
-					g_ROM[5] = &g_arRawData[nHardWire + 0x1000];
+					romData[4] = rawData.subspan(nHardWire).data();//0xC000-DFFF is hardwires to 2nd last bank
+					romData[5] = rawData.subspan(nHardWire + 0x1000).data();
 					nBank = 0;//0x8000
 				}
 
 				uint nRomBank = 0x2000 * (s_r8001 & ((s_nPRGCount * 2) - 1));
-				g_ROM[nBank] = &g_arRawData[nRomBank];
-				g_ROM[nBank + 1] = &g_arRawData[nRomBank + 0x1000];
+				romData[nBank] = rawData.subspan(nRomBank).data();
+				romData[nBank + 1] = rawData.subspan(nRomBank + 0x1000).data();
 			}
 			break;
 			case 7:
 			{
 				uint nRomBank = 0x2000 * (s_r8001 & ((s_nPRGCount * 2) - 1));
-				g_ROM[2] = &g_arRawData[nRomBank];
-				g_ROM[3] = &g_arRawData[nRomBank + 0x1000];
+				romData[2] = rawData.subspan(nRomBank).data();
+				romData[3] = rawData.subspan(nRomBank + 0x1000).data();
 			}
 			break;
 			}
@@ -211,6 +215,9 @@ static void SetFourScreenMirror()
 static void mmc3_reset()
 {
 	static auto& ppuTable = PPUTable();
+	static auto& romData = RomData();
+	auto& format = nes_format();
+	auto rawData = RawData();
 	//mmc3_log.Start("logs/mmc3.log");
 	mapperMMC3().m_bSaveRam = s_bSaveRam = true;
 	s_bDisableIRQ = false;
@@ -227,24 +234,24 @@ static void mmc3_reset()
 
 	clear_mapper1_irq();
 
-	g_ROM[0] = &g_arRawData[0x0000];
-	g_ROM[1] = &g_arRawData[0x1000];
-	g_ROM[2] = &g_arRawData[0x2000];
-	g_ROM[3] = &g_arRawData[0x3000];
+	romData[0] = rawData.subspan(0x0000).data();
+	romData[1] = rawData.subspan(0x1000).data();
+	romData[2] = rawData.subspan(0x2000).data();
+	romData[3] = rawData.subspan(0x3000).data();
 
-	s_nPRGCount = g_ines_format.prg_rom_count;
+	s_nPRGCount = format.prg_rom_count;
 
 	s_nLastBank = (s_nPRGCount - 1) * 0x4000;
 
-	g_ROM[4] = &g_arRawData[s_nLastBank + 0x0000];
-	g_ROM[5] = &g_arRawData[s_nLastBank + 0x1000];
-	g_ROM[6] = &g_arRawData[s_nLastBank + 0x2000];
-	g_ROM[7] = &g_arRawData[s_nLastBank + 0x3000];
+	romData[4] = rawData.subspan(s_nLastBank + 0x0000).data();
+	romData[5] = rawData.subspan(s_nLastBank + 0x1000).data();
+	romData[6] = rawData.subspan(s_nLastBank + 0x2000).data();
+	romData[7] = rawData.subspan(s_nLastBank + 0x3000).data();
 
-	if (g_ines_format.chr_rom_count > 0) {
-		s_nVromMask = (8 * g_ines_format.chr_rom_count) - 1;
+	if (format.chr_rom_count > 0) {
+		s_nVromMask = (8 * format.chr_rom_count) - 1;
 		s_nLastBank += 0x4000;
-		s_pVROM = &g_arRawData[s_nLastBank];
+		s_pVROM = rawData.subspan(s_nLastBank).data();
 		for (uint n = 0; n < 8; n++) {
 			//first 2k is swapped in at reset
 			ppuTable[n] = &s_pVROM[(0x400 * n)];
@@ -258,9 +265,9 @@ static void mmc3_reset()
 		}
 	}
 
-	if ((g_ines_format.rom_control_1 & 8) == 8) {
+	if ((format.rom_control_1 & 8) == 8) {
 		SetFourScreenMirror();
-	} else if ((g_ines_format.rom_control_1 & 1) == 1) {
+	} else if ((format.rom_control_1 & 1) == 1) {
 		SetVerticalMirror();
 	} else {
 		SetHorizontalMirror();

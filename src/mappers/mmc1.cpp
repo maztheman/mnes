@@ -65,6 +65,11 @@ static void MMC1SetOneScreenMirror()
 
 static void mmc1_reset()
 {
+	static auto& romData = RomData();
+
+	auto& format = nes_format();
+	auto rawData = RawData();
+
 	s_nMaxIRQ = 0x20000000 | (4 << 25);
 	s_nIRQCounter = 0;
 	//g_mmc1.Start("logs/mmc1.log");
@@ -73,28 +78,28 @@ static void mmc1_reset()
 	s_Shift = 0;
 	s_Regs[0] = 0xCU;
 
-	g_ROM[0] = &g_arRawData[0x0000];
-	g_ROM[1] = &g_arRawData[0x1000];
-	g_ROM[2] = &g_arRawData[0x2000];
-	g_ROM[3] = &g_arRawData[0x3000];
+	romData[0] = rawData.subspan(0x0000).data();
+	romData[1] = rawData.subspan(0x1000).data();
+	romData[2] = rawData.subspan(0x2000).data();
+	romData[3] = rawData.subspan(0x3000).data();
 
-	uint nLastBank = (g_ines_format.prg_rom_count - 1) * 0x4000U;
+	uint nLastBank = (format.prg_rom_count - 1) * 0x4000U;
 
-	g_ROM[4] = &g_arRawData[nLastBank + 0x0000];
-	g_ROM[5] = &g_arRawData[nLastBank + 0x1000];
-	g_ROM[6] = &g_arRawData[nLastBank + 0x2000];
-	g_ROM[7] = &g_arRawData[nLastBank + 0x3000];
+	romData[4] = rawData.subspan(nLastBank + 0x0000).data();
+	romData[5] = rawData.subspan(nLastBank + 0x1000).data();
+	romData[6] = rawData.subspan(nLastBank + 0x2000).data();
+	romData[7] = rawData.subspan(nLastBank + 0x3000).data();
 
-	s_n16KbPRomMask = (g_ines_format.prg_rom_count * 16) - 1;
-	s_n32KbPRomMask = (g_ines_format.prg_rom_count * 8) - 1;
+	s_n16KbPRomMask = (format.prg_rom_count * 16) - 1;
+	s_n32KbPRomMask = (format.prg_rom_count * 8) - 1;
 
 	nLastBank += 0x4000U;
 
-	if (g_ines_format.prg_rom_count < 32)
+	if (format.prg_rom_count < 32)
 	{
 		s_nCartSize = 0U;
 	}
-	else if (g_ines_format.prg_rom_count < 64)
+	else if (format.prg_rom_count < 64)
 	{
 		s_nCartSize = 1U;
 	}
@@ -103,11 +108,11 @@ static void mmc1_reset()
 		s_nCartSize = 2U;
 	}
 
-	if (g_ines_format.chr_rom_count > 0)
+	if (format.chr_rom_count > 0)
 	{
-		s_n8KbVRomMask = (g_ines_format.chr_rom_count * 8) - 1;
-		s_n4KbVRomMask = (g_ines_format.chr_rom_count * 16) - 1;
-		s_pVROM = &g_arRawData[nLastBank];
+		s_n8KbVRomMask = (format.chr_rom_count * 8) - 1;
+		s_n4KbVRomMask = (format.chr_rom_count * 16) - 1;
+		s_pVROM = rawData.subspan(nLastBank).data();
 	}
 	else
 	{
@@ -124,11 +129,11 @@ static void mmc1_reset()
 		ppuTable[n] = &s_pVROM[(0x400) * n];
 	}
 
-	if ((g_ines_format.rom_control_1 & 8) == 8)
+	if ((format.rom_control_1 & 8) == 8)
 	{
 		//SetFourScreenMirror();
 	}
-	else if ((g_ines_format.rom_control_1 & 1) == 1)
+	else if ((format.rom_control_1 & 1) == 1)
 	{
 		SetVerticalMirror();
 	}
@@ -137,7 +142,7 @@ static void mmc1_reset()
 		SetHorizontalMirror();
 	}
 
-	mapperMMC1().m_bSaveRam = s_bSaveRam = (g_ines_format.rom_control_1 & 2) == 2;
+	mapperMMC1().m_bSaveRam = s_bSaveRam = (format.rom_control_1 & 2) == 2;
 }
 
 
@@ -247,6 +252,10 @@ static void mmc1_set_chr_hi()
 
 static void mmc1_set_prgrom()
 {
+	static auto& romData = RomData();
+	auto& format = nes_format();
+	auto rawData = RawData();
+
 	uint n256Bank = 0;
 	if (s_nCartSize == 0) {
 		n256Bank = 0;
@@ -269,7 +278,7 @@ static void mmc1_set_prgrom()
 		uint nBank = ((s_Regs[3] & 0xF) >> 1) & s_n32KbPRomMask;
 		uint nAddress = n256Bank + (nBank * 0x8000);
 		for (uint n = 0; n < 8; n++) {
-			g_ROM[n] = &g_arRawData[nAddress + (0x1000 * n)];
+			romData[n] = rawData.subspan(nAddress + (0x1000 * n)).data();
 		}
 	} else {//switch 16kb from 0x8000 or 0xC000, making one of the areas locked to first or last prom bank.
 		uint nBank = (s_Regs[3] & 0xF) & s_n16KbPRomMask;
@@ -277,30 +286,31 @@ static void mmc1_set_prgrom()
 		
 		if ((s_Regs[0] & 4) == 0x4) {//swap 0x8000, hardwire 0xC000 to end
 			for (uint n = 0; n < 4; n++) {
-				g_ROM[n] = &g_arRawData[nAddress + (0x1000 * n)];
+				romData[n] = rawData.subspan(nAddress + (0x1000 * n)).data();
 			}
 
-			uint nLastBank = (g_ines_format.prg_rom_count - 1) * 0x4000;
+			uint nLastBank = (format.prg_rom_count - 1) * 0x4000;
 			if (s_nCartSize == 1 || s_nCartSize == 2) {
 				nLastBank = n256Bank + 0x3C000;
 			}
 
-			g_ROM[4] = &g_arRawData[nLastBank + 0x0000];
-			g_ROM[5] = &g_arRawData[nLastBank + 0x1000];
-			g_ROM[6] = &g_arRawData[nLastBank + 0x2000];
-			g_ROM[7] = &g_arRawData[nLastBank + 0x3000];
+			romData[4] = rawData.subspan(nLastBank + 0x0000).data();
+			romData[5] = rawData.subspan(nLastBank + 0x1000).data();
+			romData[6] = rawData.subspan(nLastBank + 0x2000).data();
+			romData[7] = rawData.subspan(nLastBank + 0x3000).data();
 		} else {//swap 0xC000, hardwire 0x8000
-			for (uint n = 0; n < 4; n++) {
-				g_ROM[n + 4] = &g_arRawData[nAddress + (0x1000 * n)];
+			for (uint n = 0; n < 4; n++)
+			{
+				romData[n + 4] = rawData.subspan(nAddress + (0x1000 * n)).data();
 			}
 			uint nFirstBank = 0;
 			if (s_nCartSize == 1 || s_nCartSize == 2) {
 				nFirstBank = n256Bank;
 			}
-			g_ROM[0] = &g_arRawData[nFirstBank + 0x0000];
-			g_ROM[1] = &g_arRawData[nFirstBank + 0x1000];
-			g_ROM[2] = &g_arRawData[nFirstBank + 0x2000];
-			g_ROM[3] = &g_arRawData[nFirstBank + 0x3000];
+			romData[0] = rawData.subspan(nFirstBank + 0x0000).data();
+			romData[1] = rawData.subspan(nFirstBank + 0x1000).data();
+			romData[2] = rawData.subspan(nFirstBank + 0x2000).data();
+			romData[3] = rawData.subspan(nFirstBank + 0x3000).data();
 		}
 	}
 }

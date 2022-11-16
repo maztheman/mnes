@@ -15,11 +15,41 @@
 #include <ppu/ppu_memory.h>
 
 #include <cstring>
+#include <fstream>
 
-static inline mapper_t*& GMapper()
+struct nes_data
 {
-	static mapper_t* instance;
+	mapper_t* mapper;
+	ines_format_t ines_format;
+	std::unique_ptr<uint8_t[]> romData;
+	size_t romDataSize;
+	std::array<uint8_t*, 8> rom = {
+		nullptr, nullptr, nullptr, nullptr,	
+		nullptr, nullptr, nullptr, nullptr
+	};
+};
+
+
+
+static inline nes_data& GNesData()
+{
+	static nes_data instance;
 	return instance;
+}
+
+ines_format_t& nes_format()
+{
+	return GNesData().ines_format;
+}
+
+std::span<uint8_t> RawData()
+{
+	return std::span<uint8_t>(GNesData().romData.get(), GNesData().romDataSize);
+}
+
+std::array<uint8_t*, 8>& RomData()
+{
+	return GNesData().rom;
 }
 
 mapper_t* get_mapper(uint mapper_no)
@@ -53,15 +83,25 @@ mapper_t* get_mapper(uint mapper_no)
 
 void set_mapper(uint mapper_no)
 {
-	GMapper() = get_mapper(mapper_no);
+	GNesData().mapper = get_mapper(mapper_no);
 }
 
 mapper_t* current_mapper()
 {
-	return GMapper();
+	return GNesData().mapper;
 }
 
-uchar* g_ROM[8] = {0};
+void set_romdata_from_stream(std::ifstream& stream, std::streamsize size)
+{
+	auto& rom = GNesData().romData;
+
+	size_t sz = static_cast<size_t>(size);
+
+	rom = std::make_unique<uint8_t[]>(sz);
+	GNesData().romDataSize = sz;
+
+	stream.read(reinterpret_cast<char*>(rom.get()), size);
+}
 
 void SetHorizontalMirror()
 {

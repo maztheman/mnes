@@ -480,6 +480,10 @@ static void mmc5_setup_prg()
 
 static uint mmc5_mode_3_read(uint address)
 {
+	static auto& romData = RomData();
+	auto& format = nes_format();
+	auto rawData = RawData();
+
 	if (address < 0x8000) {
 		//ram stuff
 
@@ -492,7 +496,7 @@ static uint mmc5_mode_3_read(uint address)
 	} else if (address < 0x10000) {
 		address &= 0x1FFF;
 		address |= ((s_r5117 & 0x7F) << 13);
-		return g_arRawData[address];
+		return rawData.subspan(address)[0];
 	}
 
 	return ~0U;//basically a bad null 

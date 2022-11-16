@@ -9,7 +9,6 @@
 
 //mappers
 vuchar		g_arRawData;
-ines_format	g_ines_format;
 
 //maybe attach the mapper to the application instead of global variable ?
 
@@ -31,7 +30,7 @@ bool CFileLoader::LoadRom(const std::filesystem::path& fileName)
 		return false;
 	}
 
-	ines_format& format = g_ines_format;
+	auto& format = nes_format();
 
 	file.read(reinterpret_cast<char*>(&format), 16);
 
@@ -54,13 +53,12 @@ bool CFileLoader::LoadRom(const std::filesystem::path& fileName)
 	//bool ines20 = (format.rom_control_1 & 0xC) == 0x8;
 
 	//prg + chr + trainer
-	size_t nFileSize = (format.prg_rom_count * 16384 ) + ( format.chr_rom_count * 8192 ) + (( (format.rom_control_1 & 4) == 4) ? 512 : 0);
+	std::streamsize nFileSize = (format.prg_rom_count * 16384 ) + ( format.chr_rom_count * 8192 ) + (( (format.rom_control_1 & 4) == 4) ? 512 : 0);
 
 	printf("detected rom size of %ld\n", nFileSize);
 
-	g_arRawData.resize(nFileSize, 0);
 
-	file.read(reinterpret_cast<char*>(g_arRawData.data()), nFileSize);
+	set_romdata_from_stream(file, nFileSize);
 
 	mp->reset();
 

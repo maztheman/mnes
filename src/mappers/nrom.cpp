@@ -6,9 +6,6 @@
 #include <cpu/memory.h>
 
 
-extern ines_format					g_ines_format;
-extern std::vector<unsigned char>	g_arRawData;
-
 static std::vector<unsigned char> s_arVRAM;
 
 
@@ -29,6 +26,8 @@ mapper_t& mapperNROM()
 
 static uint nrom_read(uint address)
 {
+	static auto& romData = RomData();
+
 	if (address >= 0x6000 && address < 0x8000) {
 		if (current_mapper()->m_bSaveRam) {
 			return g_SRAM[address & 0x1FFF];
@@ -37,7 +36,7 @@ static uint nrom_read(uint address)
 
 	if (address >= 0x8000 && address <= 0xFFFF) {
 		uint bank = (address >> 0xC) - 8;
-		return g_ROM[bank][address & 0xFFF];
+		return romData[bank][address & 0xFFF];
 	}
 
 	return 0;
@@ -55,29 +54,33 @@ static void nrom_nop()
 
 static void nrom_reset()
 {
+	static auto& romData = RomData();
+	auto& format = nes_format();
+	auto rawData = RawData();
+
 	printf("Mapper[nrom]:reset()\n");
 	uint nOffset = 0x4000;
-	if (g_ines_format.prg_rom_count == 1) {
+	if (format.prg_rom_count == 1) {
 		//banks are 0x1000 in size
-		g_ROM[4] = g_ROM[0] = &g_arRawData[0x0000];
-		g_ROM[5] = g_ROM[1] = &g_arRawData[0x1000];
-		g_ROM[6] = g_ROM[2] = &g_arRawData[0x2000];
-		g_ROM[7] = g_ROM[3] = &g_arRawData[0x3000];
+		romData[4] = romData[0] = rawData.subspan(0x0000).data();
+		romData[5] = romData[1] = rawData.subspan(0x1000).data();
+		romData[6] = romData[2] = rawData.subspan(0x2000).data();
+		romData[7] = romData[3] = rawData.subspan(0x3000).data();
 	} else {//2 
 		nOffset = 0x8000;
-		g_ROM[0] = &g_arRawData[0x0000];
-		g_ROM[1] = &g_arRawData[0x1000];
-		g_ROM[2] = &g_arRawData[0x2000];
-		g_ROM[3] = &g_arRawData[0x3000];
-		g_ROM[4] = &g_arRawData[0x4000];
-		g_ROM[5] = &g_arRawData[0x5000];
-		g_ROM[6] = &g_arRawData[0x6000];
-		g_ROM[7] = &g_arRawData[0x7000];
+		romData[0] = rawData.subspan(0x0000).data();
+		romData[1] = rawData.subspan(0x1000).data();
+		romData[2] = rawData.subspan(0x2000).data();
+		romData[3] = rawData.subspan(0x3000).data();
+		romData[4] = rawData.subspan(0x4000).data();
+		romData[5] = rawData.subspan(0x5000).data();
+		romData[6] = rawData.subspan(0x6000).data();
+		romData[7] = rawData.subspan(0x7000).data();
 	}
 
 	auto& ppuTable = PPUTable();
 
-	if (g_ines_format.chr_rom_count == 0) {
+	if (format.chr_rom_count == 0) {
 		s_arVRAM.resize(0x2000, 0);
 		//ppu pages are 1k or 0x400
 		for (uint n = 0; n < 8; n++) {
@@ -86,11 +89,11 @@ static void nrom_reset()
 	} else {
 		//ppu pages are 1k or 0x400
 		for (uint n = 0; n < 8; n++) {
-			ppuTable[n] = &g_arRawData[nOffset + (0x400 * n)];
+			ppuTable[n] = rawData.subspan(nOffset + (0x400 * n)).data();
 		}
 	}
 
-	if ((g_ines_format.rom_control_1 & 1) == 1) {
+	if ((format.rom_control_1 & 1) == 1) {
 		SetVerticalMirror();
 	} else {
 		SetHorizontalMirror();

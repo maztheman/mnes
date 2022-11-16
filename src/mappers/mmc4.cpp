@@ -9,8 +9,6 @@
 #include <cpu/memory.h>
 #include <common/Log.h>
 
-extern uint nrom_read(uint);
-
 static bool		s_bSaveRam;
 static uint		s_nLatchSelector0;
 static uint		s_nLatchSelector1;
@@ -40,6 +38,9 @@ mapper_t& mapperMMC4()
 
 static void mmc4_write(uint address, uint value)
 {
+	static auto& romData = RomData();
+	auto rawData = RawData();
+
 	//fuck sram
 	if (address < 0xA000) {
 		return;
@@ -48,7 +49,7 @@ static void mmc4_write(uint address, uint value)
 	if (address < 0xB000) {
 		uint nBank = (value & s_n16KbPRomMask) * 0x4000;
 		for (uint n = 0; n < 4; n++) {
-			g_ROM[n] = &g_arRawData[nBank + (0x1000 * n)];
+			romData[n] = rawData.subspan(nBank + (0x1000 * n)).data();
 		}
 	} else if (address < 0xC000) {
 		s_nLatchReg0 = (value & s_n4KbVRomMask);
@@ -73,38 +74,42 @@ static void mmc4_write(uint address, uint value)
 
 static void mmc4_reset()
 {
+	static auto& romData = RomData();
+	auto& format = nes_format();
+	auto rawData = RawData();
+
 	s_nLatchSelector0 = 0xFE;
 	s_nLatchSelector1 = 0xFE;
 
-	s_n16KbPRomMask = (g_ines_format.prg_rom_count) - 1;
+	s_n16KbPRomMask = (format.prg_rom_count) - 1;
 
-	g_ROM[0] = &g_arRawData[0x0000];
-	g_ROM[1] = &g_arRawData[0x1000];
-	g_ROM[2] = &g_arRawData[0x2000];
-	g_ROM[3] = &g_arRawData[0x3000];
+	romData[0] = rawData.subspan(0x0000).data();
+	romData[1] = rawData.subspan(0x1000).data();
+	romData[2] = rawData.subspan(0x2000).data();
+	romData[3] = rawData.subspan(0x3000).data();
 
-	uint nLastBank = (g_ines_format.prg_rom_count - 1) * 0x4000;
+	uint nLastBank = (format.prg_rom_count - 1) * 0x4000;
 
-	g_ROM[4] = &g_arRawData[nLastBank + 0x0000];
-	g_ROM[5] = &g_arRawData[nLastBank + 0x1000];
-	g_ROM[6] = &g_arRawData[nLastBank + 0x2000];
-	g_ROM[7] = &g_arRawData[nLastBank + 0x3000];
+	romData[4] = rawData.subspan(nLastBank + 0x0000).data();
+	romData[5] = rawData.subspan(nLastBank + 0x1000).data();
+	romData[6] = rawData.subspan(nLastBank + 0x2000).data();
+	romData[7] = rawData.subspan(nLastBank + 0x3000).data();
 
 	nLastBank += 0x4000;
 
-	if (g_ines_format.chr_rom_count > 0) {
-		s_n4KbVRomMask = (g_ines_format.chr_rom_count * 2) - 1;
-		s_pVROM = &g_arRawData[nLastBank];
+	if (format.chr_rom_count > 0) {
+		s_n4KbVRomMask = (format.chr_rom_count * 2) - 1;
+		s_pVROM = rawData.subspan(nLastBank).data();
 	} else {
 		s_n4KbVRomMask = 15;
 		s_arVRAM.resize(0x2000);
 		s_pVROM = &s_arVRAM[0];
 	}
 
-	if ((g_ines_format.rom_control_1 & 8) == 8) {
+	if ((format.rom_control_1 & 8) == 8) {
 		//dont do this.
 		//SetFourScreenMirror();
-	} else if ((g_ines_format.rom_control_1 & 1) == 1) {
+	} else if ((format.rom_control_1 & 1) == 1) {
 		SetVerticalMirror();
 	} else {
 		SetHorizontalMirror();

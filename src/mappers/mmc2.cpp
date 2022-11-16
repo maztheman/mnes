@@ -34,14 +34,18 @@ mapper_t& mapperMMC2()
 
 static void mmc2_write(uint address, uint value)
 {
-	if (address < 0xA000) {
+	static auto& romData = RomData();
+	auto rawData = RawData();
+
+	if (address < 0xA000) 
+	{
 		return;
 	}
 
 	if (address < 0xB000) {
 		uint nBank = (value & s_n8KbPRomMask) * 0x2000;
-		g_ROM[0] = &g_arRawData[nBank];
-		g_ROM[1] = &g_arRawData[nBank + 0x1000];
+		romData[0] = rawData.subspan(nBank).data();
+		romData[1] = rawData.subspan(nBank + 0x1000).data();
 	} else if (address < 0xD000) {
 		uint nBank = (value & s_n4KbVRomMask) * 0x1000;
 		auto& ppuTable = PPUTable();
@@ -82,35 +86,39 @@ static void mmc2_sync()
 
 static void mmc2_reset()
 {
+	static auto& romData = RomData();
+	auto& format = nes_format();
+	auto rawData = RawData();
+
 	s_nLatchSelector = 0xFE;
 	s_pVROM = nullptr;
 
-	s_n8KbPRomMask = (g_ines_format.prg_rom_count * 2) - 1;
+	s_n8KbPRomMask = (format.prg_rom_count * 2) - 1;
 
 	for (uint n = 0; n < 2; n++) {
-		g_ROM[n] = &g_arRawData[(0x1000) * n];
+		romData[n] = rawData.subspan((0x1000) * n).data();
 	}
 
-	uint nLastBank = ((g_ines_format.prg_rom_count * 2) - 3) * 0x2000;
+	uint nLastBank = ((format.prg_rom_count * 2) - 3) * 0x2000;
 	uint tmp = 0x0000;
 	for (uint n = 2; n < 8; n++, tmp += 0x1000) {
-		g_ROM[n] = &g_arRawData[nLastBank + tmp];
+		romData[n] = rawData.subspan(nLastBank + tmp).data();
 	}
 
 	nLastBank += 0x6000;
 
-	if (g_ines_format.chr_rom_count > 0) {
-		s_n4KbVRomMask = (g_ines_format.chr_rom_count * 2) - 1;
-		s_pVROM = &g_arRawData[nLastBank];
+	if (format.chr_rom_count > 0) {
+		s_n4KbVRomMask = (format.chr_rom_count * 2) - 1;
+		s_pVROM = rawData.subspan(nLastBank).data();
 	} else {
 		s_n4KbVRomMask = 15;
 		s_arVRAM.resize(0x2000);
 		s_pVROM = &s_arVRAM[0];
 	}
 
-	if ((g_ines_format.rom_control_1 & 8) == 8) {
+	if ((format.rom_control_1 & 8) == 8) {
 		//SetFourScreenMirror();
-	} else if ((g_ines_format.rom_control_1 & 1) == 1) {
+	} else if ((format.rom_control_1 & 1) == 1) {
 		SetVerticalMirror();
 	} else {
 		SetHorizontalMirror();

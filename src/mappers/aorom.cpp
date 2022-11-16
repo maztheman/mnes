@@ -12,10 +12,6 @@
 #include <cstring>
 
 
-extern ines_format					g_ines_format;
-extern vuchar						g_arRawData;
-extern uint nrom_read(uint);
-
 static bool					s_bSaveRam = false;
 static std::vector<uchar>	s_arVRAM;
 static uint					s_n32kBankMask;
@@ -39,6 +35,9 @@ static void aorom_write(uint address, uint value)
 {
 	static auto& tables = Tables();
 	static auto ntram = NTRam();
+	static auto& romData = RomData();
+
+	auto rawData = RawData();
 
 	if (address >= 0x6000 && address < 0x8000)
 	{
@@ -62,7 +61,7 @@ static void aorom_write(uint address, uint value)
 	uint n32kBank = ((value & 0xF) & s_n32kBankMask) * 0x8000;
 
 	for (uint n = 0; n < 8; n++) {
-		g_ROM[n] = &g_arRawData[n32kBank + (0x1000 * n)];
+		romData[n] = rawData.subspan(n32kBank + (0x1000 * n)).data();
 	}
 }
 
@@ -74,9 +73,12 @@ static void aorom_nop()
 static void aorom_reset()
 {
 	static auto& pputable = PPUTable();
+	static auto& romData = RomData();
+	auto& format = nes_format();
+	auto rawData = RawData();
 
 	for (uint n = 0; n < 8; n++) {
-		g_ROM[n] = &g_arRawData[(0x1000 * n)];
+		romData[n] = rawData.subspan(0x1000 * n).data();
 	}
 
 	s_arVRAM.resize(0x2000);
@@ -84,17 +86,17 @@ static void aorom_reset()
 		pputable[n] = &s_arVRAM[(0x400 * n)];
 	}
 
-	s_n32kBankMask = (g_ines_format.prg_rom_count * 8) - 1U;
+	s_n32kBankMask = (format.prg_rom_count * 8) - 1U;
 
-	if ((g_ines_format.rom_control_1 & 8) == 8) {
+	if ((format.rom_control_1 & 8) == 8) {
 		//don't do this
 		//		SetFourScreenMirror();
-	} else if ((g_ines_format.rom_control_1 & 1) == 1) {
+	} else if ((format.rom_control_1 & 1) == 1) {
 		SetVerticalMirror();
 	} else {
 		SetHorizontalMirror();
 	}
 
-	 s_bSaveRam = mapperAOROM().m_bSaveRam = (g_ines_format.rom_control_1 & 2) == 2;
+	 s_bSaveRam = mapperAOROM().m_bSaveRam = (format.rom_control_1 & 2) == 2;
 }
 

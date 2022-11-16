@@ -40,6 +40,8 @@ void SetHorizontalMirror();
 void SetVerticalMirror();
 void SetOneScreenMirror();
 
-extern uchar*		g_ROM[8];
-extern vuchar		g_arRawData;
-extern ines_format	g_ines_format;
+void set_romdata_from_stream(std::ifstream& stream, std::streamsize size);
+std::span<uint8_t> RawData();
+std::array<uint8_t*, 8>& RomData();
+
+ines_format_t& nes_format();

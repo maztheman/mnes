@@ -31,47 +31,54 @@ static void cnrom_write(uint address, uint value)
 
 	uint nBankAddress = (value * 0x2000) + s_nOffset;
 
-	auto& pputable = PPUTable();
+	static auto& pputable = PPUTable();
+
+	auto rawData = RawData();
 
 	//ppu pages are 1k or 0x400
 	for (uint n = 0; n < 8; n++)
 	{
-		pputable[n] = &g_arRawData[nBankAddress + (0x400 * n)];
+		pputable[n] = rawData.subspan(nBankAddress + (0x400 * n)).data();
 	}
 }
 
 static void cnrom_reset()
 {
+	static auto& romData = RomData();
+	
+	auto& format = nes_format();
+	auto rawData = RawData();
+
 	s_nOffset = 0x4000;
-	if (g_ines_format.prg_rom_count == 1)
+	if (format.prg_rom_count == 1)
 	{
 		//banks are 0x1000 in size
-		g_ROM[4] = g_ROM[0] = &g_arRawData[0x0000];
-		g_ROM[5] = g_ROM[1] = &g_arRawData[0x1000];
-		g_ROM[6] = g_ROM[2] = &g_arRawData[0x2000];
-		g_ROM[7] = g_ROM[3] = &g_arRawData[0x3000];
+		romData[4] = romData[0] = rawData.subspan(0x0000).data();
+		romData[5] = romData[1] = rawData.subspan(0x1000).data();
+		romData[6] = romData[2] = rawData.subspan(0x2000).data();
+		romData[7] = romData[3] = rawData.subspan(0x3000).data();
 	}
 	else
 	{
 		//2
 		s_nOffset = 0x8000;
-		g_ROM[0] = &g_arRawData[0x0000];
-		g_ROM[1] = &g_arRawData[0x1000];
-		g_ROM[2] = &g_arRawData[0x2000];
-		g_ROM[3] = &g_arRawData[0x3000];
-		g_ROM[4] = &g_arRawData[0x4000];
-		g_ROM[5] = &g_arRawData[0x5000];
-		g_ROM[6] = &g_arRawData[0x6000];
-		g_ROM[7] = &g_arRawData[0x7000];
+		romData[0] = rawData.subspan(0x0000).data();
+		romData[1] = rawData.subspan(0x1000).data();
+		romData[2] = rawData.subspan(0x2000).data();
+		romData[3] = rawData.subspan(0x3000).data();
+		romData[4] = rawData.subspan(0x4000).data();
+		romData[5] = rawData.subspan(0x5000).data();
+		romData[6] = rawData.subspan(0x6000).data();
+		romData[7] = rawData.subspan(0x7000).data();
 	}
 
 	//ppu pages are 1k or 0x400
 	for (uint n = 0; n < 8; n++)
 	{
-		PPUTable()[n] = &g_arRawData[s_nOffset + (0x400 * n)];
+		PPUTable()[n] = rawData.subspan(s_nOffset + (0x400 * n)).data();
 	}
 
-	if ((g_ines_format.rom_control_1 & 1) == 1)
+	if ((format.rom_control_1 & 1) == 1)
 	{
 		SetVerticalMirror();
 	}

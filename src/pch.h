@@ -1,6 +1,7 @@
 #include <vector>
 #include <cstdint>
 #include <string>
+#include <span>
 
 using uint = unsigned int;
 using uchar = unsigned char;

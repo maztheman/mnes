@@ -30,7 +30,7 @@ using uchar = unsigned char;
     +--------+------+------------------------------------------+
 */
 
-struct ines_format {
+struct ines_format_t {
 	uchar reserved[3];
 	uchar file_version;
 	uchar prg_rom_count;
