@@ -520,7 +520,7 @@ static inline void ppu_sprite_draw(const uint& ppu_cycle)
 			uint RealX = (ppu_cycle - 1);
 			uint RealY = ppu_scanline();
 			uint index = (768 * RealY) + (RealX * 3);
-			uchar *Palette = &g_Palette[0];
+			auto palette = Palette();
 
 			uchar b0 = sprite_bmp0[i].fetch();
 			uchar b1 = sprite_bmp1[i].fetch();
@@ -541,9 +541,9 @@ static inline void ppu_sprite_draw(const uint& ppu_cycle)
 			if ((sprite_attribute_latch[i] & 0x20) == 0 || g_aBGColor[RealX] == 0) {
 				//is a non-transparent pixel
 				if (chrcolor != 0) {
-					bits[index + 0] = g_RGBPalette[Palette[0x10 + color]][0];
-					bits[index + 1] = g_RGBPalette[Palette[0x10 + color]][1];
-					bits[index + 2] = g_RGBPalette[Palette[0x10 + color]][2];
+					bits[index + 0] = g_RGBPalette[palette[0x10 + color]][0];
+					bits[index + 1] = g_RGBPalette[palette[0x10 + color]][1];
+					bits[index + 2] = g_RGBPalette[palette[0x10 + color]][2];
 				}
 			}
 

@@ -60,7 +60,7 @@ mapper_t& mapperMMC1()
 
 static void MMC1SetOneScreenMirror()
 {
-	g_Tables[1] = g_Tables[3] = g_Tables[0] = g_Tables[2] = &g_NTRam[0x000];
+	SetOneScreenMirror();
 }
 
 static void mmc1_reset()
@@ -117,9 +117,11 @@ static void mmc1_reset()
 		s_pVROM = &s_arVRAM[0];
 	}
 
+	static auto& ppuTable = PPUTable();
+
 	for (uint n = 0; n < 8; n++)
 	{
-		g_PPUTable[n] = &s_pVROM[(0x400) * n];
+		ppuTable[n] = &s_pVROM[(0x400) * n];
 	}
 
 	if ((g_ines_format.rom_control_1 & 8) == 8)
@@ -210,16 +212,18 @@ static void mmc1_set_control()
 
 static void mmc1_set_chr_lo()
 {
+	static auto& ppuTable = PPUTable();
+
 	if ((s_Regs[0] & 0x10) == 0) {//switch 8k
 		//low bit ignored in 8kb mode
 		uint nAddress = ((s_Regs[1] & 0x1E) & s_n8KbVRomMask) * 0x2000;
 		for (uint n = 0; n < 8; n++) {
-			g_PPUTable[n] = &s_pVROM[nAddress + ((0x400) * n)];
+			ppuTable[n] = &s_pVROM[nAddress + ((0x400) * n)];
 		}
 	} else {//switch 4k
 		uint nAddress = ((s_Regs[1] & 0x1F) & s_n4KbVRomMask) * 0x1000;
 		for (uint n = 0; n < 4; n++) {
-			g_PPUTable[n] = &s_pVROM[nAddress + ((0x400) * n)];
+			ppuTable[n] = &s_pVROM[nAddress + ((0x400) * n)];
 		}
 	}
 }
@@ -229,13 +233,15 @@ static void mmc1_set_chr_lo()
 
 static void mmc1_set_chr_hi()
 {
+	static auto& ppuTable = PPUTable();
+
 	if ((s_Regs[0] & 0x10) == 0) {
 		return;
 	}
 	//switch 4k at 0x1000
 	uint nAddress = ((s_Regs[2] & 0x1F) & s_n4KbVRomMask) * 0x1000;
 	for (uint n = 0; n < 4; n++) {
-		g_PPUTable[n + 4] = &s_pVROM[nAddress + ((0x400) * n)];
+		ppuTable[n + 4] = &s_pVROM[nAddress + ((0x400) * n)];
 	}
 }
 

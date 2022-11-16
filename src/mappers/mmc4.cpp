@@ -113,27 +113,28 @@ static void mmc4_reset()
 
 static void mmc4_sync()
 {
+	auto& ppuTable = PPUTable();
 	if (s_nLatchSelector0 == 0xFE) {
 		uint nBank = (s_nLatchReg0 & s_n4KbVRomMask) * 0x1000;
 		for (uint n = 0; n < 4; n++) {
-			g_PPUTable[n] = &s_pVROM[(0x400 * n) + nBank];
+			ppuTable[n] = &s_pVROM[(0x400 * n) + nBank];
 		}
 	} else if (s_nLatchSelector0 == 0xFD) {
 		uint nBank = (s_nLatchReg1 & s_n4KbVRomMask) * 0x1000;
 		for (uint n = 0; n < 4; n++) {
-			g_PPUTable[n] = &s_pVROM[(0x400 * n) + nBank];
+			ppuTable[n] = &s_pVROM[(0x400 * n) + nBank];
 		}
 	}
 
 	if (s_nLatchSelector1 == 0xFE) {
 		uint nBank = (s_nLatchReg2 & s_n4KbVRomMask) * 0x1000;
 		for (uint n = 0; n < 4; n++) {
-			g_PPUTable[n + 4] = &s_pVROM[(0x400 * n) + nBank];
+			ppuTable[n + 4] = &s_pVROM[(0x400 * n) + nBank];
 		}
 	} else if (s_nLatchSelector1 == 0xFD) {
 		uint nBank = (s_nLatchReg3 & s_n4KbVRomMask) * 0x1000;
 		for (uint n = 0; n < 4; n++) {
-			g_PPUTable[n + 4] = &s_pVROM[(0x400 * n) + nBank];
+			ppuTable[n + 4] = &s_pVROM[(0x400 * n) + nBank];
 		}
 	}
 }

@@ -75,16 +75,18 @@ static void nrom_reset()
 		g_ROM[7] = &g_arRawData[0x7000];
 	}
 
+	auto& ppuTable = PPUTable();
+
 	if (g_ines_format.chr_rom_count == 0) {
 		s_arVRAM.resize(0x2000, 0);
 		//ppu pages are 1k or 0x400
 		for (uint n = 0; n < 8; n++) {
-			g_PPUTable[n] = &s_arVRAM[(0x400 * n)];
+			ppuTable[n] = &s_arVRAM[(0x400 * n)];
 		}
 	} else {
 		//ppu pages are 1k or 0x400
 		for (uint n = 0; n < 8; n++) {
-			g_PPUTable[n] = &g_arRawData[nOffset + (0x400 * n)];
+			ppuTable[n] = &g_arRawData[nOffset + (0x400 * n)];
 		}
 	}
 

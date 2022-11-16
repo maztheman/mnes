@@ -1,13 +1,9 @@
 #pragma once
 
-typedef unsigned char uchar;
-typedef unsigned int uint;
+uint32_t ppu_memory_main_read(uint32_t address);
+void ppu_memory_main_write(uint32_t address, uint32_t value);
 
-uint ppu_memory_main_read(uint address);
-void ppu_memory_main_write(uint address, uint value);
-
-
-extern uchar* g_PPUTable[8];
-extern uchar* g_Tables[4];
-extern uchar g_Palette[64];
-extern uchar g_NTRam[0x800];
+std::array<uint8_t*, 8>& PPUTable();
+std::array<uint8_t*, 4>& Tables();
+std::span<uint8_t> Palette();
+std::span<uint8_t> NTRam();

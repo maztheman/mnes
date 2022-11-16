@@ -31,10 +31,12 @@ static void cnrom_write(uint address, uint value)
 
 	uint nBankAddress = (value * 0x2000) + s_nOffset;
 
+	auto& pputable = PPUTable();
+
 	//ppu pages are 1k or 0x400
 	for (uint n = 0; n < 8; n++)
 	{
-		g_PPUTable[n] = &g_arRawData[nBankAddress + (0x400 * n)];
+		pputable[n] = &g_arRawData[nBankAddress + (0x400 * n)];
 	}
 }
 
@@ -66,7 +68,7 @@ static void cnrom_reset()
 	//ppu pages are 1k or 0x400
 	for (uint n = 0; n < 8; n++)
 	{
-		g_PPUTable[n] = &g_arRawData[s_nOffset + (0x400 * n)];
+		PPUTable()[n] = &g_arRawData[s_nOffset + (0x400 * n)];
 	}
 
 	if ((g_ines_format.rom_control_1 & 1) == 1)

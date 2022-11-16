@@ -24,6 +24,8 @@ static inline mapper_t*& GMapper()
 
 mapper_t* get_mapper(uint mapper_no)
 {
+	fmt::print(stderr, "using mapper no {}\n", mapper_no);
+
 	switch(mapper_no) 
 	{
 		using namespace mnes::mappers;
@@ -63,17 +65,23 @@ uchar* g_ROM[8] = {0};
 
 void SetHorizontalMirror()
 {
-	g_Tables[0] = g_Tables[1] = &g_NTRam[0x000];
-	g_Tables[2] = g_Tables[3] = &g_NTRam[0x400];
+	auto& tables = Tables();
+	auto ntram = NTRam();
+	tables[0] = tables[1] = ntram.data();
+	tables[2] = tables[3] = ntram.subspan(0x400).data();
 }
 
 void SetVerticalMirror()
-{ 
-	g_Tables[0] = g_Tables[2] = &g_NTRam[0x000];
-	g_Tables[1] = g_Tables[3] = &g_NTRam[0x400];
+{
+	auto& tables = Tables();
+	auto ntram = NTRam();
+
+	tables[0] = tables[2] = ntram.data();
+	tables[1] = tables[3] = ntram.subspan(0x400).data();
 }
 
 void SetOneScreenMirror()
 { 
-	g_Tables[1] = g_Tables[3] = g_Tables[0] = g_Tables[2] = &g_NTRam[0x000];
+	auto& tables = Tables();
+	tables[1] = tables[3] = tables[0] = tables[2] = NTRam().data();
 }

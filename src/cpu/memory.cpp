@@ -133,7 +133,7 @@ uint memory_main_read(uint address)
 				This suppression behavior is due to the $2002 read pulling the NMI line back up too quickly after it drops (NMI is active low) for the CPU to see it.
 				(CPU inputs like NMI are sampled each clock.)
 			*/
-			g_PPURegisters.last_2002_read = ppu_get_cycle();
+			PPURegs().last_2002_read = ppu_get_cycle();
 			clear_vblank();
 			g_MemoryRegisters.r2006Latch = false;
 			break;

@@ -65,8 +65,10 @@ static void unrom_reset()
 
 	memset(&s_VRAM[0], 0, 0x2000);
 
+	static auto& ppuTable = PPUTable();
+
 	for (uint n = 0; n < 8; n++) {
-		g_PPUTable[n] = &s_VRAM[(0x400 * n)];
+		ppuTable[n] = &s_VRAM[(0x400 * n)];
 	}
 
 	if ((g_ines_format.rom_control_1 & 1) == 1) {

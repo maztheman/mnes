@@ -44,8 +44,9 @@ static void mmc2_write(uint address, uint value)
 		g_ROM[1] = &g_arRawData[nBank + 0x1000];
 	} else if (address < 0xD000) {
 		uint nBank = (value & s_n4KbVRomMask) * 0x1000;
+		auto& ppuTable = PPUTable();
 		for (uint n = 0; n < 4; n++) {
-			g_PPUTable[n] = &s_pVROM[(0x400 * n) + nBank];
+			ppuTable[n] = &s_pVROM[(0x400 * n) + nBank];
 		}
 	} else if (address < 0xE000) {
 		s_nLatchReg0 = (value & s_n4KbVRomMask);
@@ -64,15 +65,17 @@ static void mmc2_write(uint address, uint value)
 
 static void mmc2_sync()
 {
+	auto& ppuTable = PPUTable();
+
 	if (s_nLatchSelector == 0xFE) {
 		uint nBank = (s_nLatchReg1 & s_n4KbVRomMask) * 0x1000;
 		for (uint n = 0; n < 4; n++) {
-			g_PPUTable[n + 4] = &s_pVROM[(0x400 * n) + nBank];
+			ppuTable[n + 4] = &s_pVROM[(0x400 * n) + nBank];
 		}
 	} else if (s_nLatchSelector == 0xFD) {
 		uint nBank = (s_nLatchReg0 & s_n4KbVRomMask) * 0x1000;
 		for (uint n = 0; n < 4; n++) {
-			g_PPUTable[n + 4] = &s_pVROM[(0x400 * n) + nBank];
+			ppuTable[n + 4] = &s_pVROM[(0x400 * n) + nBank];
 		}
 	}
 }

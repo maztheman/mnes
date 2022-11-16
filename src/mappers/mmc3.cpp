@@ -10,6 +10,8 @@
 #include <cpu/cpu_registers.h>
 #include <cpu/memory.h>
 
+#include <ppu/ppu_memory.h>
+
 #include <common/Log.h>
 
 
@@ -21,9 +23,6 @@ extern uint		ppu_addr_bus();
 extern uint		ppu_get_current_scanline_cycle();
 
 //Extern cpu and ppu variables
-extern uchar*	g_PPUTable[8];
-extern uchar*	g_Tables[4];
-extern uchar	g_NTRam[0x800];
 
 static bool		s_bSaveRam;
 static bool		s_bDisableIRQ;
@@ -71,6 +70,7 @@ mapper_t& mapperMMC3()
 
 static void mmc3_write(uint address, uint value)
 {
+	static auto& ppuTable = PPUTable();
 	//could handle writes to save ram here to keep the save ram local to mapper butt fuck it for now.
 
 	//before sram man
@@ -85,7 +85,7 @@ static void mmc3_write(uint address, uint value)
 		return;
 	}
 
-	//m_Log.AddLine("%04X #$%02X SL:%03ld MMC SL:%03ld", address, value, g_PPURegisters.scanline, m_nScanlineCount);
+	//m_Log.AddLine("%04X #$%02X SL:%03ld MMC SL:%03ld", address, value, PPURegs().scanline, m_nScanlineCount);
 
 	if (address < 0xA000) {
 		bool bReg = (address & 1) == 0;
@@ -106,8 +106,8 @@ static void mmc3_write(uint address, uint value)
 				}
 				//convert to bank
 				nAddress >>= 0xA;
-				g_PPUTable[nAddress] = &s_pVROM[nRomBank];
-				g_PPUTable[nAddress + 1] = &s_pVROM[nRomBank + 0x400];
+				ppuTable[nAddress] = &s_pVROM[nRomBank];
+				ppuTable[nAddress + 1] = &s_pVROM[nRomBank + 0x400];
 			}
 			break;
 			case 2:
@@ -123,7 +123,7 @@ static void mmc3_write(uint address, uint value)
 
 				//convert to bank
 				nAddress >>= 0xA;
-				g_PPUTable[nAddress] = &s_pVROM[nRomBank];
+				ppuTable[nAddress] = &s_pVROM[nRomBank];
 			}
 			break;
 			case 6:
@@ -198,16 +198,19 @@ static void mmc3_write(uint address, uint value)
 
 static void SetFourScreenMirror()
 {
+	static auto& tables = Tables();
+	auto ntRam = NTRam();
 	s_arNTRAM.resize(0x800);
-	g_Tables[0] = &g_NTRam[0x000];
-	g_Tables[1] = &g_NTRam[0x400];
-	g_Tables[2] = &s_arNTRAM[0x000];
-	g_Tables[3] = &s_arNTRAM[0x400];
+	tables[0] = ntRam.data();
+	tables[1] = ntRam.subspan(0x400).data();
+	tables[2] = &s_arNTRAM[0x000];
+	tables[3] = &s_arNTRAM[0x400];
 }
 
 
 static void mmc3_reset()
 {
+	static auto& ppuTable = PPUTable();
 	//mmc3_log.Start("logs/mmc3.log");
 	mapperMMC3().m_bSaveRam = s_bSaveRam = true;
 	s_bDisableIRQ = false;
@@ -244,14 +247,14 @@ static void mmc3_reset()
 		s_pVROM = &g_arRawData[s_nLastBank];
 		for (uint n = 0; n < 8; n++) {
 			//first 2k is swapped in at reset
-			g_PPUTable[n] = &s_pVROM[(0x400 * n)];
+			ppuTable[n] = &s_pVROM[(0x400 * n)];
 		}
 	} else {
 		s_nVromMask = 7;
 		s_pVROM = &s_VRAM[0];
 		memset(&s_VRAM[0], 0, 0x2000);
 		for (uint n = 0; n < 8; n++) {
-			g_PPUTable[n] = &s_pVROM[(0x400 * n)];
+			ppuTable[n] = &s_pVROM[(0x400 * n)];
 		}
 	}
 

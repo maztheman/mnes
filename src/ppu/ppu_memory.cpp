@@ -2,11 +2,66 @@
 
 #include <cpu/memory_registers.h>
 
-uchar*	g_PPUTable[8]	= {0};
-uchar*	g_Tables[4]		= {0};
-//optional vram, this will swap out the memory...maybe can wrap the memory so we dealloc after...
-uchar	g_Palette[64]	= {0};
-uchar	g_NTRam[0x800]	= {0};
+#include <span>
+#include <array>
+
+static constexpr auto VRAM_SIZE = 64 + 0x800;
+
+struct ppu_memory_t
+{
+	std::array<uint8_t*, 8> PPUTable = {
+		nullptr, nullptr, nullptr, nullptr, 
+		nullptr, nullptr, nullptr, nullptr
+	};
+	std::array<uint8_t*, 4> Tables = {
+		nullptr, nullptr, nullptr, nullptr
+	};
+	std::unique_ptr<uint8_t[]> VRAM = std::make_unique<uint8_t[]>(VRAM_SIZE);
+
+	std::span<uint8_t> VRAMSPAN()
+	{
+		return std::span<uint8_t>(VRAM.get(), VRAM_SIZE);
+	}
+
+	std::span<uint8_t> Palette()
+	{
+		return VRAMSPAN().subspan(0, 64);
+	}
+
+	std::span<uint8_t> NTRam()
+	{
+		return VRAMSPAN().subspan(64, 0x800);
+	}
+};
+
+ppu_memory_t& ppu_memory()
+{
+	static ppu_memory_t instance;
+	return instance;
+}
+
+std::array<uint8_t*, 8>& PPUTable()
+{
+	return ppu_memory().PPUTable;
+}
+
+std::array<uint8_t*, 4>& Tables()
+{
+	return ppu_memory().Tables;
+}
+
+std::span<uint8_t> Palette()
+{
+	return ppu_memory().Palette();
+}
+
+std::span<uint8_t> NTRam()
+{
+	return ppu_memory().NTRam();
+}
+
+static auto& ppuTable = PPUTable();
+static auto& tables = Tables();
 
 uint ppu_memory_main_read(uint address)
 {
@@ -18,17 +73,17 @@ uint ppu_memory_main_read(uint address)
 
 	//Pattern Table
 	if (address < 0x2000) {
-		return g_PPUTable[address >> 0xA][address & 0x3FF];
+		return ppuTable[address >> 0xA][address & 0x3FF];
 	}
 
 	//Name Table
 	if (address < 0x3F00) {
 		uint index = (address & 0xC00) >> 10;
-		return g_Tables[index][address & 0x3FF];
+		return tables[index][address & 0x3FF];
 	}
 
 	address &= 0x1F;
-	return g_Palette[address];
+	return ppu_memory().Palette()[address];
 }
 
 void ppu_memory_main_write(uint address, uint value)
@@ -39,14 +94,14 @@ void ppu_memory_main_write(uint address, uint value)
 
 	//Pattern Table
 	if (address < 0x2000) {
-		g_PPUTable[address >> 0xA][address & 0x3FF] = value;
+		ppu_memory().PPUTable[address >> 0xAU][address & 0x3FF] = value;
 		return;
 	}
 
 	//Name Table
 	if (address < 0x3F00) {
-		int index = (address&0xC00)>>10;
-		g_Tables[index][address & 0x3FF] = value;
+		size_t index = (address&0xC00)>>10;
+		ppu_memory().Tables[index][address & 0x3FF] = value;
 		return;
 	}
 
@@ -54,12 +109,13 @@ void ppu_memory_main_write(uint address, uint value)
 	uint tmp = address & 0x1F;
 	uint val = value & 0x3F;
 
-	if (tmp <= 0x10) {
+	if (auto palette = ppu_memory().Palette(); tmp <= 0x10)
+	{
 		tmp &= 0xF;
-		g_Palette[tmp] = val;
-		g_Palette[0xC] = g_Palette[0x8] = g_Palette[0x4] = g_Palette[0x0];
-		g_Palette[0x10] = g_Palette[0x1C] = g_Palette[0x18] = g_Palette[0x14] = g_Palette[0x0];
+		palette[tmp] = val;
+		palette[0xC] = palette[0x8] = palette[0x4] = palette[0x0];
+		palette[0x10] = palette[0x1C] = palette[0x18] = palette[0x14] = palette[0x0];
 	} else {
-		g_Palette[tmp] = val;
+		palette[tmp] = val;
 	}
 }

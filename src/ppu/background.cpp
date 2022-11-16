@@ -128,9 +128,9 @@ static inline void ppu_bg_draw(const uint& ppu_cycle)
 {
 	//drawing uses the scanline.front() to get the current lines data
 	auto bits = getScreenData();
-	uchar *Palette = &g_Palette[0];
+	auto palette = Palette();
 	uint RealX = (ppu_cycle - 1);
-	uint RealY = g_PPURegisters.scanline;
+	uint RealY = PPURegs().scanline;
 	uint index = (768 * RealY) + (RealX * 3);
 
 	bool bDraw = true;
@@ -150,13 +150,13 @@ static inline void ppu_bg_draw(const uint& ppu_cycle)
 
 		g_aBGColor[RealX] = (chrcolor != 0) ? 1 : 0;
 
-		bits[index + 0] = g_RGBPalette[Palette[color]][0];
-		bits[index + 1] = g_RGBPalette[Palette[color]][1];
-		bits[index + 2] = g_RGBPalette[Palette[color]][2];
+		bits[index + 0] = g_RGBPalette[palette[color]][0];
+		bits[index + 1] = g_RGBPalette[palette[color]][1];
+		bits[index + 2] = g_RGBPalette[palette[color]][2];
 	} else {
 		g_aBGColor[RealX] = 0;
-		bits[index + 0] = g_RGBPalette[Palette[0]][0];
-		bits[index + 1] = g_RGBPalette[Palette[0]][1];
-		bits[index + 2] = g_RGBPalette[Palette[0]][2];
+		bits[index + 0] = g_RGBPalette[palette[0]][0];
+		bits[index + 1] = g_RGBPalette[palette[0]][1];
+		bits[index + 2] = g_RGBPalette[palette[0]][2];
 	}
 }

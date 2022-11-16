@@ -1,12 +1,10 @@
 #pragma once
 
-typedef unsigned int uint;
-
-struct ppu_registers {
-	uint scanline;
-	uint last_2002_read;
+struct ppu_registers 
+{
+	uint32_t scanline;
+	uint32_t last_2002_read;
 };
 
-extern ppu_registers g_PPURegisters;
-
-uint ppu_scanline();
+ppu_registers& PPURegs();
+uint32_t ppu_scanline();

@@ -65,8 +65,8 @@ void ppu_reset()
 	auto screenBuffer = getScreenData();
 	memset(screenBuffer.data(), 0xCD, screenBuffer.size());
 
-	g_PPURegisters.last_2002_read = -5;
-	g_PPURegisters.scanline = 241;
+	PPURegs().last_2002_read = -5;
+	PPURegs().scanline = 241;
 
 	PPU_cycles = 0;
 	ppu_update_scanline();
@@ -157,9 +157,9 @@ static inline void ppu_update_scanline()
 	auto scanline = s_arCycle2Scanline[PPU_cycles];//look up the scanline for this cycle
 
 	if (scanline < 0) {
-		g_PPURegisters.scanline = 241 + (21 + scanline);
+		PPURegs().scanline = 241U + static_cast<uint32_t>(21 + scanline);
 	} else {
-		g_PPURegisters.scanline = scanline;
+		PPURegs().scanline = static_cast<uint32_t>(scanline);
 	}
 }
 
@@ -169,7 +169,7 @@ static inline void ppu_inc_cycle()
 	if (PPU_cycles >= 89342U) {
 		PPU_cycles -= 89342U;
 		s_bEvenFrame = !s_bEvenFrame;
-		g_PPURegisters.last_2002_read = -5;
+		PPURegs().last_2002_read = -5;
 	}
 	ppu_update_scanline();
 }
@@ -179,12 +179,12 @@ void ppu_do_cycle()
 {
 	auto ppu_cycle = s_arMod341[PPU_cycles];//look up the supposed mod 341 of the current ppu
 
-	if (g_PPURegisters.scanline >= 0 && g_PPURegisters.scanline <= 239) {
-		if (ppu_cycle == 0) {
+	if (auto scanline = PPURegs().scanline; scanline <= 239U) {
+		if (ppu_cycle == 0U) {
 			memset(&g_aBGColor[0], 0, sizeof(uint) * 256);//used for sprite0 hit detection
 		}
 		ppu_process_visible_frame(ppu_cycle);
-	} else if (g_PPURegisters.scanline == 241) {
+	} else if (scanline == 241U) {
 		if (ppu_cycle == 1) {
 			/*
 				Reading $2002 within a few PPU clocks of when VBL is set results in special-case behavior.
@@ -194,7 +194,7 @@ void ppu_do_cycle()
 				This suppression behavior is due to the $2002 read pulling the NMI line back up too quickly after it drops (NMI is active low) for the CPU to see it.
 				(CPU inputs like NMI are sampled each clock.)
 			*/
-			if (g_PPURegisters.last_2002_read == PPU_cycles/* || (g_PPURegisters.last_2002_read + 1) == PPU_cycles*/) {
+			if (PPURegs().last_2002_read == PPU_cycles/* || (PPURegs().last_2002_read + 1) == PPU_cycles*/) {
 				MLOG("** NMI Surpressed due to Reading of $2002 too soon before**\n");
 			} else {
 				set_vblank();
@@ -203,7 +203,7 @@ void ppu_do_cycle()
 				}
 			}
 		}
-	} else if (g_PPURegisters.scanline == 261) {
+	} else if (scanline == 261U) {
 		if (ppu_cycle == 339) {
 			if (s_bEvenFrame == false && is_bg_enabled()) {
 				ppu_inc_cycle();
