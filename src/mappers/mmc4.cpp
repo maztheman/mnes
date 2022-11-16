@@ -1,3 +1,4 @@
+#include "nrom.h"
 #include "mapper.h"
 #include <cstring>
 
@@ -17,20 +18,27 @@ static uint		s_nLatchReg0;
 static uint		s_nLatchReg1;
 static uint		s_nLatchReg2;
 static uint		s_nLatchReg3;
-static uchar*		s_pVROM;
-static vuchar		s_arVRAM;
+static uchar*	s_pVROM;
+static vuchar	s_arVRAM;
 static uint		s_n4KbVRomMask;
 static uint		s_n16KbPRomMask;
 
-void mmc4_write(uint address, uint value);
-void mmc4_reset();
-void mmc4_sync();
-uint mmc4_ppu_read(uint address);
-void mmc4_nop();
+static void mmc4_write(uint address, uint value);
+static void mmc4_reset();
+static void mmc4_sync();
+static uint mmc4_ppu_read(uint address);
+static void mmc4_nop();
 
-SETUP_MAPPER(MMC4, nrom_read, mmc4_write, mmc4_nop, mmc4_nop, mmc4_reset, mmc4_ppu_read)
+mapper_t& mapperMMC4()
+{
+	static mapper_t instance =
+	{
+		mapperNROM().read_memory, mmc4_ppu_read, mmc4_write, mmc4_nop, mmc4_nop, mmc4_reset, mnes::mappers::MMC4, false
+	};
+	return instance;
+}
 
-void mmc4_write(uint address, uint value)
+static void mmc4_write(uint address, uint value)
 {
 	//fuck sram
 	if (address < 0xA000) {
@@ -63,7 +71,7 @@ void mmc4_write(uint address, uint value)
 	}
 }
 
-void mmc4_reset()
+static void mmc4_reset()
 {
 	s_nLatchSelector0 = 0xFE;
 	s_nLatchSelector1 = 0xFE;
@@ -103,7 +111,7 @@ void mmc4_reset()
 	}
 }
 
-void mmc4_sync()
+static void mmc4_sync()
 {
 	if (s_nLatchSelector0 == 0xFE) {
 		uint nBank = (s_nLatchReg0 & s_n4KbVRomMask) * 0x1000;
@@ -130,7 +138,7 @@ void mmc4_sync()
 	}
 }
 
-uint mmc4_ppu_read(uint address)
+static uint mmc4_ppu_read(uint address)
 {
 	if (address >= 0xFD0 && address <= 0xFDF) {
 		s_nLatchSelector0 = 0xFD;
@@ -148,7 +156,7 @@ uint mmc4_ppu_read(uint address)
 	return address;//open bus
 }
 
-void mmc4_nop()
+static void mmc4_nop()
 {
 
 }

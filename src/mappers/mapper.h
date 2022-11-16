@@ -2,39 +2,21 @@
 
 #include <common/ines_format.h>
 
-#define MAPPER_NROM		0
-#define MAPPER_MMC1		1
-#define MAPPER_UNROM	2
-#define MAPPER_CNROM	3
-#define MAPPER_MMC3		4
-#define MAPPER_MMC5		5
-#define MAPPER_AOROM	7
-#define MAPPER_MMC2		9
-#define MAPPER_MMC4		10
-
-#define NROM		0
-#define MMC1		1
-#define UNROM	2
-#define CNROM	3
-#define MMC3		4
-#define MMC5		5
-#define AOROM	7
-#define MMC2		9
-#define MMC4		10
-
-
-class Mapper
+namespace mnes::mappers
 {
-public:
+	constexpr auto NROM = 0;
+	constexpr auto MMC1 = 1;
+	constexpr auto UNROM = 2;
+	constexpr auto CNROM = 3;
+	constexpr auto MMC3 = 4;
+	constexpr auto MMC5 = 5;
+	constexpr auto AOROM = 7;
+	constexpr auto MMC2 = 9;
+	constexpr auto MMC4 = 10;
+}
 
-
-private:
-
-
-};
-
-
-struct mapper_t {
+struct mapper_t 
+{
 	uint (*read_memory)(uint address);
 	uint (*read_ppu_memory)(uint address);
 	void (*write_memory)(uint address, uint value);
@@ -45,11 +27,14 @@ struct mapper_t {
 	bool m_bSaveRam;
 };
 
-inline uint ppu_read_nop(uint) { return 0; }
-
-#define SETUP_MAPPER(mapper_no, readmem, writemem, docpu, doppu, reset, ppuread) mapper_t mapr##mapper_no = {readmem, ppuread, writemem, docpu, doppu, reset, mapper_no, false};
+inline uint ppu_read_nop(uint)
+{
+	return 0;
+}
 
 mapper_t* get_mapper(uint mapper_no);
+void set_mapper(uint mapper_no);
+mapper_t* current_mapper();
 
 void SetHorizontalMirror();
 void SetVerticalMirror();

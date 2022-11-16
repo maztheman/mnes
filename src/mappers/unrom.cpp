@@ -1,16 +1,35 @@
-#include <cstring>
-#include <vector>
+#include "unrom.h"
+
+#include "nrom.h"
+
 #include "mapper.h"
 
 #include <ppu/ppu_memory.h>
 
+#include <cstring>
+#include <vector>
+
+
 extern std::vector<unsigned char> g_arRawData;
-extern uint nrom_read(uint);
 extern ines_format g_ines_format;
 
 static uchar s_VRAM[0x2000];
 
-void unrom_write(uint address, uint value)
+static void unrom_write(uint address, uint value);
+static void unrom_nop();
+static void unrom_reset();
+
+mapper_t& mapperUNROM()
+{
+	static mapper_t instance = 
+	{
+		mapperNROM().read_memory, ppu_read_nop, unrom_write, unrom_nop, unrom_nop, unrom_reset, mnes::mappers::UNROM, false
+	};
+
+	return instance;
+}
+
+static void unrom_write(uint address, uint value)
 {
 	if (address < 0x8000) {
 		return;
@@ -24,12 +43,12 @@ void unrom_write(uint address, uint value)
 	g_ROM[3] = &g_arRawData[nBankAddress + 0x3000];
 }
 
-void unrom_nop() 
+static void unrom_nop() 
 {
 
 }
 
-void unrom_reset() 
+static void unrom_reset()
 {
 	g_ROM[0] = &g_arRawData[0x0000];
 	g_ROM[1] = &g_arRawData[0x1000];
@@ -56,5 +75,3 @@ void unrom_reset()
 		SetHorizontalMirror();
 	}
 }
-
-SETUP_MAPPER(UNROM, nrom_read, unrom_write, unrom_nop, unrom_nop, unrom_reset, ppu_read_nop)

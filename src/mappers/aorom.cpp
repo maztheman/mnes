@@ -1,4 +1,6 @@
-#include <cstring>
+#include "aorom.h"
+#include "nrom.h"
+
 #include "mapper.h"
 
 #include <ppu/ppu_memory.h>
@@ -6,6 +8,8 @@
 #include <cpu/cpu_registers.h>
 #include <cpu/memory.h>
 #include <common/Log.h>
+
+#include <cstring>
 
 
 extern ines_format					g_ines_format;
@@ -16,9 +20,22 @@ static bool					s_bSaveRam = false;
 static std::vector<uchar>	s_arVRAM;
 static uint					s_n32kBankMask;
 
-void aorom_reset();
+static void aorom_reset();
+static void aorom_write(uint address, uint value);
+static void aorom_nop();
 
-void aorom_write(uint address, uint value)
+mapper_t& mapperAOROM()
+{
+	static mapper_t instance = 
+	{
+		mapperNROM().read_memory, ppu_read_nop, aorom_write, aorom_nop, aorom_nop, aorom_reset, 7, false
+	};
+
+	return instance;
+}
+
+
+static void aorom_write(uint address, uint value)
 {
 	if (address >= 0x6000 && address < 0x8000) {
 		if (s_bSaveRam) {
@@ -43,14 +60,14 @@ void aorom_write(uint address, uint value)
 	}
 }
 
-void aorom_nop()
+static void aorom_nop()
 {
 
 }
 
-SETUP_MAPPER(AOROM, nrom_read, aorom_write, aorom_nop, aorom_nop, aorom_reset, ppu_read_nop)
+//SETUP_MAPPER(AOROM, nrom_read, aorom_write, aorom_nop, aorom_nop, aorom_reset, ppu_read_nop)
 
-void aorom_reset()
+static void aorom_reset()
 {
 	for (uint n = 0; n < 8; n++) {
 		g_ROM[n] = &g_arRawData[(0x1000 * n)];
@@ -72,5 +89,6 @@ void aorom_reset()
 		SetHorizontalMirror();
 	}
 
-	 s_bSaveRam = maprAOROM.m_bSaveRam = (g_ines_format.rom_control_1 & 2) == 2;
+	 s_bSaveRam = mapperAOROM().m_bSaveRam = (g_ines_format.rom_control_1 & 2) == 2;
 }
+

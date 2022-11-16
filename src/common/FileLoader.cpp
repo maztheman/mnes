@@ -10,7 +10,6 @@
 //mappers
 vuchar		g_arRawData;
 ines_format	g_ines_format;
-mapper_t*	g_mapper;
 
 //maybe attach the mapper to the application instead of global variable ?
 
@@ -43,9 +42,10 @@ bool CFileLoader::LoadRom(const std::filesystem::path& fileName)
 
 	uint nMapperNo = ((format.rom_control_1 & 0xF0) >> 4) | (format.rom_control_2 & 0xF0);
 
-	g_mapper = get_mapper(nMapperNo);
+	set_mapper(nMapperNo);
+	auto mp = current_mapper();
 
-	if (g_mapper == nullptr) 
+	if (mp == nullptr) 
 	{
 		fmt::print(stderr, "mapper {} is not supported\n", nMapperNo);
 		return false;
@@ -62,7 +62,7 @@ bool CFileLoader::LoadRom(const std::filesystem::path& fileName)
 
 	file.read(reinterpret_cast<char*>(g_arRawData.data()), nFileSize);
 
-	g_mapper->reset();
+	mp->reset();
 
 	return true;
 }

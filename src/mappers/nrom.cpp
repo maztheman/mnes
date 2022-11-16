@@ -1,3 +1,5 @@
+#include "nrom.h"
+
 #include "mapper.h"
 
 #include <ppu/ppu_memory.h>
@@ -9,11 +11,26 @@ extern std::vector<unsigned char>	g_arRawData;
 
 static std::vector<unsigned char> s_arVRAM;
 
-uint nrom_read(uint address)
+
+static uint nrom_read(uint address);
+static void nrom_write(uint, uint);
+static void nrom_nop();
+static void nrom_reset();
+
+mapper_t& mapperNROM()
+{
+	static mapper_t instance = 
+	{
+		nrom_read, ppu_read_nop, nrom_write, nrom_nop, nrom_nop, nrom_reset, mnes::mappers::NROM, false
+	};
+	return instance;
+}
+
+
+static uint nrom_read(uint address)
 {
 	if (address >= 0x6000 && address < 0x8000) {
-		extern mapper_t* g_mapper;
-		if (g_mapper->m_bSaveRam) {
+		if (current_mapper()->m_bSaveRam) {
 			return g_SRAM[address & 0x1FFF];
 		}
 	}
@@ -26,17 +43,17 @@ uint nrom_read(uint address)
 	return 0;
 }
 
-void nrom_write(uint, uint)
+static void nrom_write(uint, uint)
 {
 
 }
 
-void nrom_nop()
+static void nrom_nop()
 {
 
 }
 
-void nrom_reset()
+static void nrom_reset()
 {
 	printf("Mapper[nrom]:reset()\n");
 	uint nOffset = 0x4000;
@@ -77,7 +94,3 @@ void nrom_reset()
 		SetHorizontalMirror();
 	}
 }
-
-
-
-SETUP_MAPPER(NROM, nrom_read, nrom_write, nrom_nop, nrom_nop, nrom_reset, ppu_read_nop)

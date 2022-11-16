@@ -1,3 +1,6 @@
+
+#include "nrom.h"
+
 #include "mapper.h"
 #include "memory.h"
 
@@ -5,8 +8,6 @@
 #include <ppu/ppu_registers.h>
 #include <cpu/cpu_registers.h>
 #include <common/Log.h>
-
-extern uint nrom_read(uint);
 
 static uint					s_nLatchSelector;
 static uint					s_nLatchReg0;
@@ -16,9 +17,22 @@ static uint					s_n4KbVRomMask;
 static uchar*				s_pVROM;
 static std::vector<uchar>	s_arVRAM;
 
-void mmc2_sync();
+static void mmc2_sync();
+static void mmc2_write(uint address, uint value);
+static void mmc2_reset();
+static uint mmc2_ppu_read(uint address);
+static void mmc2_nop();
 
-void mmc2_write(uint address, uint value)
+mapper_t& mapperMMC2()
+{
+	static mapper_t instance =
+	{
+		mapperNROM().read_memory, mmc2_ppu_read, mmc2_write, mmc2_nop, mmc2_nop, mmc2_reset, mnes::mappers::MMC2, false
+	};
+	return instance;
+}
+
+static void mmc2_write(uint address, uint value)
 {
 	if (address < 0xA000) {
 		return;
@@ -48,7 +62,7 @@ void mmc2_write(uint address, uint value)
 	}
 }
 
-void mmc2_sync()
+static void mmc2_sync()
 {
 	if (s_nLatchSelector == 0xFE) {
 		uint nBank = (s_nLatchReg1 & s_n4KbVRomMask) * 0x1000;
@@ -63,7 +77,7 @@ void mmc2_sync()
 	}
 }
 
-void mmc2_reset()
+static void mmc2_reset()
 {
 	s_nLatchSelector = 0xFE;
 	s_pVROM = nullptr;
@@ -100,7 +114,7 @@ void mmc2_reset()
 	}
 }
 
-uint mmc2_ppu_read(uint address)
+static uint mmc2_ppu_read(uint address)
 {
 	uint test = address & 0xFFF;
 	if (test >= 0xFD0 && test <= 0xFDF) {
@@ -113,9 +127,7 @@ uint mmc2_ppu_read(uint address)
 	return address;//open bus
 }
 
-void mmc2_nop()
+static void mmc2_nop()
 {
 
 }
-
-SETUP_MAPPER(MMC2, nrom_read, mmc2_write, mmc2_nop, mmc2_nop, mmc2_reset, mmc2_ppu_read)

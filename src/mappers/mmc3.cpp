@@ -1,3 +1,6 @@
+#include "mmc3.h"
+#include "nrom.h"
+
 #include "mapper.h"
 
 #include <cstring>
@@ -11,7 +14,6 @@
 
 
 //extern functions
-extern uint		nrom_read(uint);
 extern uint		ppu_scanline();
 extern void		clear_mapper1_irq();
 extern void		set_mapper1_irq();
@@ -51,16 +53,23 @@ static uchar*	s_pVROM;
 static uint		s_nVromMask;
 static vuchar	s_arNTRAM;
 
-void mmc3_write(uint address, uint value);
-void mmc3_reset();
-void mmc3_ppu_do_cycle();
-void mmc3_nop();
+static void mmc3_write(uint address, uint value);
+static void mmc3_reset();
+static void mmc3_ppu_do_cycle();
+static void mmc3_nop();
 
-SETUP_MAPPER(MMC3, nrom_read, mmc3_write, mmc3_nop, mmc3_ppu_do_cycle, mmc3_reset, ppu_read_nop)
+mapper_t& mapperMMC3()
+{
+	static mapper_t instance =
+	{
+		mapperNROM().read_memory, ppu_read_nop, mmc3_write, mmc3_nop, mmc3_ppu_do_cycle, mmc3_reset, mnes::mappers::MMC3, false
+	};
+	return instance;
+}
 
 //maybe split up register writes into seperate functions for clarity
 
-void mmc3_write(uint address, uint value)
+static void mmc3_write(uint address, uint value)
 {
 	//could handle writes to save ram here to keep the save ram local to mapper butt fuck it for now.
 
@@ -157,7 +166,7 @@ void mmc3_write(uint address, uint value)
 				SetHorizontalMirror();
 			}
 			s_bChipEnable = (s_rA001 & 0x80) == 0x80;
-			maprMMC3.m_bSaveRam = s_bSaveRam = (s_rA001 & 0x40) == 0x0;
+			mapperMMC3().m_bSaveRam = s_bSaveRam = (s_rA001 & 0x40) == 0x0;
 		}
 	} else if (address < 0xE000) {
 		bool bReg = (address & 1) == 0;
@@ -187,7 +196,7 @@ void mmc3_write(uint address, uint value)
 	//	m_r8000, m_r8001, m_rA000, m_rA001, m_rC000, m_rC001, m_rE000, m_rE001);
 }
 
-void SetFourScreenMirror()
+static void SetFourScreenMirror()
 {
 	s_arNTRAM.resize(0x800);
 	g_Tables[0] = &g_NTRam[0x000];
@@ -197,10 +206,10 @@ void SetFourScreenMirror()
 }
 
 
-void mmc3_reset()
+static void mmc3_reset()
 {
 	//mmc3_log.Start("logs/mmc3.log");
-	maprMMC3.m_bSaveRam = s_bSaveRam = true;
+	mapperMMC3().m_bSaveRam = s_bSaveRam = true;
 	s_bDisableIRQ = false;
 	s_bChipEnable = true;
 	s_bForceReload = false;
@@ -263,7 +272,7 @@ static bool is_a12_rising(const uint s_ui_ppu_addr_last, const uint ui_ppu_addr)
 }
 
 
-void mmc3_ppu_do_cycle()
+static void mmc3_ppu_do_cycle()
 {
 	static uint s_ui_ppu_addr_last = 0;
 
@@ -289,7 +298,7 @@ void mmc3_ppu_do_cycle()
 	s_ui_ppu_addr_last = ui_ppu_addr;
 }
 
-void mmc3_nop()
+static void mmc3_nop()
 {
 
 }

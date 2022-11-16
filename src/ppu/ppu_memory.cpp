@@ -2,8 +2,6 @@
 
 #include <cpu/memory_registers.h>
 
-extern mapper_t* g_mapper;
-
 uchar*	g_PPUTable[8]	= {0};
 uchar*	g_Tables[4]		= {0};
 //optional vram, this will swap out the memory...maybe can wrap the memory so we dealloc after...
@@ -16,7 +14,7 @@ uint ppu_memory_main_read(uint address)
 
 	address &= 0x3FFF;
 
-	g_mapper->read_ppu_memory(address);//allow mapper to read shit man
+	current_mapper()->read_ppu_memory(address);//allow mapper to read shit man
 
 	//Pattern Table
 	if (address < 0x2000) {

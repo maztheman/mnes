@@ -1,4 +1,6 @@
-#include <cstring>
+#include "mmc1.h"
+
+#include "nrom.h"
 
 #include "mapper.h"
 
@@ -9,8 +11,7 @@
 #include <cpu/memory.h>
 #include <common/Log.h>
 
-
-extern uint nrom_read(uint);
+#include <cstring>
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,25 +39,31 @@ static uint						mmc1_last_address = ~0U;
 static uint64_t					mmc1_last_cycle = 0;
 static uint64_t					mmc1_mid_write_cycle = 0;
 
-
 static void mmc1_set_control();
 static void mmc1_set_chr_lo();
 static void mmc1_set_chr_hi();
 static void mmc1_set_prgrom();
 
-void mmc1_reset();
-void mmc1_write(uint, uint);
-void mmc1_do_cpu_cycle();
-void mmc1_nop();
+static void mmc1_reset();
+static void mmc1_write(uint, uint);
+static void mmc1_do_cpu_cycle();
+static void mmc1_nop();
 
-SETUP_MAPPER(MMC1, nrom_read, mmc1_write, mmc1_do_cpu_cycle, mmc1_nop, mmc1_reset, ppu_read_nop)
+mapper_t& mapperMMC1()
+{
+	static mapper_t instance = 
+	{
+		mapperNROM().read_memory, ppu_read_nop, mmc1_write, mmc1_do_cpu_cycle, mmc1_nop, mmc1_reset, mnes::mappers::MMC1, false
+	};
+	return instance;
+}
 
 static void MMC1SetOneScreenMirror()
 {
 	g_Tables[1] = g_Tables[3] = g_Tables[0] = g_Tables[2] = &g_NTRam[0x000];
 }
 
-void mmc1_reset()
+static void mmc1_reset()
 {
 	s_nMaxIRQ = 0x20000000 | (4 << 25);
 	s_nIRQCounter = 0;
@@ -64,14 +71,14 @@ void mmc1_reset()
 	memset(&s_Regs[0], 0, sizeof(uint) * 4);
 	s_Latch = 0;
 	s_Shift = 0;
-	s_Regs[0] = 0xC;
+	s_Regs[0] = 0xCU;
 
 	g_ROM[0] = &g_arRawData[0x0000];
 	g_ROM[1] = &g_arRawData[0x1000];
 	g_ROM[2] = &g_arRawData[0x2000];
 	g_ROM[3] = &g_arRawData[0x3000];
 
-	uint nLastBank = (g_ines_format.prg_rom_count - 1) * 0x4000;
+	uint nLastBank = (g_ines_format.prg_rom_count - 1) * 0x4000U;
 
 	g_ROM[4] = &g_arRawData[nLastBank + 0x0000];
 	g_ROM[5] = &g_arRawData[nLastBank + 0x1000];
@@ -81,44 +88,58 @@ void mmc1_reset()
 	s_n16KbPRomMask = (g_ines_format.prg_rom_count * 16) - 1;
 	s_n32KbPRomMask = (g_ines_format.prg_rom_count * 8) - 1;
 
-	nLastBank += 0x4000;
+	nLastBank += 0x4000U;
 
-	if (g_ines_format.prg_rom_count < 32) {
-		s_nCartSize = 0;
-	} else if (g_ines_format.prg_rom_count < 64) {
-		s_nCartSize = 1;
-	} else {
-		s_nCartSize = 2;
+	if (g_ines_format.prg_rom_count < 32)
+	{
+		s_nCartSize = 0U;
+	}
+	else if (g_ines_format.prg_rom_count < 64)
+	{
+		s_nCartSize = 1U;
+	}
+	else
+	{
+		s_nCartSize = 2U;
 	}
 
-	if (g_ines_format.chr_rom_count > 0) {
+	if (g_ines_format.chr_rom_count > 0)
+	{
 		s_n8KbVRomMask = (g_ines_format.chr_rom_count * 8) - 1;
 		s_n4KbVRomMask = (g_ines_format.chr_rom_count * 16) - 1;
 		s_pVROM = &g_arRawData[nLastBank];
-	} else {
+	}
+	else
+	{
 		s_n8KbVRomMask = 7;
 		s_n4KbVRomMask = 15;
 		s_arVRAM.resize(0x2000);
 		s_pVROM = &s_arVRAM[0];
 	}
 
-	for (uint n = 0; n < 8; n++) {
+	for (uint n = 0; n < 8; n++)
+	{
 		g_PPUTable[n] = &s_pVROM[(0x400) * n];
 	}
 
-	if ((g_ines_format.rom_control_1 & 8) == 8) {
+	if ((g_ines_format.rom_control_1 & 8) == 8)
+	{
 		//SetFourScreenMirror();
-	} else if ((g_ines_format.rom_control_1 & 1) == 1) {
+	}
+	else if ((g_ines_format.rom_control_1 & 1) == 1)
+	{
 		SetVerticalMirror();
-	} else {
+	}
+	else
+	{
 		SetHorizontalMirror();
 	}
 
-	maprMMC1.m_bSaveRam = s_bSaveRam = (g_ines_format.rom_control_1 & 2) == 2;
+	mapperMMC1().m_bSaveRam = s_bSaveRam = (g_ines_format.rom_control_1 & 2) == 2;
 }
 
 
-void mmc1_write(uint address, uint value) 
+static void mmc1_write(uint address, uint value) 
 {
 	if (address >= 0x6000 && address < 0x8000) {
 		if (s_bSaveRam) {
@@ -278,7 +299,7 @@ static void mmc1_set_prgrom()
 	}
 }
 
-void mmc1_do_cpu_cycle()
+static void mmc1_do_cpu_cycle()
 {
 	mmc1_last_cycle++;
 
@@ -292,7 +313,7 @@ void mmc1_do_cpu_cycle()
 
 }
 
-void mmc1_nop()
+static void mmc1_nop()
 {
 
 }

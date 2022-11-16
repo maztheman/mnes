@@ -187,22 +187,30 @@ static uint s_r5206;
 /// </summary>
 static uchar s_r5C00[0x400];
 
-uint mmc5_read(uint address);
-void mmc5_write(uint address, uint value);
-void mmc5_reset();
-void mmc5_nop();
-uint mmc5_read_ppu_memory(uint address);
-void mmc5_do_ppu_cycle();
-void mmc5_do_cpu_cycle();
+static uint mmc5_read(uint address);
+static void mmc5_write(uint address, uint value);
+static void mmc5_reset();
+static void mmc5_nop();
+static uint mmc5_read_ppu_memory(uint address);
+static void mmc5_do_ppu_cycle();
+static void mmc5_do_cpu_cycle();
 
 static void mmc5_set_prg_mode();
 static void mmc5_set_chr_mode();
 static void mmc5_setup_prg();
 static uint mmc5_mode_3_read(uint address);
 
-SETUP_MAPPER(MMC5, mmc5_read, mmc5_write, mmc5_do_cpu_cycle, mmc5_do_ppu_cycle, mmc5_reset, mmc5_read_ppu_memory)
+mapper_t& mapperMMC5()
+{
+	static mapper_t instance =
+	{
+		mmc5_read, mmc5_read_ppu_memory, mmc5_write, mmc5_do_cpu_cycle, mmc5_do_ppu_cycle, mmc5_reset, mnes::mappers::MMC5, false
+	};
+	return instance;
+}
 
-uint mmc5_read(uint address)
+
+static uint mmc5_read(uint address)
 {
 	if (address == 0xFFFA || address == 0xFFFB) {
 		s_bInFrame = false;
@@ -251,7 +259,7 @@ uint mmc5_read(uint address)
 	return 0;
 }
 
-void mmc5_write(uint address, uint value)
+static void mmc5_write(uint address, uint value)
 {
 	if (address == 0x2001 && (value & 0x18) == 0) {
 		s_bInFrame = false;
@@ -363,7 +371,7 @@ PPU $1C00-$1FFF: 1 KB switchable CHR bank
 
 //initialize the base mmc5 stuff here
 
-void mmc5_reset()
+static void mmc5_reset()
 {
 	s_bSaveRam = false;
 	
@@ -375,7 +383,7 @@ void mmc5_reset()
 	memset(&s_r512x[0], 0, sizeof(uint) * 12);
 }
 
-void mmc5_nop()
+static void mmc5_nop()
 {
 
 }
@@ -385,12 +393,12 @@ static void mmc5_do_scanline()
 
 }
 
-void mmc5_do_ppu_cycle()
+static void mmc5_do_ppu_cycle()
 {
 
 }
 
-void mmc5_do_cpu_cycle()
+static void mmc5_do_cpu_cycle()
 {
 	if (s_bPPUIsReading) {
 		s_IdleCount = 0;
@@ -434,7 +442,7 @@ static void mmc5_set_chr_mode()
 	}
 }
 
-uint mmc5_read_ppu_memory(uint address) 
+static uint mmc5_read_ppu_memory(uint address) 
 { 
 	static uint s_LastPPUAddrIdx = 0;
 

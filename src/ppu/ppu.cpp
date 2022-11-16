@@ -177,8 +177,6 @@ static inline void ppu_inc_cycle()
 
 void ppu_do_cycle()
 {
-	extern mapper_t* g_mapper;
-
 	auto ppu_cycle = s_arMod341[PPU_cycles];//look up the supposed mod 341 of the current ppu
 
 	if (g_PPURegisters.scanline >= 0 && g_PPURegisters.scanline <= 239) {
@@ -221,7 +219,7 @@ void ppu_do_cycle()
 		}
 	}
 
-	g_mapper->do_ppu_cycle();
+	current_mapper()->do_ppu_cycle();
 
 	ppu_inc_cycle();
 

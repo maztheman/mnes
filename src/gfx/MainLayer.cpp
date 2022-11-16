@@ -113,21 +113,21 @@ void MainLayer::addMenu()
         }
         if (ImGui::BeginMenu("Zoom"))
         {
-            if (ImGui::MenuItem("1X"))
+            if (ImGui::MenuItem("1x"))
             {
-                m_ZoomLevel = 1;
+                m_ZoomLevel = 1.0f;
             }
-            if (ImGui::MenuItem("2X"))
+            if (ImGui::MenuItem("2x"))
             {
-                m_ZoomLevel = 2;
+                m_ZoomLevel = 2.0f;
             }
-            if (ImGui::MenuItem("3X"))
+            if (ImGui::MenuItem("3x"))
             {
-                m_ZoomLevel = 3;
+                m_ZoomLevel = 3.0f;
             }
-            if (ImGui::MenuItem("4X"))
+            if (ImGui::MenuItem("4x"))
             {
-                m_ZoomLevel = 4;
+                m_ZoomLevel = 4.0f;
             }
 
             ImGui::EndMenu();
@@ -156,7 +156,6 @@ void MainLayer::OnImGui()
     {
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Text("Tick: %ld  ", g_Registers.tick_count);
-        ImGui::SliderInt("Zoom", &m_ZoomLevel, 1, 4);
         ImGui::End();
     }
 

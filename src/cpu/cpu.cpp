@@ -25,8 +25,6 @@ void cpu_initialize()
 //tick!
 void cpu_do_cycle()
 {
-	extern mapper_t* g_mapper;
-
 	//this is where hijacking a interrupt can happen
 	g_Registers.prev_nmi = g_Registers.nmi;
 	//g_Registers.prev_irq = (IF_INTERRUPT() == false) ? g_Registers.irq : 0;
@@ -39,7 +37,7 @@ void cpu_do_cycle()
 	ppu_do_cycle();
 	ppu_do_cycle();
 
-	g_mapper->do_cpu_cycle();
+	current_mapper()->do_cpu_cycle();
 
 	cpu_cycle--;
 }

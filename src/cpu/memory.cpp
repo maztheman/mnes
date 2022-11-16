@@ -50,9 +50,6 @@ static uint TO_ZERO_PAGE(T address)
 #include "jump_addressing.cpp"
 #include "rel_addressing.cpp"
 
-
-extern mapper_t* g_mapper;
-
 struct joystick_shift_reg_t
 {
 	uint reg = 0;
@@ -92,6 +89,7 @@ uchar g_TMP_SPR_RAM[32] = {0};
 void memory_intialize()
 {
 	memset(&g_MemoryRegisters, 0, sizeof(MemoryRegisters));
+	g_Registers.tick_count = 0;
 	std::fill(&g_MainMemory[0], &g_MainMemory[0x800], 0);
 	std::fill(&g_SRAM[0], &g_SRAM[0x2000], 0);
 	std::fill(&g_SPR_RAM[0], &g_SPR_RAM[0x100], 0);
@@ -100,12 +98,12 @@ void memory_intialize()
 
 uint memory_pc_peek(uint address)
 {
-	return g_mapper->read_memory(address);
+	return current_mapper()->read_memory(address);
 }
 
 uint memory_main_read(uint address)
 {
-	uint nMapperAnswer = g_mapper->read_memory(address);
+	uint nMapperAnswer = current_mapper()->read_memory(address);
 
 	if (address < 0x2000) {
 		return g_MainMemory[address & 0x7FF];
@@ -214,7 +212,7 @@ uint memory_main_read(uint address)
 
 void memory_main_write(uint address, uint value)
 {
-	g_mapper->write_memory(address, value);
+	current_mapper()->write_memory(address, value);
 	//g_pCurrentMapper->WriteMemory(address, value);
 
 	if (address < 0x2000) {
@@ -375,7 +373,7 @@ void memory_main_write(uint address, uint value)
 		return;
 	}
 
-	if (address < 0x8000 && g_mapper->m_bSaveRam) {//SRAM man..
+	if (address < 0x8000 && current_mapper()->m_bSaveRam) {//SRAM man..
 		g_SRAM[ address & 0x1FFF ] = value & 0xFF;
 		return;
 	}
