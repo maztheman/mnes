@@ -148,7 +148,7 @@ static inline void ppu_sprite_initalize(const uint& ppu_cycle)
 {
 	bool even_cycle = (ppu_cycle & 1) == 0 ? true : false;
 	if (ppu_cycle == 1) {
-		g_MemoryRegisters.oam_clear_reads = true;
+		GMemoryRegisters().oam_clear_reads = true;
 	}
 
 	if (!even_cycle) {
@@ -159,7 +159,7 @@ static inline void ppu_sprite_initalize(const uint& ppu_cycle)
 
 static inline bool is_sprite_in_range(uint scanline, uint sprite_top)
 {
-	uint sprite_bottom = sprite_top + ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
+	uint sprite_bottom = sprite_top + ((GMemoryRegisters().r2000 & 0x20) ? 16 : 8);
 	return scanline >= sprite_top && scanline < sprite_bottom;
 }
 
@@ -209,7 +209,7 @@ static inline void ppu_sprite_copy_to_secondary(const uint& ppu_cycle)
 {
 	bool even_cycle = (ppu_cycle & 1) == 0 ? true : false;
 	if (ppu_cycle == 65) {
-		g_MemoryRegisters.oam_clear_reads = false;
+		GMemoryRegisters().oam_clear_reads = false;
 		sprite_state.reset();
 	}
 
@@ -259,7 +259,7 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 #if 1
 	static uint pattern_table_addr = 0;
 	//use this switch eventually
-	//const uint cuHeight = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
+	//const uint cuHeight = ((GMemoryRegisters().r2000 & 0x20) ? 16 : 8);
 	//sprite cycle 0, 1, 2, 3 -- Garbage fetches
 	//something must have happen in 0 and 2 but its junk
 	switch (sprite_cycle)
@@ -290,11 +290,11 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 
 	if (sprite_cycle == 0) {
 	} else if (sprite_cycle == 1) {
-		ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
+		ppu_memory_main_read(GMemoryRegisters().ppu_addr_bus);//read and throw away
 	} else if (sprite_cycle == 3) {
-		ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
+		ppu_memory_main_read(GMemoryRegisters().ppu_addr_bus);//read and throw away
 	} else if (sprite_cycle == 4) { //sprite cycle 4, 6 set ppu_addr
-		uint height = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
+		uint height = ((GMemoryRegisters().r2000 & 0x20) ? 16 : 8);
 		if (selected_index >= sprite_state.oam_2nd_index) {
 			sprite_attribute_latch[selected_index] = 0xFF;
 			sprite_count[selected_index] = 0xFF;
@@ -306,9 +306,9 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			if (height == 16) {
 				ptable = (tile & 1) ? 0x1000 : 0x0000;
 			} else {
-				ptable = (g_MemoryRegisters.r2000 & 0x8) ? 0x1000 : 0x0000;
+				ptable = (GMemoryRegisters().r2000 & 0x8) ? 0x1000 : 0x0000;
 			}
-			g_MemoryRegisters.ppu_addr_bus = addr = ptable | (tile << 4);
+			GMemoryRegisters().ppu_addr_bus = addr = ptable | (tile << 4);
 		} else {
 			uint8_t tile = oam2nd[idx + 1];
 			uint FineY = ppu_scanline() - oam2nd[idx + 0];
@@ -325,33 +325,33 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 				}
 				tile += bottom_tile;
 			} else {
-				ptable = (g_MemoryRegisters.r2000 & 0x8) ? 0x1000 : 0x0000;
+				ptable = (GMemoryRegisters().r2000 & 0x8) ? 0x1000 : 0x0000;
 				if (sprite_attribute_latch[selected_index] & 0x80) {
 					FineY = 7 - FineY;
 				}
 			}
 
-			MLOG_PPU("Sprite C4: O:$%04X", g_MemoryRegisters.ppu_addr_bus);
-			pattern_table_addr = g_MemoryRegisters.ppu_addr_bus = ptable | (tile << 4) | (FineY & 0x7);
-			MLOG_PPU(" N:$%04X SL:%ld PC:$%04X C:%ld H:%ld T:[$%016lX]\n", g_MemoryRegisters.ppu_addr_bus, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), height, g_Registers.tick_count)
+			MLOG_PPU("Sprite C4: O:$%04X", GMemoryRegisters().ppu_addr_bus);
+			pattern_table_addr = GMemoryRegisters().ppu_addr_bus = ptable | (tile << 4) | (FineY & 0x7);
+			MLOG_PPU(" N:$%04X SL:%ld PC:$%04X C:%ld H:%ld T:[$%016lX]\n", GMemoryRegisters().ppu_addr_bus, ppu_scanline(), GRegisters().pc, ppu_get_current_scanline_cycle(), height, GRegisters().tick_count)
 
 			sprite_count[selected_index] = oam2nd[idx + 3];
 		}
 	} else if (sprite_cycle == 6) {
-		g_MemoryRegisters.ppu_addr_bus += 8;
+		GMemoryRegisters().ppu_addr_bus += 8;
 		pattern_table_addr += 8;
 		if (selected_index < sprite_state.oam_2nd_index) {
-			MLOG_PPU("Sprite C6: A:$%04X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8))
+			MLOG_PPU("Sprite C6: A:$%04X SL:%ld PC:$%04X C:%ld H:%ld\n", GMemoryRegisters().ppu_addr_bus, ppu_scanline(), GRegisters().pc, ppu_get_current_scanline_cycle(), ((GMemoryRegisters().r2000 & 0x20) ? 16 : 8))
 		}
 	} else if (sprite_cycle == 5) {
 		if (selected_index >= sprite_state.oam_2nd_index) {
-			ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
+			ppu_memory_main_read(GMemoryRegisters().ppu_addr_bus);//read and throw away
 			sprite_bmp0[selected_index].set(0);
 		} else {
-			uint8_t b0 = TO_BYTE(ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus));
-			MLOG_PPU("Sprite C5: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b0, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8))
-			if (g_MemoryRegisters.ppu_addr_bus != pattern_table_addr) {
-				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", g_MemoryRegisters.ppu_addr_bus, pattern_table_addr)
+			uint8_t b0 = TO_BYTE(ppu_memory_main_read(GMemoryRegisters().ppu_addr_bus));
+			MLOG_PPU("Sprite C5: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", GMemoryRegisters().ppu_addr_bus, b0, ppu_scanline(), GRegisters().pc, ppu_get_current_scanline_cycle(), ((GMemoryRegisters().r2000 & 0x20) ? 16 : 8))
+			if (GMemoryRegisters().ppu_addr_bus != pattern_table_addr) {
+				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", GMemoryRegisters().ppu_addr_bus, pattern_table_addr)
 			}
 			if (sprite_attribute_latch[selected_index] & 0x40) {
 				b0 = reverse_byte(b0);
@@ -360,13 +360,13 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 		}
 	} else if (sprite_cycle == 7) {
 		if (selected_index >= sprite_state.oam_2nd_index) {
-			ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus);//read and throw away
+			ppu_memory_main_read(GMemoryRegisters().ppu_addr_bus);//read and throw away
 			sprite_bmp1[selected_index].set(0);
 		} else {
-			uint8_t b1 = TO_BYTE(ppu_memory_main_read(g_MemoryRegisters.ppu_addr_bus));
-			MLOG_PPU("Sprite C7: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", g_MemoryRegisters.ppu_addr_bus, b1, ppu_scanline(), g_Registers.pc, ppu_get_current_scanline_cycle(), ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8))
-			if (g_MemoryRegisters.ppu_addr_bus != pattern_table_addr) {
-				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", g_MemoryRegisters.ppu_addr_bus, pattern_table_addr)
+			uint8_t b1 = TO_BYTE(ppu_memory_main_read(GMemoryRegisters().ppu_addr_bus));
+			MLOG_PPU("Sprite C7: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n", GMemoryRegisters().ppu_addr_bus, b1, ppu_scanline(), GRegisters().pc, ppu_get_current_scanline_cycle(), ((GMemoryRegisters().r2000 & 0x20) ? 16 : 8))
+			if (GMemoryRegisters().ppu_addr_bus != pattern_table_addr) {
+				MLOG_PPU("Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", GMemoryRegisters().ppu_addr_bus, pattern_table_addr)
 			}
 			if (sprite_attribute_latch[selected_index] & 0x40) {
 				b1 = reverse_byte(b1);
@@ -393,14 +393,14 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 
 	//tmp
 
-	//we need to be cycle accurate for the g_MemoryRegisters.ppu_addr_bus
+	//we need to be cycle accurate for the GMemoryRegisters().ppu_addr_bus
 	//meaning 2 cycles for reading, yes, but the addr is put there on cycle 1, and finishes reading on cycle 2
 
 
 
 
 	if (tmp == 0) {
-		uint height = ((g_MemoryRegisters.r2000 & 0x20) ? 16 : 8);
+		uint height = ((GMemoryRegisters().r2000 & 0x20) ? 16 : 8);
 		if (selected_index >= sprite_state.oam_2nd_index) {
 			sprite_attribute_latch[selected_index] = 0xFF;
 			sprite_count[selected_index] = 0xFF;
@@ -412,10 +412,10 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 			if (height == 16) {
 				ptable = (tile & 1) ? 0x1000 : 0x0000;
 			} else {
-				ptable = (g_MemoryRegisters.r2000 & 0x8) ? 0x1000 : 0x0000;
+				ptable = (GMemoryRegisters().r2000 & 0x8) ? 0x1000 : 0x0000;
 			}
 
-			g_MemoryRegisters.ppu_addr_bus = addr = ptable | (tile << 4);
+			GMemoryRegisters().ppu_addr_bus = addr = ptable | (tile << 4);
 			ppu_memory_main_read(addr);//read and throw away
 
 			sprite_bmp0[selected_index].set(0);
@@ -437,19 +437,19 @@ static inline void ppu_sprite_fetch_sprite_data(const uint& ppu_cycle)
 				}
 				tile += bottom_tile;
 			} 			else {
-				ptable = (g_MemoryRegisters.r2000 & 0x8) ? 0x1000 : 0x0000;
+				ptable = (GMemoryRegisters().r2000 & 0x8) ? 0x1000 : 0x0000;
 				if (sprite_attribute_latch[selected_index] & 0x80) {
 					FineY = 7 - FineY;
 				}
 			}
 
-			g_MemoryRegisters.ppu_addr_bus = addr = ptable | (tile << 4) | (FineY & 0x7);
+			GMemoryRegisters().ppu_addr_bus = addr = ptable | (tile << 4) | (FineY & 0x7);
 
 			sprite_count[selected_index] = oam2nd[idx + 3];
 
 			uint8_t b0 = ppu_memory_main_read(addr);
 			
-			g_MemoryRegisters.ppu_addr_bus = addr2 = addr | 8;
+			GMemoryRegisters().ppu_addr_bus = addr2 = addr | 8;
 
 			uint8_t b1 = ppu_memory_main_read(addr2);
 

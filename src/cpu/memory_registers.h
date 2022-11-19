@@ -16,7 +16,7 @@ struct MemoryRegisters
 	uint32_t	ppu_latch_byte{0U};
 };
 
-extern MemoryRegisters g_MemoryRegisters;
+MemoryRegisters& GMemoryRegisters();
 
 void set_sprite_overflow();
 void set_vblank();

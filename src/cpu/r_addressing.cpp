@@ -1,12 +1,12 @@
 void memory_r_immediate()
 {
     //2.1
-    g_Registers.byteLatch = ext_memory_read(g_Registers.pc++);
+    GRegisters().byteLatch = ext_memory_read(GRegisters().pc++);
 
-    MLOG(" #$%02X", g_Registers.byteLatch);
+    MLOG(" #$%02X", GRegisters().byteLatch);
 
     //2.2 Do Operation
-    switch (g_Registers.opCode)
+    switch (GRegisters().opCode)
     {
         using namespace mnes::opcodes;
     case OPCODE_ADC_OP:
@@ -43,7 +43,7 @@ void memory_r_immediate()
         cpu_sbc();
         break;
     case OPCODE_SBC_IMM_EB:
-        g_Registers.byteLatch = 255 - g_Registers.byteLatch;
+        GRegisters().byteLatch = 255 - GRegisters().byteLatch;
         cpu_sbc();
         break;
     case OPCODE_ARR_IMM:
@@ -58,7 +58,7 @@ void memory_r_immediate()
         break;
     case OPCODE_ALR_IMM:
         cpu_and();
-        internals::cpu_lsr(g_Registers.a);
+        internals::cpu_lsr(GRegisters().a);
         break;
     case OPCODE_LAX_IMM:
         cpu_lax();
@@ -115,14 +115,14 @@ void memory_r_immediate()
 void memory_r_absolute()
 {
     //2
-    uint pcl = ext_memory_read(g_Registers.pc++);
+    uint pcl = ext_memory_read(GRegisters().pc++);
     //3
-    uint pch = ext_memory_read(g_Registers.pc++);
+    uint pch = ext_memory_read(GRegisters().pc++);
     //4.1
-    g_Registers.byteLatch = ext_memory_read(pcl | (pch << 8));
-    MLOG(" $%04X <- $%02X", pcl | (pch << 8), g_Registers.byteLatch);
+    GRegisters().byteLatch = ext_memory_read(pcl | (pch << 8));
+    MLOG(" $%04X <- $%02X", pcl | (pch << 8), GRegisters().byteLatch);
     //4.2 - Do Operation
-    switch (g_Registers.opCode)
+    switch (GRegisters().opCode)
     {
     using namespace mnes::opcodes;
     case OPCODE_LDA_AB:
@@ -181,12 +181,12 @@ void memory_r_absolute()
 void memory_r_zero_page()
 {
     //2
-    uint address = ext_memory_read(g_Registers.pc++);
+    uint address = ext_memory_read(GRegisters().pc++);
     //3.1
-    g_Registers.byteLatch = ext_memory_read(address);
-    MLOG(" $%02X <- $%02X", address, g_Registers.byteLatch);
+    GRegisters().byteLatch = ext_memory_read(address);
+    MLOG(" $%02X <- $%02X", address, GRegisters().byteLatch);
     //3.2
-    switch (g_Registers.opCode)
+    switch (GRegisters().opCode)
     {
     using namespace mnes::opcodes;        
     case OPCODE_LDA_ZP:
@@ -209,7 +209,7 @@ void memory_r_zero_page()
         break;
     case OPCODE_ADC_ZP:
         cpu_adc();
-        MLOG(" A<=$%02X", g_Registers.a)
+        MLOG(" A<=$%02X", GRegisters().a)
         break;
     case OPCODE_SBC_ZP:
         cpu_sbc();
@@ -253,14 +253,14 @@ void memory_r_zero_page()
 static inline void memory_r_zero_page_indexed(const uint& indexRegister)
 {
     //2
-    uint address = ext_memory_read(g_Registers.pc++);
+    uint address = ext_memory_read(GRegisters().pc++);
     //3
     ext_memory_read(address);
     //4.1
-    g_Registers.byteLatch = ext_memory_read((address + indexRegister) & 0xFF);
-    MLOG(" $%02X, I[%02X] A:$%02X <- $%02X", address, indexRegister, (address + indexRegister) & 0xFF, g_Registers.byteLatch);
+    GRegisters().byteLatch = ext_memory_read((address + indexRegister) & 0xFF);
+    MLOG(" $%02X, I[%02X] A:$%02X <- $%02X", address, indexRegister, (address + indexRegister) & 0xFF, GRegisters().byteLatch);
     //4.2
-    switch (g_Registers.opCode)
+    switch (GRegisters().opCode)
     {
     using namespace mnes::opcodes;
     case OPCODE_LDA_ZP_X:
@@ -298,12 +298,12 @@ static inline void memory_r_zero_page_indexed(const uint& indexRegister)
 
 void memory_r_zero_page_indexed_x()
 {
-    memory_r_zero_page_indexed(g_Registers.x);
+    memory_r_zero_page_indexed(GRegisters().x);
 }
 
 void memory_r_zero_page_indexed_y()
 {
-    memory_r_zero_page_indexed(g_Registers.y);
+    memory_r_zero_page_indexed(GRegisters().y);
 }
 
 /*
@@ -333,22 +333,22 @@ void memory_r_zero_page_indexed_y()
 static inline void memory_r_absolute_indexed(const uint& indexRegister)
 {
     //2
-    uint pcl = ext_memory_read(g_Registers.pc++);
+    uint pcl = ext_memory_read(GRegisters().pc++);
     //3
-    uint pch = ext_memory_read(g_Registers.pc++) << 8;
+    uint pch = ext_memory_read(GRegisters().pc++) << 8;
     MLOG(" $%04X, I[$%02X]", pcl | pch, indexRegister);
     pcl += indexRegister;
     //4
-    g_Registers.byteLatch = ext_memory_read((pcl & 0xFF) | pch);
+    GRegisters().byteLatch = ext_memory_read((pcl & 0xFF) | pch);
     if (pcl > 0xFF) {
         //5
-        g_Registers.byteLatch = ext_memory_read((pch + pcl) & 0xFFFF);
-        MLOG(" AF:$%04X <- $%02X", (pch + pcl) & 0xFFFF, g_Registers.byteLatch);
+        GRegisters().byteLatch = ext_memory_read((pch + pcl) & 0xFFFF);
+        MLOG(" AF:$%04X <- $%02X", (pch + pcl) & 0xFFFF, GRegisters().byteLatch);
     } else {
-        MLOG(" A:$%04X <- $%02X", (pcl & 0xFF) | pch, g_Registers.byteLatch);
+        MLOG(" A:$%04X <- $%02X", (pcl & 0xFF) | pch, GRegisters().byteLatch);
     }
     //Do Operation
-    switch (g_Registers.opCode)
+    switch (GRegisters().opCode)
     {
     using namespace mnes::opcodes;
     case OPCODE_LDA_AB_X:
@@ -393,12 +393,12 @@ static inline void memory_r_absolute_indexed(const uint& indexRegister)
 
 void memory_r_absolute_indexed_x()
 {
-    memory_r_absolute_indexed(g_Registers.x);
+    memory_r_absolute_indexed(GRegisters().x);
 }
 
 void memory_r_absolute_indexed_y()
 {
-    memory_r_absolute_indexed(g_Registers.y);
+    memory_r_absolute_indexed(GRegisters().y);
 }
 
 /*
@@ -420,19 +420,19 @@ void memory_r_absolute_indexed_y()
 void memory_r_indexed_indirect()
 {
     //2
-    uint pointer = ext_memory_read(g_Registers.pc++);
-    MLOG(" ($%02X, X[$%02X])", pointer, g_Registers.x)
+    uint pointer = ext_memory_read(GRegisters().pc++);
+    MLOG(" ($%02X, X[$%02X])", pointer, GRegisters().x)
     //3
     ext_memory_read(pointer);
     //4
-    uint pcl = ext_memory_read(TO_ZERO_PAGE(pointer + g_Registers.x));
+    uint pcl = ext_memory_read(TO_ZERO_PAGE(pointer + GRegisters().x));
     //5
-    uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + g_Registers.x + 1)) << 8;
+    uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + GRegisters().x + 1)) << 8;
     //6.1
-    g_Registers.byteLatch = ext_memory_read(pcl | pch);
-    MLOG(" A:$%04X <- $%02X", pcl | pch, g_Registers.byteLatch)
+    GRegisters().byteLatch = ext_memory_read(pcl | pch);
+    MLOG(" A:$%04X <- $%02X", pcl | pch, GRegisters().byteLatch)
     //6.2 Do Operation
-    switch (g_Registers.opCode)
+    switch (GRegisters().opCode)
     {
     using namespace mnes::opcodes;
     case OPCODE_LDA_IN_X:
@@ -490,25 +490,25 @@ void memory_r_indexed_indirect()
 void memory_r_indirect_indexed()
 {
     //2
-    uint pointer = ext_memory_read(g_Registers.pc++);
-    MLOG(" ($%02X), Y[%02X]", pointer, g_Registers.y);
+    uint pointer = ext_memory_read(GRegisters().pc++);
+    MLOG(" ($%02X), Y[%02X]", pointer, GRegisters().y);
     //3
     uint pcl = ext_memory_read(pointer);
     //4
     uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + 1)) << 8;
-    pcl += g_Registers.y;
+    pcl += GRegisters().y;
     //5
     //Could be invalid read
-    g_Registers.byteLatch = ext_memory_read(TO_ZERO_PAGE(pcl) | pch);
+    GRegisters().byteLatch = ext_memory_read(TO_ZERO_PAGE(pcl) | pch);
     if (pcl > 0xFF) {
         //6*, we are here because the effective address was off by $100
-        g_Registers.byteLatch = ext_memory_read((pcl + pch) & 0xFFFF);
-        MLOG(" A:$%04X < $%02X", (pcl + pch) & 0xFFFF, g_Registers.byteLatch);
+        GRegisters().byteLatch = ext_memory_read((pcl + pch) & 0xFFFF);
+        MLOG(" A:$%04X < $%02X", (pcl + pch) & 0xFFFF, GRegisters().byteLatch);
     } else {
-        MLOG(" A:$%04X < $%02X", TO_ZERO_PAGE(pcl) | pch, g_Registers.byteLatch);
+        MLOG(" A:$%04X < $%02X", TO_ZERO_PAGE(pcl) | pch, GRegisters().byteLatch);
     }
     //Do Operation
-    switch (g_Registers.opCode)
+    switch (GRegisters().opCode)
     {
     using namespace mnes::opcodes;        
     case OPCODE_LDA_IN_Y:

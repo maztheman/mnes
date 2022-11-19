@@ -12,11 +12,11 @@ Write instructions(STA, STX, STY, SAX)
 void memory_w_absolute()
 {
 	//2
-	uint pcl = ext_memory_read(g_Registers.pc++);
+	uint pcl = ext_memory_read(GRegisters().pc++);
 	//3
-	uint pch = ext_memory_read(g_Registers.pc++) << 8;
+	uint pch = ext_memory_read(GRegisters().pc++) << 8;
 	//4.1 Do Operation
-	switch (g_Registers.opCode)
+	switch (GRegisters().opCode)
 	{
 	using namespace mnes::opcodes;
 	case OPCODE_STA_AB:
@@ -30,8 +30,8 @@ void memory_w_absolute()
 		break;
 	}
 	//4.2 
-	MLOG(" $%04X <= $%02X", pcl | pch, g_Registers.byteLatch);
-	ext_memory_write(pcl | pch, g_Registers.byteLatch);
+	MLOG(" $%04X <= $%02X", pcl | pch, GRegisters().byteLatch);
+	ext_memory_write(pcl | pch, GRegisters().byteLatch);
 }
 
 /*
@@ -47,9 +47,9 @@ void memory_w_absolute()
 void memory_w_zero_page()
 {
 	//2
-	uint address = ext_memory_read(g_Registers.pc++);
+	uint address = ext_memory_read(GRegisters().pc++);
 	//3.1
-	switch (g_Registers.opCode)
+	switch (GRegisters().opCode)
 	{
 		using namespace mnes::opcodes;
 	case OPCODE_STA_ZP:
@@ -66,9 +66,9 @@ void memory_w_zero_page()
 		break;
 	}
 	//3.2
-	MLOG(" $%02X <= $%02X", address, g_Registers.byteLatch)
+	MLOG(" $%02X <= $%02X", address, GRegisters().byteLatch)
 
-	ext_memory_write(address, g_Registers.byteLatch);
+	ext_memory_write(address, GRegisters().byteLatch);
 }
 
 /*
@@ -90,14 +90,14 @@ void memory_w_zero_page()
 static inline void memory_w_zero_page_indexed(const uint& indexRegister)
 {
 	//2
-	uint address = ext_memory_read(g_Registers.pc++);
+	uint address = ext_memory_read(GRegisters().pc++);
 	//3.1 read from address
 	ext_memory_read(address);
 	MLOG(" $%02X, I[$%02X]", address, indexRegister);
 	//3.2 add index register to address
 	address = TO_ZERO_PAGE(address + indexRegister);
 	//4.1 Do Operation
-	switch (g_Registers.opCode)
+	switch (GRegisters().opCode)
 	{
 	using namespace mnes::opcodes;		
 	case OPCODE_STA_ZP_X:
@@ -114,18 +114,18 @@ static inline void memory_w_zero_page_indexed(const uint& indexRegister)
 		break;
 	}
 	//4.2
-	MLOG(" A:$%02X <= $%02X", address, g_Registers.byteLatch)
-	ext_memory_write(address, g_Registers.byteLatch);
+	MLOG(" A:$%02X <= $%02X", address, GRegisters().byteLatch)
+	ext_memory_write(address, GRegisters().byteLatch);
 }
 
 void memory_w_zero_page_indexed_x()
 {
-	memory_w_zero_page_indexed(g_Registers.x);
+	memory_w_zero_page_indexed(GRegisters().x);
 }
 
 void memory_w_zero_page_indexed_y()
 {
-	memory_w_zero_page_indexed(g_Registers.y);
+	memory_w_zero_page_indexed(GRegisters().y);
 }
 
 /*
@@ -153,9 +153,9 @@ void memory_w_zero_page_indexed_y()
 void memory_w_absolute_indexed(const uint& indexRegister)
 {
 	//2
-	uint pcl = ext_memory_read(g_Registers.pc++);
+	uint pcl = ext_memory_read(GRegisters().pc++);
 	//3.1 fetch high byte of address
-	uint pch = ext_memory_read(g_Registers.pc++) << 8;
+	uint pch = ext_memory_read(GRegisters().pc++) << 8;
 	MLOG(" $%04X, I[$%02X]", pcl | pch, indexRegister);
 	//3.2 add index register to low address byte
 	pcl += indexRegister;
@@ -165,7 +165,7 @@ void memory_w_absolute_indexed(const uint& indexRegister)
 	//4.2 fix high byte
 	uint address = (pcl + pch) & 0xFFFF;
 	//5.1 Do Operation
-	switch (g_Registers.opCode)
+	switch (GRegisters().opCode)
 	{
 	using namespace mnes::opcodes;
 	case OPCODE_STA_AB_X:
@@ -173,31 +173,31 @@ void memory_w_absolute_indexed(const uint& indexRegister)
 		cpu_sta();
 		break;
 	case OPCODE_SHY_AB_X:
-		g_Registers.byteLatch = (g_Registers.y & ((address >> 8) + 1)) & 0xFF;
-		if ((g_Registers.x + pcl) > 0xFF) {
+		GRegisters().byteLatch = (GRegisters().y & ((address >> 8) + 1)) & 0xFF;
+		if ((GRegisters().x + pcl) > 0xFF) {
 			return;
 		}
 		break;
 	case OPCODE_SHX_AB_Y:
-		g_Registers.byteLatch = (g_Registers.x & ((address >> 8) + 1)) & 0xFF;
-		if ((g_Registers.y + pcl) > 0xFF) {
+		GRegisters().byteLatch = (GRegisters().x & ((address >> 8) + 1)) & 0xFF;
+		if ((GRegisters().y + pcl) > 0xFF) {
 			return;
 		}
 		break;
 	}
 	//5.2
-	MLOG(" A:$%04X <= $%02X", address, g_Registers.byteLatch)
-	ext_memory_write(address, g_Registers.byteLatch);
+	MLOG(" A:$%04X <= $%02X", address, GRegisters().byteLatch)
+	ext_memory_write(address, GRegisters().byteLatch);
 }
 
 void memory_w_absolute_indexed_x()
 {
-	memory_w_absolute_indexed(g_Registers.x);
+	memory_w_absolute_indexed(GRegisters().x);
 }
 
 void memory_w_absolute_indexed_y()
 {
-	memory_w_absolute_indexed(g_Registers.y);
+	memory_w_absolute_indexed(GRegisters().y);
 }
 
 /*
@@ -219,18 +219,18 @@ void memory_w_absolute_indexed_y()
 void memory_w_indexed_indirect()
 {
 	//2
-	uint pointer = ext_memory_read(g_Registers.pc++);
-	MLOG(" ($%02X, X[$%02X])", pointer, g_Registers.x)
+	uint pointer = ext_memory_read(GRegisters().pc++);
+	MLOG(" ($%02X, X[$%02X])", pointer, GRegisters().x)
 	//3.1 read from pointer address, throw away data
 	ext_memory_read(pointer);
 	//3.2 add X to pointer address
-	pointer += g_Registers.x;
+	pointer += GRegisters().x;
 	//4
 	uint pcl = ext_memory_read(TO_ZERO_PAGE(pointer));
 	//5
 	uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + 1)) << 8;
 	//6.1 Do Operation
-	switch (g_Registers.opCode)
+	switch (GRegisters().opCode)
 	{
 	using namespace mnes::opcodes;		
 	case OPCODE_STA_IN_X:
@@ -238,8 +238,8 @@ void memory_w_indexed_indirect()
 		break;
 	}
 	//6.2
-	MLOG(" A:$%04X <= $%02X", pcl | pch, g_Registers.byteLatch)
-	ext_memory_write(pcl | pch, g_Registers.byteLatch);
+	MLOG(" A:$%04X <= $%02X", pcl | pch, GRegisters().byteLatch)
+	ext_memory_write(pcl | pch, GRegisters().byteLatch);
 }
 /*
 	 Write instructions (STA, SHA)
@@ -265,20 +265,20 @@ void memory_w_indexed_indirect()
 void memory_w_indirect_indexed()
 {
 	//2
-	uint pointer = ext_memory_read(g_Registers.pc++);
-	MLOG(" ($%02X), Y[%02X]", pointer, g_Registers.y);
+	uint pointer = ext_memory_read(GRegisters().pc++);
+	MLOG(" ($%02X), Y[%02X]", pointer, GRegisters().y);
 	//3
 	uint pcl = ext_memory_read(pointer);
 	//4.1 fetch high byte of effective address
 	uint pch = ext_memory_read(TO_ZERO_PAGE(pointer + 1)) << 8;
 	//4.2 add Y to low byte of effective address
-	pcl += g_Registers.y;
+	pcl += GRegisters().y;
 	//5.1 read from effective address could be invalid
 	ext_memory_read(TO_ZERO_PAGE(pcl) | pch);
 	//5.2 fix high byte of effective address
 	uint address = (pcl + pch) & 0xFFFF;
 	//6.1 Do Operation
-	switch (g_Registers.opCode)
+	switch (GRegisters().opCode)
 	{
 	using namespace mnes::opcodes;		
 	case OPCODE_STA_IN_Y:
@@ -287,6 +287,6 @@ void memory_w_indirect_indexed()
 
 	}
 	//6.2
-	MLOG(" A:$%04X <= $%02X", address, g_Registers.byteLatch);
-	ext_memory_write(address, g_Registers.byteLatch);
+	MLOG(" A:$%04X <= $%02X", address, GRegisters().byteLatch);
+	ext_memory_write(address, GRegisters().byteLatch);
 }

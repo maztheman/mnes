@@ -58,48 +58,48 @@ static inline uint8_t ppu_memory_main_read_byte(uint address)
 static inline void ppu_bg_pre_process_shift_regs(const uint ppu_cycle, const uint) 
 {
 
-	const uint& v = g_MemoryRegisters.r2006;
+	const uint& v = GMemoryRegisters().r2006;
 
 	uint tmp = ppu_cycle & 7;
 	//get addr
 	if (tmp == 1) {
-		g_MemoryRegisters.ppu_addr_bus = 0x2000 | (v & 0xFFF);
+		GMemoryRegisters().ppu_addr_bus = 0x2000 | (v & 0xFFF);
 	} else if (tmp == 3) {
-		g_MemoryRegisters.ppu_addr_bus &= 0x2C00;
-		g_MemoryRegisters.ppu_addr_bus += 0x3C0 + (((v >> 4) & 0x38) | ((v >> 2) & 0x7));
+		GMemoryRegisters().ppu_addr_bus &= 0x2C00;
+		GMemoryRegisters().ppu_addr_bus += 0x3C0 + (((v >> 4) & 0x38) | ((v >> 2) & 0x7));
 	} else if (tmp == 5) {
-		g_MemoryRegisters.ppu_addr_bus = (g_MemoryRegisters.r2000 & 0x10) ? 0x1000 : 0x0000;
-		g_MemoryRegisters.ppu_addr_bus |= (ppu_render_latch[0] << 4);
-		g_MemoryRegisters.ppu_addr_bus |= ((v >> 12) & 0x7);
+		GMemoryRegisters().ppu_addr_bus = (GMemoryRegisters().r2000 & 0x10) ? 0x1000 : 0x0000;
+		GMemoryRegisters().ppu_addr_bus |= (ppu_render_latch[0] << 4);
+		GMemoryRegisters().ppu_addr_bus |= ((v >> 12) & 0x7);
 	} else if (tmp == 7) {
-		g_MemoryRegisters.ppu_addr_bus += 8;
+		GMemoryRegisters().ppu_addr_bus += 8;
 	}
 
 	if (tmp == 2) {
 		//get nt byte
 		//uint ntable = (v >> 10) & 3;
 		//ppu_render_latch[0] = g_Tables[ntable][(v & 0x3FF)];
-		ppu_render_latch[0] = ppu_memory_main_read_byte(g_MemoryRegisters.ppu_addr_bus);
+		ppu_render_latch[0] = ppu_memory_main_read_byte(GMemoryRegisters().ppu_addr_bus);
 	} else if (tmp == 4) {
 		//get at byte
 		//uint ntable = (v >> 10) & 3;
 		//uint addr = 0x3C0 + ((v >> 4) & 0x38) | ((v >> 2) & 0x7);
 		//uint8_t ab = g_Tables[ntable][addr];//ppu_memory_main_read(addr); ///g_Tables[ntable][addr];
-		uint8_t ab = ppu_memory_main_read_byte(g_MemoryRegisters.ppu_addr_bus);
+		uint8_t ab = ppu_memory_main_read_byte(GMemoryRegisters().ppu_addr_bus);
 		uint sno = (v & 0x40) >> 5 | ((v & 2) >> 1);
 		ppu_render_latch[1] = get_attribute_byte(ab, sno);
 	} else if (tmp == 6) {
 		//get low bg tile byte
-		//uint ptable = (g_MemoryRegisters.r2000 & 0x10) ? 0x1000 : 0x0000;
+		//uint ptable = (GMemoryRegisters().r2000 & 0x10) ? 0x1000 : 0x0000;
 		//uint addr = ptable | (ppu_render_latch[0] << 4) | ((v >> 12) & 0x7);
 		//ppu_render_latch[2] = ppu_memory_main_read(addr);
-		ppu_render_latch[2] = ppu_memory_main_read_byte(g_MemoryRegisters.ppu_addr_bus);
+		ppu_render_latch[2] = ppu_memory_main_read_byte(GMemoryRegisters().ppu_addr_bus);
 	} else if (tmp == 0) {
 		//get hi bg tile byte
-		//uint ptable = (g_MemoryRegisters.r2000 & 0x10) ? 0x1000 : 0x0000;
+		//uint ptable = (GMemoryRegisters().r2000 & 0x10) ? 0x1000 : 0x0000;
 		//uint addr = ptable | (ppu_render_latch[0] << 4) | 8 | ((v >> 12) & 0x7);
 		//ppu_render_latch[3] = ppu_memory_main_read(addr);
-		ppu_render_latch[3] = ppu_memory_main_read_byte(g_MemoryRegisters.ppu_addr_bus);
+		ppu_render_latch[3] = ppu_memory_main_read_byte(GMemoryRegisters().ppu_addr_bus);
 	}
 
 	if (tmp == 0) {
@@ -140,7 +140,7 @@ static inline void ppu_bg_draw(const uint& ppu_cycle)
 	}
 
 	if (bDraw) {
-		uint bitoff = 7 - g_MemoryRegisters.TileXOffset;
+		uint bitoff = 7 - GMemoryRegisters().TileXOffset;
 		uint b0 = test1.fetch(bitoff);
 		uint b1 = test2.fetch(bitoff);
 		uint chrcolor = b0 | b1 << 1;

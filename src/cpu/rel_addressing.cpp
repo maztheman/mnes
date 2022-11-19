@@ -37,11 +37,11 @@ That's because the "last cycle" is actually "Fetch opcode of next instruction"
 void memory_rel()
 {
     //2.1
-    int8_t operand = static_cast<int8_t>(ext_memory_read(g_Registers.pc++) & 0xFF);
+    int8_t operand = static_cast<int8_t>(ext_memory_read(GRegisters().pc++) & 0xFF);
     MLOG(" $%02X %d", operand & 0xFF, operand);
     //2.2 Do Operation
     bool bTakeBranch = false;
-    switch (g_Registers.opCode) 
+    switch (GRegisters().opCode) 
     {
         using namespace mnes::opcodes;
     case OPCODE_BCC:
@@ -79,10 +79,10 @@ void memory_rel()
 
 
         //Before 3rd cycle, we split the pc into pcl and pch
-        int pcl = static_cast<int>(g_Registers.pc & 0xFF);
-        int pch = static_cast<int>(g_Registers.pc & 0xFF00);
+        int pcl = static_cast<int>(GRegisters().pc & 0xFF);
+        int pch = static_cast<int>(GRegisters().pc & 0xFF00);
         //3.1
-        ext_memory_read(g_Registers.pc);
+        ext_memory_read(GRegisters().pc);
         //3.2 add operand to PCL
         pcl += static_cast<int>(operand);
         MLOG(" pcl: %d [%04X]", pcl, pcl);
@@ -94,16 +94,16 @@ void memory_rel()
             ext_memory_read(TO_ZERO_PAGE(pcl) | static_cast<uint>(pch));
             //4.2 Fix PCH
         }
-        pch = (static_cast<int>(g_Registers.pc) + operand) & 0xFFFF;
+        pch = (static_cast<int>(GRegisters().pc) + operand) & 0xFFFF;
         //pch = (pcl | pch) & 0xFFFF;
         MLOG(" pch: %04X", pch);
-        //if ((pch & 0xFF00) == (g_Registers.pc & 0xFF00)) {
+        //if ((pch & 0xFF00) == (GRegisters().pc & 0xFF00)) {
             //this next step should be done, however in this emulator the opcode fetch is done in the "next" iteration
             //in order to fix this I would need to be able to know if a opcode has been fetched already
             //4.3 if they didnt change increase PC
             //pch = (pch + 1) & 0xFFFF;
         //}
-        g_Registers.pc = static_cast<uint>(pch);
+        GRegisters().pc = static_cast<uint>(pch);
     }
 #ifdef USE_LOG    
      else {

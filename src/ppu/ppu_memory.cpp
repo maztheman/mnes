@@ -65,7 +65,7 @@ static auto& tables = Tables();
 
 uint ppu_memory_main_read(uint address)
 {
-	//g_MemoryRegisters.ppu_addr_bus = address;
+	//GMemoryRegisters().ppu_addr_bus = address;
 
 	address &= 0x3FFF;
 
@@ -88,7 +88,7 @@ uint ppu_memory_main_read(uint address)
 
 void ppu_memory_main_write(uint address, uint value)
 {
-	//g_MemoryRegisters.ppu_addr_bus = address;
+	//GMemoryRegisters().ppu_addr_bus = address;
 
 	address &= 0x3FFF;
 

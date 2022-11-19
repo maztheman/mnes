@@ -121,8 +121,8 @@ tmp_spr_ram_t TmpSPRRam()
 
 void memory_intialize()
 {
-	g_MemoryRegisters = MemoryRegisters{};
-	g_Registers.tick_count = 0;
+	GMemoryRegisters() = MemoryRegisters{};
+	GRegisters().tick_count = 0;
 	memset(MemoryData().memory.get(), 0, MEMORY_SIZE);
 }
 
@@ -146,15 +146,15 @@ uint memory_main_read(uint address)
 		switch(address)
 		{
 		case 0://W
-			//nRetval = g_MemoryRegisters.r2000;
-			nRetval = g_MemoryRegisters.ppu_latch_byte;
+			//nRetval = GMemoryRegisters().r2000;
+			nRetval = GMemoryRegisters().ppu_latch_byte;
 			break;
 		case 1://W
-			//nRetval =  g_MemoryRegisters.r2001;
-			nRetval = g_MemoryRegisters.ppu_latch_byte;
+			//nRetval =  GMemoryRegisters().r2001;
+			nRetval = GMemoryRegisters().ppu_latch_byte;
 			break;
 		case 2://R
-			nRetval =  g_MemoryRegisters.r2002;
+			nRetval =  GMemoryRegisters().r2002;
 			/*
 				Reading $2002 within a few PPU clocks of when VBL is set results in special-case behavior.
 				Reading one PPU clock before reads it as clear and never sets the flag or generates NMI for that frame.
@@ -165,37 +165,37 @@ uint memory_main_read(uint address)
 			*/
 			PPURegs().last_2002_read = ppu_get_cycle();
 			clear_vblank();
-			g_MemoryRegisters.r2006Latch = false;
+			GMemoryRegisters().r2006Latch = false;
 			break;
 		case 3://W
-			nRetval = g_MemoryRegisters.ppu_latch_byte;
+			nRetval = GMemoryRegisters().ppu_latch_byte;
 			break;
 		case 4://RW
-			if (g_MemoryRegisters.oam_clear_reads) {
+			if (GMemoryRegisters().oam_clear_reads) {
 				nRetval = 0xFF;
 			} else {
-				nRetval = SPRRam()[g_MemoryRegisters.r2003];
+				nRetval = SPRRam()[GMemoryRegisters().r2003];
 			}
 			break;
 		case 5://W
-			nRetval = g_MemoryRegisters.ppu_latch_byte;
+			nRetval = GMemoryRegisters().ppu_latch_byte;
 			break;
 		case 6://W
-			nRetval = g_MemoryRegisters.ppu_latch_byte;
+			nRetval = GMemoryRegisters().ppu_latch_byte;
 			break;
 		case 7://RW
 			//read from ppu
 			MLOG(" @ PPU Cycle %ld", ppu_get_current_scanline_cycle())
-			uint ppuaddress = g_MemoryRegisters.r2006;
-			g_MemoryRegisters.r2006 = ( g_MemoryRegisters.r2006 + ((g_MemoryRegisters.r2000 & 0x4)? 32 : 1)) & 0x7FFF;
-			g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+			uint ppuaddress = GMemoryRegisters().r2006;
+			GMemoryRegisters().r2006 = ( GMemoryRegisters().r2006 + ((GMemoryRegisters().r2000 & 0x4)? 32 : 1)) & 0x7FFF;
+			GMemoryRegisters().ppu_addr_bus = GMemoryRegisters().r2006;
 			if (ppuaddress >= 0x3F00) {
 				//returns value right away, but also sets the latch too
-				g_MemoryRegisters.r2006ByteLatch = ppu_memory_main_read(ppuaddress & 0x2FFF);
+				GMemoryRegisters().r2006ByteLatch = ppu_memory_main_read(ppuaddress & 0x2FFF);
 				nRetval = ppu_memory_main_read(ppuaddress);
 			} else {
-				nRetval = g_MemoryRegisters.r2006ByteLatch;
-				g_MemoryRegisters.r2006ByteLatch = ppu_memory_main_read(ppuaddress);
+				nRetval = GMemoryRegisters().r2006ByteLatch;
+				GMemoryRegisters().r2006ByteLatch = ppu_memory_main_read(ppuaddress);
 			}
 			break;
 		}
@@ -256,74 +256,74 @@ void memory_main_write(uint address, uint value)
 		{
 		case 0://W
 			{
-				bool bNmiEnabled = (g_MemoryRegisters.r2000 & 0x80) == 0x80;
-				g_MemoryRegisters.r2000 = value;
-				g_MemoryRegisters.r2006Temp &= 0xF3FF;
-				g_MemoryRegisters.r2006Temp |= (value & 0x3) << 10;
-				if (bNmiEnabled == false && (g_MemoryRegisters.r2000 & 0x80) == 0x80 && is_vblank()) {
+				bool bNmiEnabled = (GMemoryRegisters().r2000 & 0x80) == 0x80;
+				GMemoryRegisters().r2000 = value;
+				GMemoryRegisters().r2006Temp &= 0xF3FF;
+				GMemoryRegisters().r2006Temp |= (value & 0x3) << 10;
+				if (bNmiEnabled == false && (GMemoryRegisters().r2000 & 0x80) == 0x80 && is_vblank()) {
 					printf("nmi set to true\n");
-					g_Registers.nmi = true;
+					GRegisters().nmi = true;
 				}
-				g_MemoryRegisters.ppu_latch_byte = value;
+				GMemoryRegisters().ppu_latch_byte = value;
 			}
 			break;
 		case 1://W
-			g_MemoryRegisters.r2001  = value;
-			g_MemoryRegisters.ppu_latch_byte = value;
+			GMemoryRegisters().r2001  = value;
+			GMemoryRegisters().ppu_latch_byte = value;
 			break;
 		case 2://R
-			g_MemoryRegisters.ppu_latch_byte = value;
+			GMemoryRegisters().ppu_latch_byte = value;
 			break;
 		case 3://W
-			g_MemoryRegisters.ppu_latch_byte =  g_MemoryRegisters.r2003 = value;
+			GMemoryRegisters().ppu_latch_byte =  GMemoryRegisters().r2003 = value;
 			break;
 		case 4://RW
-			SPRRam()[ g_MemoryRegisters.r2003++ ] = TO_BYTE(value);
-			g_MemoryRegisters.r2003 &= 0xFF;
+			SPRRam()[ GMemoryRegisters().r2003++ ] = TO_BYTE(value);
+			GMemoryRegisters().r2003 &= 0xFF;
 			break;
 		case 5://W
 			{
-				if (g_MemoryRegisters.r2006Latch) {//second write
-					g_MemoryRegisters.r2006Temp &= 0x8C1F;
-					g_MemoryRegisters.r2006Temp |= (value << 2) & 0x3E0;
-					g_MemoryRegisters.r2006Temp |= (value << 12) & 0x7000;
+				if (GMemoryRegisters().r2006Latch) {//second write
+					GMemoryRegisters().r2006Temp &= 0x8C1F;
+					GMemoryRegisters().r2006Temp |= (value << 2) & 0x3E0;
+					GMemoryRegisters().r2006Temp |= (value << 12) & 0x7000;
 				} else {//first write
-					g_MemoryRegisters.TileXOffset = value & 0x7;
-					g_MemoryRegisters.r2006Temp &= 0xFFE0;//erase bits D0-D4
-					g_MemoryRegisters.r2006Temp |= (value >> 3) & 0x1F; //copy bit D3-D7 to D0-D4
+					GMemoryRegisters().TileXOffset = value & 0x7;
+					GMemoryRegisters().r2006Temp &= 0xFFE0;//erase bits D0-D4
+					GMemoryRegisters().r2006Temp |= (value >> 3) & 0x1F; //copy bit D3-D7 to D0-D4
 				}
-				g_MemoryRegisters.r2006Latch = !g_MemoryRegisters.r2006Latch;
-				g_MemoryRegisters.ppu_latch_byte = value;
+				GMemoryRegisters().r2006Latch = !GMemoryRegisters().r2006Latch;
+				GMemoryRegisters().ppu_latch_byte = value;
 				break;
 			}
 		case 6://W
 			{
-				if (g_MemoryRegisters.r2006Latch) {//second write
-					g_MemoryRegisters.r2006Temp &= 0x3F00;//clear bottom, according to docs it says top 2 bits are cleared.  
+				if (GMemoryRegisters().r2006Latch) {//second write
+					GMemoryRegisters().r2006Temp &= 0x3F00;//clear bottom, according to docs it says top 2 bits are cleared.  
 					//in essense its masking 2006 to 0x3FFF, which is good because if you look inside write in 2007 it masks anyways to 0x3FFF;
 					//side effect is Y-scroll gets 1 bit chopped off.
 					//which is prolly why they use 2005 to scroll, since it is the scrolling register.
-					g_MemoryRegisters.r2006Temp |= value;//set bottom
-					g_MemoryRegisters.r2006 = g_MemoryRegisters.r2006Temp;
-					if (g_MemoryRegisters.r2006 < 0x3F00) {
-						MLOG(" @ PPU cycle %ld old $%04X", ppu_get_current_scanline_cycle(), g_MemoryRegisters.ppu_addr_bus)
-						g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+					GMemoryRegisters().r2006Temp |= value;//set bottom
+					GMemoryRegisters().r2006 = GMemoryRegisters().r2006Temp;
+					if (GMemoryRegisters().r2006 < 0x3F00) {
+						MLOG(" @ PPU cycle %ld old $%04X", ppu_get_current_scanline_cycle(), GMemoryRegisters().ppu_addr_bus)
+						GMemoryRegisters().ppu_addr_bus = GMemoryRegisters().r2006;
 					}
 				} else {//first write
-					g_MemoryRegisters.r2006Temp &= 0xFF;//clear top
-					g_MemoryRegisters.r2006Temp |= (value & 0x3F) << 8;//set top
+					GMemoryRegisters().r2006Temp &= 0xFF;//clear top
+					GMemoryRegisters().r2006Temp |= (value & 0x3F) << 8;//set top
 				}
-				g_MemoryRegisters.r2006Latch = !g_MemoryRegisters.r2006Latch;
-				g_MemoryRegisters.ppu_latch_byte = value;
+				GMemoryRegisters().r2006Latch = !GMemoryRegisters().r2006Latch;
+				GMemoryRegisters().ppu_latch_byte = value;
 				break;
 			}
 		case 7://RW
 			{
-				uint ppuAddress = g_MemoryRegisters.r2006;
-				g_MemoryRegisters.r2006 = ( g_MemoryRegisters.r2006 + ((g_MemoryRegisters.r2000 & 0x4)? 32 : 1)) & 0x7FFF;
-				if (g_MemoryRegisters.r2006 < 0x3F00) {
-					MLOG(" @ PPU cycle %ld old $%04X", ppu_get_current_scanline_cycle(), g_MemoryRegisters.ppu_addr_bus)
-					g_MemoryRegisters.ppu_addr_bus = g_MemoryRegisters.r2006;
+				uint ppuAddress = GMemoryRegisters().r2006;
+				GMemoryRegisters().r2006 = ( GMemoryRegisters().r2006 + ((GMemoryRegisters().r2000 & 0x4)? 32 : 1)) & 0x7FFF;
+				if (GMemoryRegisters().r2006 < 0x3F00) {
+					MLOG(" @ PPU cycle %ld old $%04X", ppu_get_current_scanline_cycle(), GMemoryRegisters().ppu_addr_bus)
+					GMemoryRegisters().ppu_addr_bus = GMemoryRegisters().r2006;
 				}
 				ppu_memory_main_write(ppuAddress, value);
 				break;
@@ -424,19 +424,19 @@ void ext_memory_write(uint address, uint value)
 
 static inline void memory_inc_stack()
 {
-	g_Registers.stack++;
-	g_Registers.stack &= 0xFF;
+	GRegisters().stack++;
+	GRegisters().stack &= 0xFF;
 }
 
 static inline void memory_dec_stack()
 {
-	g_Registers.stack--;
-	g_Registers.stack &= 0xFF;
+	GRegisters().stack--;
+	GRegisters().stack &= 0xFF;
 }
 
 void memory_push_byte(uint nValue)
 {
-	ext_memory_write(g_Registers.stack + 0x100, nValue);
+	ext_memory_write(GRegisters().stack + 0x100, nValue);
 	memory_dec_stack();
 }
 
@@ -444,63 +444,63 @@ void memory_push_byte(uint nValue)
 uint memory_pop_byte()
 {
 	memory_inc_stack();
-	uint retval = ext_memory_read(g_Registers.stack + 0x100);
+	uint retval = ext_memory_read(GRegisters().stack + 0x100);
 	return retval;
 }
 
 void memory_push_pc()
 {
-	ext_memory_write(g_Registers.stack + 0x100, (g_Registers.pc >> 8));
+	ext_memory_write(GRegisters().stack + 0x100, (GRegisters().pc >> 8));
 	memory_dec_stack();
-	ext_memory_write(g_Registers.stack + 0x100, g_Registers.pc & 0xFF);
+	ext_memory_write(GRegisters().stack + 0x100, GRegisters().pc & 0xFF);
 	memory_dec_stack();
 }
 
 void memory_pop_pc()
 {
 	memory_inc_stack();
-	g_Registers.pc = ext_memory_read(g_Registers.stack + 0x100);
+	GRegisters().pc = ext_memory_read(GRegisters().stack + 0x100);
 	memory_inc_stack();
-	g_Registers.pc |= ext_memory_read(g_Registers.stack + 0x100) << 8;
+	GRegisters().pc |= ext_memory_read(GRegisters().stack + 0x100) << 8;
 }
 /// <summary>
 /// Only is done right after opcode is officially read
 /// </summary>
 static inline void check_for_hardware_irq()
 {
-	if (g_Registers.prev_nmi) {
-		g_Registers.opCode = 0x00;
-		g_Registers.actual_irq = doing_irq::nmi;
+	if (GRegisters().prev_nmi) {
+		GRegisters().opCode = 0x00;
+		GRegisters().actual_irq = doing_irq::nmi;
 		MLOG("NMI -> ")
 	} else if (IF_INTERRUPT() == false) {
-		if (g_Registers.irq) {
-			g_Registers.opCode = 0x00;
-			g_Registers.actual_irq = doing_irq::irq;
+		if (GRegisters().irq) {
+			GRegisters().opCode = 0x00;
+			GRegisters().actual_irq = doing_irq::irq;
 			MLOG("IRQ -> ")
 		} else {
-			g_Registers.actual_irq = doing_irq::none;
-			g_Registers.pc++;
+			GRegisters().actual_irq = doing_irq::none;
+			GRegisters().pc++;
 		}
 	} else {
-		g_Registers.actual_irq = doing_irq::none;
-		g_Registers.pc++;
+		GRegisters().actual_irq = doing_irq::none;
+		GRegisters().pc++;
 	}
 }
 
 static inline void check_for_software_irq()
 {
-	if (g_Registers.actual_irq == doing_irq::none) {
-		if (g_Registers.opCode == mnes::opcodes::OPCODE_BRK) {
-			g_Registers.actual_irq = doing_irq::brk;
+	if (GRegisters().actual_irq == doing_irq::none) {
+		if (GRegisters().opCode == mnes::opcodes::OPCODE_BRK) {
+			GRegisters().actual_irq = doing_irq::brk;
 		}
 	}
 }
 
 static inline void check_for_delayed_i_flag()
 {
-	if (g_Registers.delayed != delayed_i::empty) {
-		SET_INTERRUPT(g_Registers.delayed == delayed_i::yes);
-		g_Registers.delayed = delayed_i::empty;
+	if (GRegisters().delayed != delayed_i::empty) {
+		SET_INTERRUPT(GRegisters().delayed == delayed_i::yes);
+		GRegisters().delayed = delayed_i::empty;
 	}
 }
 
@@ -509,24 +509,24 @@ static inline void check_for_delayed_i_flag()
 /// </summary>
 static inline void memory_read_opcode()
 {
-	g_Registers.opCode = ext_memory_read(g_Registers.pc);
+	GRegisters().opCode = ext_memory_read(GRegisters().pc);
 	
 #ifdef USE_LOG	
-	uint pc = g_Registers.pc;
+	uint pc = GRegisters().pc;
 #endif
 
 	check_for_hardware_irq();
 	check_for_software_irq();
 	check_for_delayed_i_flag();
 
-	MLOG("$%04X %02X %s", pc, g_Registers.opCode, OpCodes[g_Registers.opCode].sOpCode);
+	MLOG("$%04X %02X %s", pc, GRegisters().opCode, OpCodes[GRegisters().opCode].sOpCode);
 }
 
 
 void memory_pc_process()
 {
 	memory_read_opcode();
-	switch (g_Registers.opCode)
+	switch (GRegisters().opCode)
 	{
 		using namespace mnes::opcodes;
 		//Read Instructions - Immediate
@@ -814,7 +814,7 @@ void memory_pc_process()
 		cpu_rts();
 		break;
 	case OPCODE_PHA:
-		MLOG(" | A:$%02X ->", g_Registers.a)
+		MLOG(" | A:$%02X ->", GRegisters().a)
 		cpu_pha();
 		break;
 	case OPCODE_PHP:
@@ -822,7 +822,7 @@ void memory_pc_process()
 		break;
 	case OPCODE_PLA:
 		cpu_pla();
-		MLOG(" | A:$%02X ->", g_Registers.a)
+		MLOG(" | A:$%02X ->", GRegisters().a)
 		break;
 	case OPCODE_PLP:
 		cpu_plp();
@@ -880,12 +880,12 @@ void memory_pc_process()
 		memory_implied_or_accumulator();
 		break;
 	default:
-		MLOG(" Unknown opcode found %02X", g_Registers.opCode)
+		MLOG(" Unknown opcode found %02X", GRegisters().opCode)
 		break;
 	}
 	
 
-	MLOG(" T:[$%016lX]\n", g_Registers.tick_count);
+	MLOG(" T:[$%016lX]\n", GRegisters().tick_count);
 
-	g_Registers.tick_count++;
+	GRegisters().tick_count++;
 }

@@ -4,7 +4,7 @@ constexpr uint32_t COARSE_Y = 0x03E0U;
 
 static inline void inc_coarse_x()
 {
-	uint& v = g_MemoryRegisters.r2006;
+	uint& v = GMemoryRegisters().r2006;
 
 	if ((v & COARSE_X) == 31) { // if coarse X == 31
 		v &= ~COARSE_X;// coarse X = 0
@@ -19,7 +19,7 @@ static inline void inc_coarse_x()
 
 static void inc_fine_y()
 {
-	uint32_t& v = g_MemoryRegisters.r2006;
+	uint32_t& v = GMemoryRegisters().r2006;
 
 	if ((v & FINE_Y) != FINE_Y) {        // if fine Y < 7
 		v += 0x1000;                      // increment fine Y

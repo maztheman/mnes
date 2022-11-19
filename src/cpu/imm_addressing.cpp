@@ -1,5 +1,5 @@
 static inline void memory_immediate()
 {
 	//2.1
-	g_Registers.byteLatch = ext_memory_read(g_Registers.pc++);
+	GRegisters().byteLatch = ext_memory_read(GRegisters().pc++);
 }

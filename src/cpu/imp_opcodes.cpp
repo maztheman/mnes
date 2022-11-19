@@ -10,7 +10,7 @@ static inline void cpu_cld()
 
 static inline void cpu_cli() 
 {
-	g_Registers.delayed = delayed_i::no;
+	GRegisters().delayed = delayed_i::no;
 }
 
 static inline void cpu_clv() {
@@ -28,55 +28,55 @@ static inline void cpu_sed()
 
 static inline void cpu_sei() 
 {
-	g_Registers.delayed = delayed_i::yes;
+	GRegisters().delayed = delayed_i::yes;
 }
 
 static inline void cpu_tax() {
-	g_Registers.x = g_Registers.a;
-	set_nz(g_Registers.x);
+	GRegisters().x = GRegisters().a;
+	set_nz(GRegisters().x);
 }
 
 static inline void cpu_tay() {
-	g_Registers.y = g_Registers.a;
-	set_nz(g_Registers.y);
+	GRegisters().y = GRegisters().a;
+	set_nz(GRegisters().y);
 }
 
 static inline void cpu_tsx() {
-	g_Registers.x = g_Registers.stack;
-	set_nz(g_Registers.x);
+	GRegisters().x = GRegisters().stack;
+	set_nz(GRegisters().x);
 }
 
 static inline void cpu_txa() {
-	g_Registers.a = g_Registers.x;
-	set_nz(g_Registers.a);
+	GRegisters().a = GRegisters().x;
+	set_nz(GRegisters().a);
 }
 
 static inline void cpu_txs() {
-	g_Registers.stack = g_Registers.x;
+	GRegisters().stack = GRegisters().x;
 }
 
 static inline void cpu_tya() {
-	g_Registers.a = g_Registers.y;
-	set_nz(g_Registers.a);
+	GRegisters().a = GRegisters().y;
+	set_nz(GRegisters().a);
 }
 
 static inline void cpu_inx() {
-	g_Registers.x = (g_Registers.x + 1) & 0xFF;
-	set_nz(g_Registers.x);
+	GRegisters().x = (GRegisters().x + 1) & 0xFF;
+	set_nz(GRegisters().x);
 }
 
 static inline void cpu_iny() {
-	g_Registers.y = (g_Registers.y + 1) & 0xFF;
-	set_nz(g_Registers.y);
+	GRegisters().y = (GRegisters().y + 1) & 0xFF;
+	set_nz(GRegisters().y);
 }
 
 static inline void cpu_dex() {
-	g_Registers.x = (g_Registers.x - 1) & 0xFF;
-	set_nz(g_Registers.x);
+	GRegisters().x = (GRegisters().x - 1) & 0xFF;
+	set_nz(GRegisters().x);
 }
 
 static inline void cpu_dey() {
-	g_Registers.y = (g_Registers.y - 1) & 0xFF;
-	set_nz(g_Registers.y);
+	GRegisters().y = (GRegisters().y - 1) & 0xFF;
+	set_nz(GRegisters().y);
 }
 

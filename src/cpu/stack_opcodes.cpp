@@ -18,21 +18,21 @@ static inline void cpu_brk()
 	uint pcl_addr = 0;
 	uint pch_addr = 0;
 	//2
-	ext_memory_read(g_Registers.pc);
-	if (g_Registers.actual_irq == doing_irq::brk) {
-		g_Registers.pc++;
+	ext_memory_read(GRegisters().pc);
+	if (GRegisters().actual_irq == doing_irq::brk) {
+		GRegisters().pc++;
 	}
 	//3-4
 	memory_push_pc();
 	//Poll the most up to date irq lines so we can interrupt
-	if (g_Registers.nmi || g_Registers.actual_irq == doing_irq::nmi) {
-		g_Registers.nmi = false;
+	if (GRegisters().nmi || GRegisters().actual_irq == doing_irq::nmi) {
+		GRegisters().nmi = false;
 		pcl_addr = NMILO;
 		pch_addr = NMIHI;
 #ifdef USE_LOG
-		if (g_Registers.actual_irq == doing_irq::brk) {
+		if (GRegisters().actual_irq == doing_irq::brk) {
 			VLog().AddLine("** NMI INTERRUPTED BRK **\n");
-		} else if (g_Registers.actual_irq == doing_irq::irq) {
+		} else if (GRegisters().actual_irq == doing_irq::irq) {
 			VLog().AddLine("** NMI INTERRUPTED IRQ **\n");
 		}
 #endif
@@ -41,18 +41,18 @@ static inline void cpu_brk()
 		pch_addr = BRKHI;
 
 #ifdef USE_LOG
-		if (g_Registers.actual_irq == doing_irq::brk) {
+		if (GRegisters().actual_irq == doing_irq::brk) {
 			VLog().AddLine("** IRQ INTERRUPTED BRK **\n");
 		}
 #endif
 	}
 	//5
-	memory_push_byte((g_Registers.actual_irq != doing_irq::brk) ? (g_Registers.status | BFLAG_10_MASK) : (g_Registers.status | BFLAG_10_MASK | BFLAG_01_MASK ));
+	memory_push_byte((GRegisters().actual_irq != doing_irq::brk) ? (GRegisters().status | BFLAG_10_MASK) : (GRegisters().status | BFLAG_10_MASK | BFLAG_01_MASK ));
 	//6
-	g_Registers.pc = (g_Registers.pc & 0xFF00) | ext_memory_read(pcl_addr);
+	GRegisters().pc = (GRegisters().pc & 0xFF00) | ext_memory_read(pcl_addr);
 	SET_INTERRUPT(true);
 	//7
-	g_Registers.pc = (g_Registers.pc & 0x00FF) | (ext_memory_read(pch_addr) << 8);
+	GRegisters().pc = (GRegisters().pc & 0x00FF) | (ext_memory_read(pch_addr) << 8);
 }
 
 /*
@@ -71,18 +71,18 @@ static inline void cpu_brk()
 static inline void cpu_rti()
 {
 	//2
-	ext_memory_read(g_Registers.pc);
+	ext_memory_read(GRegisters().pc);
 	//3
 	cpu_do_cycle();
 	memory_inc_stack();
 	//4
-	g_Registers.status = ext_memory_read(0x100 + g_Registers.stack) & BFLAG_CLEAR_MASK;
+	GRegisters().status = ext_memory_read(0x100 + GRegisters().stack) & BFLAG_CLEAR_MASK;
 	memory_inc_stack();
 	//5
-	g_Registers.pc = (g_Registers.pc & 0xFF00) |  ext_memory_read(0x100 + g_Registers.stack);
+	GRegisters().pc = (GRegisters().pc & 0xFF00) |  ext_memory_read(0x100 + GRegisters().stack);
 	memory_inc_stack();
 	//6
-	g_Registers.pc = (g_Registers.pc & 0x00FF) | (ext_memory_read(0x100 + g_Registers.stack) << 8);
+	GRegisters().pc = (GRegisters().pc & 0x00FF) | (ext_memory_read(0x100 + GRegisters().stack) << 8);
 }
 
 /*
@@ -101,18 +101,18 @@ static inline void cpu_rti()
 static inline void cpu_rts() 
 {
 	//2
-	ext_memory_read(g_Registers.pc);
+	ext_memory_read(GRegisters().pc);
 	//3
 	cpu_do_cycle();
 	memory_inc_stack();
 	//4
-	g_Registers.pc = (g_Registers.pc & 0xFF00) | ext_memory_read(0x100 + g_Registers.stack);
+	GRegisters().pc = (GRegisters().pc & 0xFF00) | ext_memory_read(0x100 + GRegisters().stack);
 	memory_inc_stack();
 	//5
-	g_Registers.pc = (g_Registers.pc & 0x00FF) | (ext_memory_read(0x100 + g_Registers.stack) << 8);
+	GRegisters().pc = (GRegisters().pc & 0x00FF) | (ext_memory_read(0x100 + GRegisters().stack) << 8);
 	//6
 	cpu_do_cycle();
-	g_Registers.pc++;
+	GRegisters().pc++;
 }
 
 /*
@@ -128,17 +128,17 @@ static inline void cpu_rts()
 static inline void cpu_pha()
 {
 	//2
-	ext_memory_read(g_Registers.pc);
+	ext_memory_read(GRegisters().pc);
 	//3
-	memory_push_byte(g_Registers.a);
+	memory_push_byte(GRegisters().a);
 }
 
 static inline void cpu_php()
 {
 	//2
-	ext_memory_read(g_Registers.pc);
+	ext_memory_read(GRegisters().pc);
 	//3
-	memory_push_byte(g_Registers.status | BFLAG_01_MASK | BFLAG_10_MASK);
+	memory_push_byte(GRegisters().status | BFLAG_01_MASK | BFLAG_10_MASK);
 }
 
 /*
@@ -155,26 +155,26 @@ static inline void cpu_php()
 static inline void cpu_pla()
 {
 	//2
-	ext_memory_read(g_Registers.pc);
+	ext_memory_read(GRegisters().pc);
 	//3
 	cpu_do_cycle();
 	memory_inc_stack();
 	//4
-	g_Registers.a = ext_memory_read(0x100 + g_Registers.stack);
-	set_nz(g_Registers.a);
+	GRegisters().a = ext_memory_read(0x100 + GRegisters().stack);
+	set_nz(GRegisters().a);
 }
 
 static inline void cpu_plp()
 {
 	//2
-	ext_memory_read(g_Registers.pc);
+	ext_memory_read(GRegisters().pc);
 	//3
 	cpu_do_cycle();
 	memory_inc_stack();
 	//4
 	bool old = IF_INTERRUPT();
-	g_Registers.status = ext_memory_read(0x100 + g_Registers.stack) & BFLAG_CLEAR_MASK;
-	g_Registers.delayed = IF_INTERRUPT() ? delayed_i::yes : delayed_i::no;
+	GRegisters().status = ext_memory_read(0x100 + GRegisters().stack) & BFLAG_CLEAR_MASK;
+	GRegisters().delayed = IF_INTERRUPT() ? delayed_i::yes : delayed_i::no;
 	SET_INTERRUPT(old);
 }
 
@@ -195,12 +195,12 @@ static inline void cpu_plp()
 static inline void cpu_jsr() 
 {
 	//2
-	uint pcl = ext_memory_read(g_Registers.pc++);
+	uint pcl = ext_memory_read(GRegisters().pc++);
 	//3
 	cpu_do_cycle();
 	//4-5
 	memory_push_pc();
 	//6
-	g_Registers.pc = pcl | (ext_memory_read(g_Registers.pc) << 8);
-	MLOG(" $%04X", g_Registers.pc);
+	GRegisters().pc = pcl | (ext_memory_read(GRegisters().pc) << 8);
+	MLOG(" $%04X", GRegisters().pc);
 }

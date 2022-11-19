@@ -15,7 +15,7 @@ namespace internals {
 
 static inline void cpu_asl() 
 {
-	internals::cpu_asl(g_Registers.byteLatch);
+	internals::cpu_asl(GRegisters().byteLatch);
 }
 
 namespace internals {
@@ -27,7 +27,7 @@ namespace internals {
 }
 
 static inline void cpu_lsr() {
-	internals::cpu_lsr(g_Registers.byteLatch);
+	internals::cpu_lsr(GRegisters().byteLatch);
 }
 
 namespace internals {
@@ -42,7 +42,7 @@ namespace internals {
 }
 
 static inline void cpu_rol() {
-	internals::cpu_rol(g_Registers.byteLatch);
+	internals::cpu_rol(GRegisters().byteLatch);
 }
 
 namespace internals {
@@ -55,17 +55,17 @@ namespace internals {
 }
 
 static inline void cpu_ror() {
-	internals::cpu_ror(g_Registers.byteLatch);
+	internals::cpu_ror(GRegisters().byteLatch);
 }
 
 static inline void cpu_inc() {
-	g_Registers.byteLatch = (g_Registers.byteLatch + 1) & 0xFF;
-	set_nz(g_Registers.byteLatch);
+	GRegisters().byteLatch = (GRegisters().byteLatch + 1) & 0xFF;
+	set_nz(GRegisters().byteLatch);
 }
 
 static inline void cpu_dec() {
-	g_Registers.byteLatch = (g_Registers.byteLatch - 1) & 0xFF;
-	set_nz(g_Registers.byteLatch);
+	GRegisters().byteLatch = (GRegisters().byteLatch - 1) & 0xFF;
+	set_nz(GRegisters().byteLatch);
 }
 
 static inline void cpu_slo()

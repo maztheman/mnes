@@ -30,7 +30,7 @@ struct Registers
 	uint64_t tick_count{ 0ULL };
 };
 
-extern Registers g_Registers;
+Registers& GRegisters();
 
 namespace irq {
 	//irq flags

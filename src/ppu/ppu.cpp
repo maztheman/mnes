@@ -217,8 +217,8 @@ void ppu_do_cycle()
 				MLOG("** NMI Surpressed due to Reading of $2002 too soon before**\n");
 			} else {
 				set_vblank();
-				if (g_MemoryRegisters.r2000 & 128) {
-					g_Registers.nmi = true;
+				if (GMemoryRegisters().r2000 & 128) {
+					GRegisters().nmi = true;
 				}
 			}
 		}

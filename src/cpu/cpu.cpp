@@ -26,8 +26,8 @@ void cpu_initialize()
 void cpu_do_cycle()
 {
 	//this is where hijacking a interrupt can happen
-	g_Registers.prev_nmi = g_Registers.nmi;
-	//g_Registers.prev_irq = (IF_INTERRUPT() == false) ? g_Registers.irq : 0;
+	GRegisters().prev_nmi = GRegisters().nmi;
+	//GRegisters().prev_irq = (IF_INTERRUPT() == false) ? GRegisters().irq : 0;
 
 	//1 apu cycles per 2 cpu cycle
 	apu_do_cycle();
@@ -59,13 +59,13 @@ int64_t cpu_get_cycle()
 
 void cpu_reset()
 {
-	g_Registers.tick_count = 0;
-	g_Registers.delayed = delayed_i::empty;
-	g_Registers.a = g_Registers.y = g_Registers.x = 0;
-	g_Registers.irq = 0;
-	g_Registers.status = IRQ_DISABLE_FLAG_MASK;
-	g_Registers.stack = 0xFD;
-	g_Registers.pc = (memory_main_read(RESETLO)) | (memory_main_read(RESETHI) << 8);
+	GRegisters().tick_count = 0;
+	GRegisters().delayed = delayed_i::empty;
+	GRegisters().a = GRegisters().y = GRegisters().x = 0;
+	GRegisters().irq = 0;
+	GRegisters().status = IRQ_DISABLE_FLAG_MASK;
+	GRegisters().stack = 0xFD;
+	GRegisters().pc = (memory_main_read(RESETLO)) | (memory_main_read(RESETHI) << 8);
 	apu_reset();
 	ppu_reset();
 	fmt::print(stderr, "cpu reset\n");

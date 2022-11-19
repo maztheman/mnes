@@ -5,31 +5,31 @@ STA, STX, STY, SHA, SHX, SHY
 
 static inline void cpu_sta() 
 {
-	g_Registers.byteLatch = g_Registers.a;
+	GRegisters().byteLatch = GRegisters().a;
 }
 
 static inline void cpu_stx() 
 {
-	g_Registers.byteLatch = g_Registers.x;
+	GRegisters().byteLatch = GRegisters().x;
 }
 
 static inline void cpu_sty() 
 {
-	g_Registers.byteLatch = g_Registers.y;
+	GRegisters().byteLatch = GRegisters().y;
 }
 
 static inline void cpu_sax()
 {
-	g_Registers.byteLatch = g_Registers.a & g_Registers.x;
+	GRegisters().byteLatch = GRegisters().a & GRegisters().x;
 }
 
 /*
 static inline void cpu_axs() 
 {
 	//immediate mode value used later
-	uint tmp = g_Registers.byteLatch;
+	uint tmp = GRegisters().byteLatch;
 	//used to restore a
-	uint oldA = g_Registers.a;
+	uint oldA = GRegisters().a;
 	//copies a into byteLatch
 	cpu_sta();
 	//copies x into a
@@ -37,11 +37,11 @@ static inline void cpu_axs()
 	//ands a with byteLatch (bascially a & x)
 	cpu_and();
 	cpu_sec();
-	g_Registers.byteLatch = tmp;
+	GRegisters().byteLatch = tmp;
 	cpu_sbc();
 	cpu_tax();
 	//restore a
-	g_Registers.byteLatch = oldA;
+	GRegisters().byteLatch = oldA;
 	cpu_lda();
 }
 */

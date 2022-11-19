@@ -106,7 +106,7 @@ void Application::GUIStuff()
     if (ImGui::Begin("Output", nullptr, outputFlags))
     {
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::Text("Tick: %ld  ", g_Registers.tick_count);
+        ImGui::Text("Tick: %ld  ", GRegisters().tick_count);
         ImGui::SameLine();
         ImGui::Text("Update tx Tick: %ld", m_Renderer.getUpdateTick());
         ImGui::End();
