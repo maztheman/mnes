@@ -1,0 +1,371 @@
+Table of Contents goes here!!!!
+
+[1]  INTRODUCTION
+
+
+[2]  CPU
+
+  [2.1]  CPU TYPE
+  
+  [2.2]  CPU SPEED
+  
+  [2.3]  MEMORY MAP
+  
+  [2.4]  INTERRUPTS
+  
+[3]  REGISTERS
+
+  [3.1]  REGISTER MAP
+  
+  [3.2]  EXTENDED DESCRIPTIONS
+    
+[4]  PPU
+
+  [4.1]  BASIC INFORMATION
+  
+  [4.2]  NAME TABLES
+  
+    [4.2.1]  NAME TABLE INFO
+    
+    [4.2.2]  NAME TABLE MIRRORING
+  
+  [4.3]  ATTRIBUTE TABLES
+  
+  [4.4]  PATTERN TABLES
+  
+  [4.5]  PALETTE INFORMATION
+  
+  [4.6]  SPRITES
+  
+    [4.6.1]  SPRITE RAM FORMAT
+    
+    [4.6.2]  SPRITE 0 TEST
+    
+    [4.6.3]  SPRITE DMA
+    
+  [4.7]  COLOR INTENSITY BITS
+  
+  [4.8]  CLIPPING
+  
+  [4.9]  VRAM WRITE FLAG
+  
+  [4.10] SCROLLING
+  
+[5]  SOUND
+
+  [5.1]  BASIC INFORMATION
+  
+  [5.2]  SOUND REGISTERS
+
+----- [1] INTRODUCTION -----
+
+Intro crap goes here...boom.
+
+
+Thanks go out to:
+
+  Kevin Horton    - For handing out information on the Sound channels and palette (and more)
+  Jamethiel       - For suggestions in the doc on how to describe
+  Jeremy Chadwick - For the initial nestech.txt ... a very handy reference.
+
+
+----- [2] CPU -----
+
+
+[2.1] CPU TYPE
+
+  The CPU used in the NES is a fairly modified 6502 (NOT a 65C02 like was 
+thought at one time).  The major modification on the processor was the
+addition of sound processing...Check www.6502.org for information on the
+6502 processor, as this document will not go into any detail on the processor
+itself....
+
+  However, it SHOULD be noted that there is NO decimal mode on the NES 6502.
+All decimal mode instructions (ADC and SDC) act as if there is no decimal mode,
+regardless of the decimal flag.
+
+
+[2.2] CPU SPEED
+
+  The PAL and NTSC CPUs run at different speeds to match the framerate of the
+output devices (TVs) that they use...the speeds are:
+
+NTSC NES: 1.7897725Mhz
+PAL  NES: 1.773447Mhz
+
+
+[2.3] MEMORY MAP
+
++---------+-------+---------------+
+| Address | Size  | Description   |
++---------+-------+---------------+
+| $0000   | $800  | RAM           |
+| $0800   | $800  | RAM*          |
+| $1000   | $800  | RAM*          |
+| $1800   | $800  | RAM*          |
+| $2000   | 8     | Registers     |
+| $2008   | $1FF8 | Registers**   |
+| $4000   | $20   | Registers     |
+| $4020   | $1FDF | Expansion ROM |
+| $6000   | $2000 | SRAM          |
+| $8000   | $4000 | PRG-ROM       |
+| $C000   | $4000 | PRG-ROM       |
++---------+-------+---------------+
+*  - These 3 ram pages are mirrors of the memory contained at $0000-$07FF
+** - The remainder of this memory can be used just like  $2000-$2007 
+     (Every 8 bytes it repeats... ($2000=$2008=$2010, etc...)  Most likely, 
+     bits 14-3 are just ignored in the memory area from $2000 to $3FFF (only 
+     partially decoded), which is why the registers SEEM mirrored. [FIXME]
+     
+
+[2.4] INTERRUPTS
+
+There are three interrupts available to the 6502.  Each interrupt has a
+vector, which is a 16-bit address that tells the CPU where to jump to when 
+the given interrupt is called. The locations of the vectors are listed under
+the name of the interrupt.  The interrupts are as follows:
+
+
+* RESET - This interrupt has the highest priority out of the interrupts 
+  $FFFC   (i.e. it'll override any other pending interrupts). RESET is 
+          called on powerup...it first loads the ROM into memory (in its
+          startup configuration).  It then loads the 16-bitRESET vector from 
+          address $FFFC and move the Program counter (PC) to that location.
+          Note that no memory is cleared and no registers are affected.
+          
+* NMI   - This interrupt has a higher priority than the IRQ interrupt.  NMI
+  $FFFA   is a Non-Maskable Interrupt, which means it can be called regardless
+          of the value stored in the Interrupt flag in the 6502.  The NMI is
+          called on VBlank, which occurs 60 times per second on a NTSC system
+          and 50 times per second on a PAL system.
+
+*IRQ/BRK- This interrupt has the lowest priority of all the interrupts.  IRQ and BRK
+  $FFFD - are actually 2 interrupts, but they both refer to the same vector, so it's
+          easiest to think of them as one and the same...BRK is triggered via the BRK
+          6502 instruction.  An IRQ can be triggered by many things...the MMC3 mapper,
+          for instance, can trigger an IRQ via a counter.  
+          
+
+
+
+
+
+
+----- [3] REGISTERS -----
+
+[3.1] REGISTER MAP
+
+Address     = The memory address to read/write to access the register
+Acc         = Access...R is read, W is write...Read and Write will be listed separately,
+              to avoid confusion.
+Description = Basic description of the register...0 bit is low, 7 bit is high.
+              Note that, when multiple letters in a row are the same letter For
+              instance, in the first description, NN, that means that N is a 2-bit
+              value, so it can be 00, 01, 10, or 11.)
+
++-----------+-----+---------------------------------------------+
+|  Address  | Acc |Description                                  |
++-----------+-----+---------------------------------------------+
+|  $2000    | W   | PPU Control Register 1                      |
+|           |     | V0spaiNN                                    |
+|           |     |   V - Enable NMI on VBlank                  |
+|           |     |       (0 = No NMI, 1 = NMI Enabled)         |
+|           |     |   0 - Not used                              |
+|           |     |   s - Sprite Size                           |
+|           |     |       (0 = 8x8, 1 = 8x16)                   |
+|           |     |   p - Background Pattern Table Address      |
+|           |     |       (0 = $0000, 1 = $1000) (VRAM)         |
+|           |     |   a - Sprite Pattern Table Address          |
+|           |     |       (0 = $0000, 1 = $1000) (VRAM)         |
+|           |     |   i - PPU Address Increment                 |
+|           |     |       (0 = Inc. by 1, 1 = Inc. by 32        |
+|           |     |   N - Nametable Address (VRAM Addresses)    |
+|           |     |       (00 = $2000, 01 = $2400,              |
+|           |     |        10 = $2800, 11 = $2C00)              |
+|           |     |                                             |
+|           |     | See section 4.10 for details on how this    |
+|           |     | register affects the display.               |
++-----------+-----+---------------------------------------------+
+|  $2001    | W   | PPU Control Register 2                      |
+|           |     | CCCvbsGm                                    |
+|           |     |   C - Color Intensity Bits (See section     |
+|           |     |       4.7 of this doc for more info         |
+|           |     |   v - Sprite Visibility                     |
+|           |     |       (0 = not visible, 1 = visible)        |
+|           |     |   b - Background Visibility                 |
+|           |     |       (0 = not visible, 1 = visible)        |  
+|           |     |   s - Sprite Clipping (See sec. 4.8)        |
+|           |     |       (0 = Enabled, 1 = Disabled)           |
+|           |     |   G - Background Clipping (See sec. 4.8)    |
+|           |     |       (0 = Enabled, 1 = Disabled)           |
+|           |     |   m - Monochrome Toggle                     |
+|           |     |       (0 = Color display, 1 = Monochrome    |
++-----------+-----+---------------------------------------------+
+|  $2002    | R   | PPU Status                                  |
+|           |     | VScw0000                                    |
+|           |     |   V - VBlank Status                         |
+|           |     |       (0 = No Vblank, 1 = VBlank occurring) |
+|           |     |   S - Sprite 0 hit  (See section 4.6.2)     |
+|           |     |       (0 = No, 1 = Yes)                     |
+|           |     |   c - Scanline Sprite Count                 |
+|           |     |       (0 = Eight or Less Sprites on line,   |
+|           |     |        1 = More than eight sprites on line. |
+|           |     |   w - VRAM Write Flag (See Section 4.9)     |
+|           |     |       (0 = Respected, 1 = Ignored)          |
+|           |     |   0 - Not used.                             |
+|           |     |                                             |
+|           |     | See section 4.10 for more details on this   |
+|           |     | register.                                   |
++-----------+-----+---------------------------------------------+
+|  $2003    | W   | Sprite Address Register (SPR-Ram Address)   |
+|           |     | aaaaaaaa                                    |
+|           |     |   a - Address in SPR-Ram that will be       |
+|           |     |       accessable via writing $2004.         |
++-----------+-----+---------------------------------------------+
+|  $2004    | W   | Sprite Data Read Register                   |
+|           |     | dddddddd                                    |
+|           |     |   d - Data to write to sprite memory at     |
+|           |     |       Sprite Address (Written to $2003).    |
+|           |     |       After writing, the sprite address is  |
+|           |     |       incremented.                          |
++-----------+-----+---------------------------------------------+
+|  $2005    | W   | Scroll position register                    |
+|           |     |                                             |
+|           |     | This register is used to set the scrolling  |
+|           |     | position of the screen, but there are some  |
+|           |     | subtlties...                                |
+|           |     |   See section 4.10 for a description        |
++-----------+-----+---------------------------------------------+
+|  $2006    | W   | PPU Address Register                        |
+|           |     |                                             |
+|           |     | This register affects the address that the  |
+|           |     | PPU will access via $2007.                  |
+|           |     | For a (much) more detailed description of   |
+|           |     | how this works, see section 4.10.           |
++-----------+-----+---------------------------------------------+
+|  $2007    | R   | PPU Data Read                               |
+|           |     | dddddddd                                    |
+|           |     |   d - The data that gets read from the PPU  |
+|           |     |       at the PPU address (which is modified |
+|           |     |       via $2006).  After the read, the PPU  |
+|           |     |       address is incremented according to   |
+|           |     |       bit 2 of $2000.                       |
+|           +-----+---------------------------------------------+
+|           | W   | PPU Data Write                              |
+|           |     | dddddddd                                    |
+|           |     |   d - Data to write to the PPU at the       |
+|           |     |       address modified by $2006.  After the |
+|           |     |       write, the PPU address is incremented |
+|           |     |       according to bit 2 of $2000.          |
++-----------+-----+---------------------------------------------+
+| $4000     | W   | See the Sound section 5.2 for sound info.   |
+| $4001     | W   |                                             |
+| $4002     | W   |                                             |
+| $4003     | W   |                                             |
+| $4004     | W   |                                             |
+| $4005     | W   |                                             |
+| $4006     | W   |                                             |
+| $4007     | W   |                                             |
+| $4008     | W   |                                             |
+| $4009     | W   |                                             |
+| $400A     | W   |                                             |
+| $400B     | W   |                                             |
+| $400C     | W   |                                             |
+| $400D     | W   |                                             |
+| $400E     | W   |                                             |
+| $400F     | W   |                                             |
+| $4010     | W   |                                             |
+| $4011     | W   |                                             |
+| $4012     | W   |                                             |
+| $4013     | W   |                                             |
++-----------+-----+---------------------------------------------+
+| $4014     | W   | Sprite DMA Register                         |
+|           |     | NNNNNNNN                                    |
+|           |     |   N - This copies 256 bytes of memory into  |
+|           |     |       SPR-RAM...The source address is       |
+|           |     |       $100 * N.                             |
++-----------+-----+---------------------------------------------+
+| $4015     | R/W | Sound Status Register - See 5.2 for details |
++-----------+-----+---------------------------------------------+
+
+[3.2] EXTENDED DESCRIPTIONS
+
+May not have to write anything for this, we'll see.
+
+
+----- [4] PPU -----
+
+[4.1] BASIC INFORMATION
+
+The PPU inside the NES is a separate processor that handles the
+graphics.  It also handles the conversion of the graphics to
+NTSC (or PAL) to be outputted to your screen!
+
+The PPU, interestingly enough, has a read buffer.  
+[FIXME]
+
+[4.2] NAMETABLES
+
+[4.2.1] NAME TABLE INFO
+
+A "Nametable" in the PPU is basically a 32x30 matrix of tile information.
+Each tile referred to in the nametable is one of the 8x8 pixel patterns that
+is stored in the pattern table (Pattern Table is explained in section 4.4).
+(This makes a name table 256x240 pixels, or one whole screen (though it's slightly
+more than a screen on an NTSC screen, since the top and bottom 8 pixels are not 
+displayed).  Each nametable is 960 bytes ($3C0), and containes the tile indices of 
+each tile to be displayed in that nametable.
+[FIXME]
+
+The nametables are arranged in memory as follows:
+
++-----------+-----------+
+|  Table 0  |  Table 1  |
+|  ($2000)  |  ($2400)  |
++-----------+-----------+
+|  Table 2  |  Table 3  |
+|  ($2800)  |  ($2C00)  |
++-----------+-----------+
+
+[4.2.2] NAME TABLE MIRRORING
+
+There are four (4) basic types of nametable mirroring: single, horizontal, vertical, and
+4-screen.  The attribute tables (section 4.3) are mirrored in this as well, since the 
+nametable and attribute tables are paired together.  The mirroring descriptions are as follows:
+
+Single     - All tables mirror the information stored in Table 0.  (Some mappers allow you to 
+             set which table is mirrored).
+Horizontal - Table 1 mirrors Table 0, and Table 3 mirrors Table 2.
+Vertical   - Table 2 mirrors Table 0, and Table 3 mirrors Table 1.
+4-Screen   - This requires an extra 2048 ($800) bytes of memory contained within the cartridge,
+             and allows for 4 independent name tables.
+             
+[4.3] ATTRIBUTE TABLES
+
+This is one of the more confusing parts about the NES...
+
+Each attribute table in the PPU is paired with one of the nametables...(wee the memory map in 
+4.1 for details).
+
+The attribute table, in essense, defines the upper 4 bits of each tile defined by the 
+nametable.  However, it does
+it in a rather...unique...way.
+
+Each byte in the attribute table (of which there are actually 60) holds the upper 2 bits of color for 
+a 4 tile by 4 tile region on its corresponding name table (each 2 bits correspond to a 2 by 2 tile area).
+Therefore, the information is arranged as so:
+
+Attribute table byte:  AABBCCDD
+
+Corresponding Name Table Area:
++---+---+---+---+
+| A   A | B   B |
++- -+- -+- -+- -+
+| A   A | B   B |
++---+---+---+---+
+| C   C | D   D |
++- -+- -+- -+- -+
+| C   C | D   D |
++---+---+---+---+
+
+Where each of the 16 grid spaces is a tile on the name table.

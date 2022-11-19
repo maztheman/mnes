@@ -1,0 +1,11 @@
+CPU MHz = 1.78977272727
+CPU Executes 1789772.72727 cycles per second;
+Rounded to 1789773 cycles per second for sanity.
+
+for c++, we can use chrono with ratio
+
+using CPUCycleRatio = std::ratio<1, 1789773>;
+
+
+and a duration of:
+using Cyclediff = std::duration<int64_t, CPUCycleRatio>;
