@@ -1,6 +1,6 @@
 #include "OpenGLTexture.h"
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 
 namespace GfxEngine::Platform::OpenGL330
 {
@@ -15,6 +15,7 @@ static GLenum PixelTypeToOpenGLFormat(PixelType type)
         case RGBA8:
             return GL_RGBA;
     }
+    throw std::runtime_error("unhandled pixel type");
 }
 
 static GLenum PixelTypeToOpenGLInternalFormat(PixelType type)

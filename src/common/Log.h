@@ -9,7 +9,7 @@ using std::vector;
 class CLog
 {
 public:
-	CLog(string sName);
+	explicit CLog(string sName);
 	~CLog(void);
 
 	void Start(const string& sLogfileName);
@@ -17,7 +17,7 @@ public:
 	void AddLine(const char* pcszFormat, ...);
 	void Close();
 
-	string& Name() {
+	const string& Name() const {
 		return m_sName;
 	}
 private:
@@ -26,79 +26,28 @@ private:
 	string m_sName;
 };
 
-#include <algorithm>
+#include <unordered_map>
 
-class CLogPtrVector : public vector<CLog*>
-{
-public:
-	CLogPtrVector() {
-	}
-	~CLogPtrVector()
-	{
-		ResetContent();
-	}
+using LogNameMap = std::unordered_map<std::string, std::unique_ptr<CLog>>;
 
-	void ResetContent() {
-		if (empty()) { return; }
-
-		for (auto& p : *this) {
-			delete p;
-		}
-
-		clear();
-
-		CLogPtrVector().swap(*this);
-	}
-
-	struct SName
-	{
-		bool operator()(CLog* pLeft, const string& right) {
-			return pLeft->Name() < right;
-		}
-
-		bool operator()(CLog* pLeft, CLog* pRight) {
-			return pLeft->Name() < pRight->Name();
-		}
-	};
-
-	CLog* FindByName(const string& sName) {
-		auto test = std::lower_bound(begin(), end(), sName, SName());
-		bool bFound = (test != end() && !(sName < (*test)->Name()));
-		return bFound ? *test : nullptr;
-	}
-
-	void Sort() {
-		std::sort(begin(), end(), SName());
-	}
-
-};
-
-extern CLogPtrVector g_arLogs;
-inline CLogPtrVector& VLogCollection() {
-	return g_arLogs;
+inline LogNameMap& VLogCollection() {
+	static LogNameMap instance;
+	return instance;
 }
 
 inline CLog& VLog(const string& sName) {
-	CLog* pLog = g_arLogs.FindByName(sName);
-	if (pLog == nullptr) {
-		pLog = new CLog(sName);
-		pLog->Start("logs/" + sName + ".log");
-		g_arLogs.push_back( pLog );
-		g_arLogs.Sort();
-	}
-	return *pLog; 
+
+		if (auto ins = VLogCollection().insert(std::make_pair(sName, std::make_unique<CLog>(sName))); ins.second) {
+			ins.first->second->Start("logs/" + sName + ".log");
+			return *(ins.first->second.get());
+		} else {
+			return *(ins.first->second.get());
+		}
 }
 
 //The main log.
-inline CLog& VLog() { 
-	CLog* pLog = g_arLogs.FindByName("main");
-	if (pLog == nullptr) {
-		pLog = new CLog("main");
-		pLog->Start("logs/mnes.log");
-		g_arLogs.push_back( pLog );
-		g_arLogs.Sort();
-	}
-	return *pLog; 
+inline CLog& VLog() {
+	return VLog("mnes");
 }
 
 #ifdef USE_LOG

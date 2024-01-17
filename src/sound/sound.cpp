@@ -1,26 +1,28 @@
-static constexpr uint s_Noise[16] = {
-  4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068  
+namespace {
+
+constexpr std::array<uint, 16> s_Noise = {
+  4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068
 };
 
-static constexpr uint s_DMC[16] = {
+constexpr std::array<uint, 16> s_DMC = {
     428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106,  84,  72,  54
 };
 
-static constexpr uint s_LengthCounter[0x20] = {
+constexpr std::array<uint, 0x20> s_LengthCounter = {
 	10,254, 20,  2, 40,  4, 80,  6, 160,  8, 60, 10, 14, 12, 26, 14,
 	12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30
 };
 
-static constexpr uint s_Duty[4] = {
+constexpr std::array<uint, 4> s_Duty = {
 	0x40, 0x60, 0x78, 0x9F
 };
 
-static constexpr uint s_Sequencer[32] = {
+constexpr std::array<uint, 32> s_Sequencer = {
 	15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0,
 	0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15
 };
 
-static constexpr double s_DMCFreq[16] = {
+constexpr std::array<double, 16> s_DMCFreq = {
     4181.71,
     4709.93,
     5264.04,
@@ -39,6 +41,8 @@ static constexpr double s_DMCFreq[16] = {
     33143.9
 };
 
+}
+
 struct sweep_unit_t
 {
 	sweep_unit_t(bool is_pulse_1, uint& target_timer)
@@ -52,9 +56,9 @@ struct sweep_unit_t
 	bool enabled{ false };
 	uint period{ 1 };
 	bool negative{ false };
-	uint shift_count;
+	uint shift_count{};
 	uint& timer;
-	uint divider_count;
+	uint divider_count{};
 	bool reload_fg{ false };
 
 	void set(uint value) {
@@ -78,13 +82,13 @@ struct sweep_unit_t
 		}
 	}
 
-	bool is_muting() const {
+	[[nodiscard]] bool is_muting() const {
 		return timer > 0x7FF || timer < 8;
 	}
 
 	void clock()
 	{
-		if (divider_count == 0 && enabled && is_muting() == false) {
+		if (divider_count == 0 && enabled && !is_muting()) {
 			update_timer();
 		}
 		if (divider_count == 0 || reload_fg) {
@@ -100,21 +104,17 @@ struct right_shift_reg8_t
 {
 	uint value{ 0 };
 
-	uint clock() {
+	[[nodiscard]] uint clock() const {
 		uint retval = value & 1;
-
+		return retval;
 	}
 };
 
 struct envelope_t {
-	
+
 	envelope_t(bool& lo, bool& dis)
 	: loop(lo)
 	, disable(dis)
-	, must_reload(false)
-	, reload(0)
-	, period(0)
-	, counter(0)
 	{
 
 	}
@@ -144,10 +144,10 @@ struct envelope_t {
 
 	bool&		loop;
 	bool&		disable;
-	bool		must_reload;
+	bool		must_reload{};
 
-	uint reload;
-	uint period;
+	uint reload{};
+	uint period{};
 	uint counter{ 0 };
 
 };
@@ -156,11 +156,9 @@ struct square_channel_t
 {
 	//54.6hz to 12400hz
 
-	square_channel_t(bool is_pulse_1 = false)
-	: enabled(false)
-	, envelope(loop_envelope, envelope_disable)
+	explicit square_channel_t(bool is_pulse_1 = false)
+	: envelope(loop_envelope, envelope_disable)
 	, sweep{ is_pulse_1, timer }
-	, length(0U)
 	{
 
 	}
@@ -200,11 +198,11 @@ struct square_channel_t
 	{
 		timer--;
 		if (timer == 0) {
-			
+
 		}
 	}
 
-	uint volume() const 
+	[[nodiscard]] uint volume() const
 	{
 
 		//sweep unit says no no
@@ -221,7 +219,7 @@ struct square_channel_t
 	}
 
 	void clock_length() {
-		if (loop_envelope == false && length != 0) {
+		if (!loop_envelope && length != 0) {
 			length--;
 		}
 	}
@@ -249,13 +247,7 @@ struct triangle_channel_t
 {
 	//27.3hz to 55900hz
 
-	triangle_channel_t()
-	: enabled(false)
-	, length_idx(0U)
-	, length(0U)
-	{
-
-	}
+	triangle_channel_t() = default;
 
 	void reset() {
 		enabled = false;
@@ -283,12 +275,12 @@ struct triangle_channel_t
 		}
 	}
 
-	uint volume() const {
+	[[nodiscard]] uint volume() const {
 		return linear_counter_reload & 0xF;
 	}
 
 	void clock_length() {
-		if (length_counter_halt == false && length != 0) {
+		if (!length_counter_halt && length != 0) {
 			length--;
 		}
 	}
@@ -309,19 +301,19 @@ struct triangle_channel_t
 		timer--;
 	}
 
-	bool			enabled;
+	bool			enabled{};
 	//Register 1
-	bool			length_counter_halt;
-	uint			linear_counter_reload;
-	uint			linear_counter;
+	bool			length_counter_halt{};
+	uint			linear_counter_reload{};
+	uint			linear_counter{};
 	//Register 2
 	uint			timer{ 0 };
 	//Register 3
-	uint			length_idx;
-	uint			length;
+	uint			length_idx{};
+	uint			length{};
 
 	//Register 3 Side-effect
-	bool			linear_counter_must_reload;
+	bool			linear_counter_must_reload{};
 };
 
 struct noise_channel_t
@@ -329,19 +321,16 @@ struct noise_channel_t
 	//29.3hz to 447000hz
 
 	noise_channel_t()
-	: enabled(false)
-	, envelope(loop_envelope, envelope_disable)
-	, length_idx(0U)
-	, length(0U)
+	: envelope(loop_envelope, envelope_disable)
 	{
 
 	}
-	
+
 	void reset() {
 		enabled = false;
 		length = length_idx = 0U;
 	}
-	
+
 	void set0(uint value) {
 		loop_envelope = (value & 0x20) == 0x20;
 		envelope_disable = (value & 0x10) == 0x10;
@@ -362,12 +351,12 @@ struct noise_channel_t
 		envelope.must_reload = true;
 	}
 
-	uint volume() const {
+	[[nodiscard]] uint volume() const {
 		return envelope.reload;
 	}
 
 	void clock_length() {
-		if (loop_envelope == false && length != 0) {
+		if (!loop_envelope && length != 0) {
 			length--;
 		}
 	}
@@ -376,21 +365,21 @@ struct noise_channel_t
 	{
 		timer--;
 	}
-	
 
-	bool			enabled;
+
+	bool			enabled{};
 	//Register 1
-	bool			loop_envelope;
-	bool			envelope_disable;
+	bool			loop_envelope{};
+	bool			envelope_disable{};
 	envelope_t		envelope;
 	//Register 2
-	bool			short_mode;
-	uint			period_idx;
+	bool			short_mode{};
+	uint			period_idx{};
 	uint			period{ 0 };
-	uint			timer;
+	uint			timer{};
 	//Register 3
-	uint			length_idx;
-	uint			length;
+	uint			length_idx{};
+	uint			length{};
 };
 
 struct memory_reader_t
@@ -407,12 +396,8 @@ struct dmc_output_unit_t
 
 struct dmc_channel_t
 {
-	dmc_channel_t()
-	: enabled(false)
-	{
+	dmc_channel_t()	= default;
 
-	}
-	
 	void set0(uint value) {
 		irq_enable = (value & 0x80) == 0x80;
 		loop = (value & 0x40) == 0x40;
@@ -432,15 +417,15 @@ struct dmc_channel_t
 		memory_rdr.remaining = sample_length = value;
 	}
 
-	uint actual_address() const {
+	[[nodiscard]] uint actual_address() const {
 		return 0xC000 | ((sample_address & 0xFF) << 6);
 	}
 
-	uint actual_length() const {
+	[[nodiscard]] uint actual_length() const {
 		return ((sample_length & 0xFF) << 4) | 1;
 	}
 
-	uint volume() const {
+	[[nodiscard]] uint volume() const {
 		return 0;
 	}
 
@@ -457,32 +442,28 @@ struct dmc_channel_t
 	{
 
 	}
-	
-	bool			enabled;
+
+	bool			enabled{};
 
 	//Register 1
-	bool			irq_enable;
-	bool			loop;
+	bool			irq_enable{};
+	bool			loop{};
 	uint			frequency_idx{ 0 };
-	uint			frequency;
-	uint			timer;
+	uint			frequency{};
+	uint			timer{};
 	//Register 2
-	uint			DAC;
+	uint			DAC{};
 	//Register 3
-	uint			sample_address;
-	uint			current_address;
+	uint			sample_address{};
+	uint			current_address{};
 	//Register 4
-	uint			sample_length;
-	memory_reader_t	memory_rdr;
+	uint			sample_length{};
+	memory_reader_t	memory_rdr{};
 };
 
 struct soundregs_t
 {
-	soundregs_t()
-		: should_reset(false)
-	{
-
-	}
+	soundregs_t() = default;
 
 	square_channel_t		square_1{ true };
 	square_channel_t		square_2;
@@ -490,12 +471,12 @@ struct soundregs_t
 	noise_channel_t			noise;
 	dmc_channel_t			dmc;
 	//Register 4017
-	bool					five_frame_cycle;
+	bool					five_frame_cycle{};
 	bool					disable_frame_interrupt{ false };
 	//frame sequencer
-	uint			seq_counter;
-	bool			should_reset;
-	uint			should_reset_at;
+	uint			seq_counter{};
+	bool			should_reset{};
+	uint			should_reset_at{};
 
 	void set4015(uint value) {
 		//mute channels
@@ -538,9 +519,9 @@ struct soundregs_t
 		retval |= (false)				? 0x10 : 0x00;//dmc remaining bytes
 		retval |= (get_apu_frame_irq())	? 0x40 : 0x00;
 		retval |= (get_dpcm_irq())		? 0x80 : 0x00;//dmc irq
-		
+
 		clear_apu_frame_irq();
-		
+
 		return retval;
 	}
 
@@ -583,16 +564,17 @@ struct soundregs_t
 	}
 };
 
-static soundregs_t sregs;
-
+namespace {
+	soundregs_t sregs;
+}
 //15 bit
 struct noise_shift_reg_t
 {
-    uint reg;  
+    uint reg;
     void set(uint value) {
         reg = value & 0x7FFF;
     }
-    
+
     void shift() {
         uint a = (reg & 1) ? 1 : 0;
         uint b = 0;
@@ -605,7 +587,9 @@ struct noise_shift_reg_t
         reg >>= 1;
         reg |= c ? 0x4000 : 0x0000;
     }
-    
+
 };
 
-static noise_shift_reg_t noise_regs;
+namespace {
+	noise_shift_reg_t noise_regs;
+}

@@ -11,11 +11,15 @@ public:
 		m_fp = fopen( sFileName.c_str(), mode.c_str() );
 	}
 
+	CFile(const CFile&) = delete;
+	CFile(CFile&&) = delete;
+	//operator=(const CFile&) = delete;
+
 	~CFile() {
 		Close();
 	}
 
-	bool IsOpen() {
+	bool IsOpen() const {
 		return m_fp != nullptr;
 	}
 

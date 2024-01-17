@@ -39,23 +39,25 @@ struct bitshift8_t
 	}
 };
 
+namespace {
+
 bitshift16_t test1;
 bitshift16_t test2;
 bitshift8_t ab1;
 bitshift8_t ab2;
-static uint8_t ppu_render_latch[4] = { 0 };
+std::array<uint8_t, 4> ppu_render_latch = { 0 };
 
-static inline uint8_t get_attribute_byte(uint value, uint screen)
+inline uint8_t get_attribute_byte(uint value, uint screen)
 {
 	return TO_BYTE(((value & (3 << (screen << 1))) >> (screen << 1)));
 }
 
-static inline uint8_t ppu_memory_main_read_byte(uint address)
+inline uint8_t ppu_memory_main_read_byte(uint address)
 {
 	return TO_BYTE(ppu_memory_main_read(address));
 }
 
-static inline void ppu_bg_pre_process_shift_regs(const uint ppu_cycle, const uint) 
+inline void ppu_bg_pre_process_shift_regs(const uint ppu_cycle, const uint)
 {
 
 	const uint& v = GMemoryRegisters().r2006;
@@ -107,10 +109,10 @@ static inline void ppu_bg_pre_process_shift_regs(const uint ppu_cycle, const uin
 	}
 }
 
-static inline void ppu_bg_post_process_shift_regs(const uint& ppu_cycle)
+inline void ppu_bg_post_process_shift_regs(const uint& ppu_cycle)
 {
 	uint tmp = ppu_cycle & 7;
-	
+
 	test1.right_shift();
 	test2.right_shift();
 	ab1.shift();
@@ -124,7 +126,7 @@ static inline void ppu_bg_post_process_shift_regs(const uint& ppu_cycle)
 	}
 }
 
-static inline void ppu_bg_draw(const uint& ppu_cycle)
+inline void ppu_bg_draw(const uint& ppu_cycle)
 {
 	//drawing uses the scanline.front() to get the current lines data
 	auto bits = getScreenData();
@@ -159,4 +161,6 @@ static inline void ppu_bg_draw(const uint& ppu_cycle)
 		bits[index + 1] = g_RGBPalette[palette[0]][1];
 		bits[index + 2] = g_RGBPalette[palette[0]][2];
 	}
+}
+
 }

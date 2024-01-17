@@ -1,13 +1,4 @@
-find_package(fmt CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
-find_package(CLI11 CONFIG REQUIRED)
-find_package(glad CONFIG REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
-find_package(glm CONFIG REQUIRED)
-find_package(imgui CONFIG REQUIRED)
-
-
-SET(SRCS 
+SET(SRCS
   main.cpp
   processor.h
   processor.cpp
@@ -19,8 +10,8 @@ add_executable(mnes ${SRCS})
 
 target_link_libraries(
   mnes
-  PUBLIC project_options project_warnings
-  PRIVATE CLI11::CLI11 fmt::fmt spdlog::spdlog glm::glm imgui::imgui GfxEngine)
+
+  PRIVATE CLI11::CLI11 fmt::fmt spdlog::spdlog glm::glm imgui_bindings GfxEngine)
 
 target_include_directories(mnes PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include" ".")
 
@@ -34,7 +25,7 @@ add_subdirectory(mappers)
 add_subdirectory(ppu)
 add_subdirectory(sound)
 
-file(GLOB_RECURSE RUNTIME_FILES 
+file(GLOB_RECURSE RUNTIME_FILES
   "bnes.pal"
 )
 
@@ -59,7 +50,7 @@ foreach(RT_FILE ${RUNTIME_FILES})
 endforeach(RT_FILE)
 
 add_custom_target(
-    RuntimeFiles 
+    RuntimeFiles
     DEPENDS ${OUT_FILES}
 )
 

@@ -406,7 +406,7 @@ static void mmc5_do_cpu_cycle()
 		s_IdleCount++;
 		if (s_IdleCount == 3) {
 			s_bInFrame = false;
-			s_LastAddr = ~0UL;
+			s_LastAddr = ~0U;
 		}
 	}
 	s_bPPUIsReading = false;

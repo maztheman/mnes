@@ -6,17 +6,19 @@
 
 #include <array>
 
-void apu_mixer();
-
 //static device_list_t		device_list = nullptr;
 //static device_t				audio_device = nullptr;
 //static device_format_t		s_audio_format;
 
-static uint s_HalfCycles;
-static int s_ticks = 0;
-static int s_prev_sound_tick = 0;
-static int s_prev_ticks = 0;
-static uint s_AudioLength;
+namespace {
+
+void apu_mixer();
+
+uint s_HalfCycles;
+int s_ticks = 0;
+int s_prev_sound_tick = 0;
+int s_prev_ticks = 0;
+uint s_AudioLength;
 
 using pulse_snd_t = std::array<double, 31>;
 
@@ -40,16 +42,21 @@ constexpr std::array<double, 203> tnd_snd_init()
 	return retval;
 }
 
-static constexpr std::array<double, 31> pulse_snd{pulse_snd_init()};
-static constexpr std::array<double, 203> tnd_snd{ tnd_snd_init()};
+constexpr std::array<double, 31> pulse_snd{pulse_snd_init()};
+constexpr std::array<double, 203> tnd_snd{ tnd_snd_init()};
+
+}
 
 #include "sound.cpp"
 
-static constexpr int ciSoundHz = 44100;
-static constexpr int ciNesHz = 1789773;
+namespace {
 
-static uint32_t s_samples[0x6000];
+constexpr int ciSoundHz = 44100;
+constexpr int ciNesHz = 1789773;
 
+std::array<uint32_t, 0x6000> s_samples{};
+
+}
 /*
 							95.88
 pulse_out =		------------------------------------
@@ -64,7 +71,6 @@ tnd_out =		-------------------------------------------------------------
 
 
 */
-
 
 
 void apu_initialize()
@@ -181,17 +187,17 @@ void apu_do_cycle()
 		//build up a buffer of 40 samples ? 40 or 41, whatever s_ticks is
 		uint idx = static_cast<uint32_t>(s_ticks - s_prev_ticks);
 
-		uint pulse1 = sregs.square_1.volume(),
-			pulse2 = 3,
-			triangle = 0,
-			noise = 0,
-			dmc = 0;
+		uint pulse1 = sregs.square_1.volume();
+		uint pulse2 = 3;
+		uint triangle = 0;
+		uint noise = 0;
+		uint dmc = 0;
 
 		auto pulse_out = pulse_snd[pulse1 + pulse2];
 		auto tnd_out = tnd_snd[3 * triangle + 2 * noise + dmc];
 
 		auto output = pulse_out + tnd_out;
-		uint16_t digital = static_cast<uint16_t>(65535 * output);
+		auto digital = static_cast<uint16_t>(65535 * output);
 
 		s_samples[idx] = digital | digital << 16U;
 	}
@@ -281,8 +287,13 @@ uint apu_memory_read(uint address)
 	return value;
 }
 
+
+namespace {
+
 void apu_mixer()
 {
-	
+
+
+}
 
 }

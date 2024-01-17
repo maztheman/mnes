@@ -2,7 +2,7 @@
 
 #include "OpenGLPlatform.h"
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 #include <imgui_impl_glfw.cpp>

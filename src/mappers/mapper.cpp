@@ -17,24 +17,28 @@
 #include <cstring>
 #include <fstream>
 
-static mapper_t* get_mapper(uint mapper_no);
+namespace {
+	mapper_t* get_mapper(uint mapper_no);
+}
 
 struct nes_data
 {
-	mapper_t* mapper;
+	mapper_t* mapper{nullptr};
 	ines_format_t ines_format;
 	std::unique_ptr<uint8_t[]> romData;
 	size_t romDataSize;
 	std::array<uint8_t*, 8> rom = {
-		nullptr, nullptr, nullptr, nullptr,	
+		nullptr, nullptr, nullptr, nullptr,
 		nullptr, nullptr, nullptr, nullptr
 	};
 };
 
-static inline nes_data& GNesData()
-{
-	static nes_data instance;
-	return instance;
+namespace {
+	inline nes_data& GNesData()
+	{
+		static nes_data instance;
+		return instance;
+	}
 }
 
 ines_format_t& nes_format()
@@ -44,7 +48,7 @@ ines_format_t& nes_format()
 
 std::span<uint8_t> RawData()
 {
-	return std::span<uint8_t>(GNesData().romData.get(), GNesData().romDataSize);
+	return {GNesData().romData.get(), GNesData().romDataSize};
 }
 
 std::array<uint8_t*, 8>& RomData()
@@ -62,11 +66,13 @@ mapper_t* current_mapper()
 	return GNesData().mapper;
 }
 
-static mapper_t* get_mapper(uint mapper_no)
+namespace {
+
+mapper_t* get_mapper(uint mapper_no)
 {
 	fmt::print(stderr, "using mapper no {}\n", mapper_no);
 
-	switch(mapper_no) 
+	switch(mapper_no)
 	{
 		using namespace mnes::mappers;
 		case MMC2:
@@ -87,15 +93,19 @@ static mapper_t* get_mapper(uint mapper_no)
 			return &mapperNROM();
 		case AOROM:
 			return &mapperAOROM();
+		default:
+			return &mapperUNROM();
 	}
 	return nullptr;
+}
+
 }
 
 void set_romdata_from_stream(std::ifstream& stream, std::streamsize size)
 {
 	auto& rom = GNesData().romData;
 
-	size_t sz = static_cast<size_t>(size);
+	auto sz = static_cast<size_t>(size);
 
 	rom = std::make_unique<uint8_t[]>(sz);
 	GNesData().romDataSize = sz;
@@ -121,7 +131,7 @@ void SetVerticalMirror()
 }
 
 void SetOneScreenMirror()
-{ 
+{
 	auto& tables = Tables();
 	tables[1] = tables[3] = tables[0] = tables[2] = NTRam().data();
 }

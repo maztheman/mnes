@@ -28,7 +28,7 @@ public:
 private:
 
     OpenGLWindowData m_Data;
-    WindowHandle m_Handle;
+    WindowHandle m_Handle{nullptr};
 };
 
 

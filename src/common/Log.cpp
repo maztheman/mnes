@@ -2,7 +2,7 @@
 
 
 //use magic statics
-CLogPtrVector g_arLogs;
+//CLogPtrVector g_arLogs;
 
 CLog::CLog(string sName)
 	: m_fp(nullptr)
@@ -33,7 +33,7 @@ void CLog::Start( const string& sLogfileName )
 void CLog::AddLine( const string& sLine )
 {
 	if ( m_fp == nullptr ) return;
-	
+
 	fprintf( m_fp, "%s\n", sLine.c_str() );
 	fflush( m_fp );
 }

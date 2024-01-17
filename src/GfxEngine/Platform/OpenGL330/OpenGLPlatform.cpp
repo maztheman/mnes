@@ -1,6 +1,6 @@
 #include "OpenGLPlatform.h"
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
 #include "OpenGLImGui.h"
@@ -17,7 +17,7 @@ static std::once_flag initialize, gladInit;
 static void InitializeGlad()
 {
     std::call_once(gladInit, []() {
-        if (gladLoadGLLoader(GLADloadproc(glfwGetProcAddress)) == 0) {
+        if (gladLoadGL(glfwGetProcAddress) == 0) {
             printf("Failed to initialize GLAD\n");
         } else {
             printf("gladInit()\n");
@@ -66,7 +66,7 @@ Window::WindowHandle OpenGL330Platform::Create(int width, int height, WindowData
 
     glViewport(0, 0, width, height);
     glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);   
+    glClear(GL_COLOR_BUFFER_BIT);
 
     return window;
 }
@@ -151,7 +151,7 @@ static constexpr Key GLFWKeyToKey(int key)
     return Key::L;
     case GLFW_KEY_K:
     return Key::K;
-        default: 
+        default:
         return Key::Invalid;
     }
 }

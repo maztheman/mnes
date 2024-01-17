@@ -10,8 +10,8 @@ using OnKeyEvent = void(*)(Key key, int action, int extra);
 
 struct OpenGLWindowData
 {
-    int width;
-    int height;
+    int width = 0;
+    int height = 0;
     OnWindowCloseFn onWindowCloseFn = nullptr;
     OnKeyEvent onKeyEvent = nullptr;
 };
