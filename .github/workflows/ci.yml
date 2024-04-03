@@ -139,7 +139,7 @@ jobs:
       
       - name: Setup ubuntu x11
         if: ${{ contains(matrix.os, 'ubuntu') }}
-        run: sudo apt install libx11-dev
+        run: sudo apt install libx11-dev libxrandr-dev
 
       - name: Cleanup Conan system packages (they are not properly cached)
         run: |
