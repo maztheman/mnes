@@ -26,14 +26,13 @@ if(NOT TARGET CLI11::CLI11)
     cpmaddpackage("gh:CLIUtils/CLI11@2.3.2")
 endif()
 
-cpmaddpackage("gh:Dav1dde/glad#v2.0.4")
-add_subdirectory(${glad_SOURCE_DIR}/cmake)
-glad_add_library(glad_lib STATIC API gl:core=3.3)
-
 if (NOT TARGET GLFW::glfw)
     cpmaddpackage("gh:glfw/glfw#3.3.8")
 endif()
 
+add_library(glad_lib STATIC)
+target_sources(glad_lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glad/src/gl.c)
+target_include_directories(glad_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/3rdParty/glad/include)
 
 if (NOT TARGET glm::glm)
     cpmaddpackage("gh:g-truc/glm#0.9.9.8")
@@ -59,6 +58,7 @@ if (NOT TARGET imgui)
     )
     message("freetype 2 is: ${FT_INCLUDE_DIR}")
     target_include_directories(imgui_bindings PUBLIC ${imgui_SOURCE_DIR}/backends ${imgui_SOURCE_DIR} ${FT_INCLUDE_DIR}/freetype2)
+    target_link_libraries(imgui_bindings PUBLIC glfw glad_lib)
 endif()
 
 

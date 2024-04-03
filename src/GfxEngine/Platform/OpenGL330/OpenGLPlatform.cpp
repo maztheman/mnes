@@ -32,10 +32,13 @@ static void WindowSizeCallback(GLFWwindow* window, int width, int height);
 void OpenGL330Platform::Init()
 {
     std::call_once(initialize, []() {
-        glfwInit();
+        if (!glfwInit()) {
+            printf("failed to init glfw!\n");
+        }
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, 1);
     });
 }
 
@@ -54,6 +57,9 @@ Window::WindowHandle OpenGL330Platform::Create(int width, int height, WindowData
 {
     Init();
     WindowHandle window = glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
+    if (window == nullptr) {
+        printf("Failed to create window!\n");
+    }
     glfwMakeContextCurrent(window);
     InitializeGlad();
     glfwSwapInterval(0);

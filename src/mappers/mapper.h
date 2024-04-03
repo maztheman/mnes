@@ -1,6 +1,7 @@
 #pragma once
 
 #include <common/ines_format.h>
+#include <ios>
 
 namespace mnes::mappers
 {
