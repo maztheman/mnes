@@ -2,137 +2,134 @@
 LDA, LDX, LDY, EOR, AND, ORA, ADC, SBC, CMP, BIT,
 LAX, LAE, SHS, NOP
 */
+namespace {
 
-static inline void cpu_lda() 
+void mnes_::cpu::lda()
 {
-	GRegisters().a = GRegisters().byteLatch;
-	set_nz(GRegisters().a);
+  cpureg.a = cpureg.byteLatch;
+  set_nz(cpureg.a);
 }
 
-static inline void cpu_ldx() 
+void mnes_::cpu::ldx()
 {
-	GRegisters().x = GRegisters().byteLatch;
-	set_nz(GRegisters().x);
+  cpureg.x = cpureg.byteLatch;
+  set_nz(cpureg.x);
 }
 
-static inline void cpu_ldy() 
+void mnes_::cpu::ldy()
 {
-	GRegisters().y = GRegisters().byteLatch;
-	set_nz(GRegisters().y);
+  cpureg.y = cpureg.byteLatch;
+  set_nz(cpureg.y);
 }
 
-static inline void cpu_eor() 
+void mnes_::cpu::eor()
 {
-	GRegisters().a ^= GRegisters().byteLatch;
-	set_nz(GRegisters().a);
+  cpureg.a ^= cpureg.byteLatch;
+  set_nz(cpureg.a);
 }
 
-static inline void cpu_and() 
+void mnes_::cpu::and_()
 {
-	GRegisters().a &= GRegisters().byteLatch;
-	set_nz(GRegisters().a);
+  cpureg.a &= cpureg.byteLatch;
+  set_nz(cpureg.a);
 }
 
-static inline void cpu_ora() 
+void mnes_::cpu::ora()
 {
-	GRegisters().a |= GRegisters().byteLatch;
-	set_nz(GRegisters().a);
+  cpureg.a |= cpureg.byteLatch;
+  set_nz(cpureg.a);
 }
 
-static inline void cpu_adc() 
+void mnes_::cpu::adc()
 {
-	uint temp = GRegisters().byteLatch + GRegisters().a + (is_carry() ? 1 : 0);
-	SET_OVERFLOW(!((GRegisters().a ^ GRegisters().byteLatch) & 0x80) && ((GRegisters().a ^ temp) & 0x80));
-	set_carry(temp > 0xff);
-	GRegisters().a = temp & 0xFF;
-	set_nz(GRegisters().a);
+  uint temp = cpureg.byteLatch + cpureg.a + (is_carry() ? 1 : 0);
+  SET_OVERFLOW(!((cpureg.a ^ cpureg.byteLatch) & 0x80) && ((cpureg.a ^ temp) & 0x80));
+  set_carry(temp > 0xff);
+  cpureg.a = temp & 0xFF;
+  set_nz(cpureg.a);
 }
 
-static inline void cpu_sbc() 
+void mnes_::cpu::sbc()
 {
-	uint temp = GRegisters().a - GRegisters().byteLatch - (is_carry() ? 0 : 1);
-	SET_OVERFLOW((((GRegisters().a ^ GRegisters().byteLatch) & 0x80) == 0x80) && (((GRegisters().a ^ temp) & 0x80) == 0x80));
-	set_carry(temp < 0x100);//value is 0 - 255 the carry is set else not!
-	GRegisters().a = (temp & 0xff);
-	set_nz(GRegisters().a);
+  uint temp = cpureg.a - cpureg.byteLatch - (is_carry() ? 0 : 1);
+  SET_OVERFLOW(
+    (((cpureg.a ^ cpureg.byteLatch) & 0x80) == 0x80) && (((cpureg.a ^ temp) & 0x80) == 0x80));
+  set_carry(temp < 0x100);// value is 0 - 255 the carry is set else not!
+  cpureg.a = (temp & 0xff);
+  set_nz(cpureg.a);
 }
 
-static inline void cpu_cmp() 
+void mnes_::cpu::cmp()
 {
-	uint temp = GRegisters().a - GRegisters().byteLatch;
-	set_carry(temp < 0x100);
-	set_nz(temp);
+  uint temp = cpureg.a - cpureg.byteLatch;
+  set_carry(temp < 0x100);
+  set_nz(temp);
 }
 
-static inline void cpu_cpx() 
+void mnes_::cpu::cpx()
 {
-	uint temp = GRegisters().x - GRegisters().byteLatch;
-	set_carry(temp < 0x100);
-	set_nz(temp);
+  uint temp = cpureg.x - cpureg.byteLatch;
+  set_carry(temp < 0x100);
+  set_nz(temp);
 }
 
-static inline void cpu_cpy() 
+void mnes_::cpu::cpy()
 {
-	uint temp = GRegisters().y - GRegisters().byteLatch;
-	set_carry(temp < 0x100);//because its uint, anything that made it less than 0 will cause it to be larger than 0x100
-	set_nz(temp);
+  uint temp = cpureg.y - cpureg.byteLatch;
+  set_carry(temp < 0x100);// because its uint, anything that made it less than 0 will cause it to be larger than 0x100
+  set_nz(temp);
 }
 
-
-static inline void cpu_bit() 
+void mnes_::cpu::bit()
 {
-	SET_SIGN((GRegisters().byteLatch & 0x80) == 0x80);
-	SET_OVERFLOW((0x40 & GRegisters().byteLatch) == 0x40);	/* Copy bit 6 to OVERFLOW flag. */
-	SET_ZERO((GRegisters().byteLatch & GRegisters().a) == 0);
+  SET_SIGN((cpureg.byteLatch & 0x80) == 0x80);
+  SET_OVERFLOW((0x40 & cpureg.byteLatch) == 0x40); /* Copy bit 6 to OVERFLOW flag. */
+  SET_ZERO((cpureg.byteLatch & cpureg.a) == 0);
 }
 
-static inline void cpu_lax() 
+void mnes_::cpu::lax()
 {
-	cpu_lda();
-	cpu_ldx();
+  lda();
+  ldx();
 }
 
-static inline void cpu_nop() 
+void mnes_::cpu::nop() {}
+
+// should be a read i think
+void mnes_::cpu::arr()
 {
+  cpureg.a &= cpureg.byteLatch;
+  cpureg.a >>= 1;
+  set_nz(cpureg.a);
+  uint b6 = (cpureg.a & 0x80) ? 1 : 0;
+  uint b5 = (cpureg.a & 0x40) ? 1 : 0;
+  set_carry(b6);
+  SET_OVERFLOW(b6 ^ b5);
 }
 
-//should be a read i think
-static inline void cpu_arr()
+void mnes_::cpu::axs()
 {
-	GRegisters().a &= GRegisters().byteLatch;
-	GRegisters().a >>= 1;
-	set_nz(GRegisters().a);
-	uint b6 = (GRegisters().a & 0x80) ? 1 : 0;
-	uint b5 = (GRegisters().a & 0x40) ? 1 : 0;
-	set_carry(b6);
-	SET_OVERFLOW(b6 ^ b5);
-
+  cpureg.x = ((cpureg.a & cpureg.x) - cpureg.byteLatch) & 0xFF;
+  set_nz(cpureg.x);
 }
 
-static inline void cpu_axs() 
+void mnes_::cpu::alr()
 {
-	GRegisters().x = ((GRegisters().a & GRegisters().x) - GRegisters().byteLatch) & 0xFF;
-	set_nz(GRegisters().x);
+  and_();
+  internals::lsr(cpureg.a);
 }
 
-static inline void cpu_alr() {
-	cpu_and();
-	internals::cpu_lsr(GRegisters().a);
-}
+void mnes_::cpu::xaa() { cpureg.a = ((cpureg.a | 0xEE) & cpureg.x & cpureg.byteLatch); }
 
-
-static inline void cpu_xaa() 
+void mnes_::cpu::oal()
 {
-	GRegisters().a = ((GRegisters().a | 0xEE) & GRegisters().x & GRegisters().byteLatch);
+  // ORA #$EE
+  cpureg.a |= 0xEE;
+  set_nz(cpureg.a);
+  // AND $#IMM
+  and_();
+  // TAX
+  tax();
 }
 
-static inline void cpu_oal() {
-	//ORA #$EE
-	GRegisters().a |= 0xEE;
-	set_nz(GRegisters().a);
-	//AND $#IMM
-	cpu_and();
-	//TAX
-	cpu_tax();
 }
-

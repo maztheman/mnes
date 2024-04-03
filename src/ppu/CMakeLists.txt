@@ -1,6 +1,5 @@
 SET(SRCS
     ppu_memory.cpp
-    ppu_registers.cpp
     ppu.cpp
 )
 

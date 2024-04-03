@@ -87,6 +87,9 @@ jobs:
       run: |
         conan remove -f '*/system'
 
+    - name: Setup ubuntu x11
+      run: sudo apt install -y libx11-dev libxrandr-dev libxinerama-dev libxcb1-dev libxcb-xkb-dev libxcb-cursor-dev libxcb-xinput-dev libxcursor-dev libxi-dev libgl1-mesa-dev libwayland-dev libwayland-egl-backend-dev waylandpp-dev wayland-protocols wayland-scanner++ libxkbcommon-dev libxkbcommon-x11-dev
+
       # make sure coverage is only enabled for Debug builds, since it sets -O0 to make sure coverage
       # has meaningful results
     - name: Configure CMake

@@ -1,12 +1,14 @@
-#include "ppu_registers.h"
+#define NSPPU mnes::ppu::
 
-ppu_registers& PPURegs()
-{
-	static ppu_registers instance = {241, NULL_LAST_READ};
-	return instance;
+namespace {
+  namespace mnes_::ppu {
+    ppu_registers ppuregs = { 241, NULL_LAST_READ };
+  }
 }
 
-uint ppu_scanline() 
+uint32_t NSPPU scanline() { return ppuregs.scanline; }
+
+void NSPPU set_last_r2002_read(uint32_t value)
 {
-	return PPURegs().scanline;
+  ppuregs.last_2002_read = value;
 }

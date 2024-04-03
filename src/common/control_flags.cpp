@@ -1,10 +1,10 @@
 #include "control_flags.h"
 
 
-runtime_variables& RV()
+runtime_variables &RV()
 {
-    static runtime_variables instance;
-    return instance;
+  static runtime_variables instance;
+  return instance;
 }
 
 bool g_bCpuRunning = false;

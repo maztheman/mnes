@@ -1,82 +1,77 @@
-static inline void cpu_clc() 
+namespace {
+
+void mnes_::cpu::clc() { set_carry(false); }
+
+void mnes_::cpu::cld() { SET_DECIMAL(false); }
+
+void mnes_::cpu::cli() { cpureg.delayed = delayed_i::no; }
+
+void mnes_::cpu::clv() { SET_OVERFLOW(false); }
+
+void mnes_::cpu::sec() { set_carry(true); }
+
+void mnes_::cpu::sed()
 {
-	set_carry(false);
+  SET_DECIMAL(true);// maybe we should do nothing...cuz this is illegal on nes
 }
 
-static inline void cpu_cld() 
+void mnes_::cpu::sei() { cpureg.delayed = delayed_i::yes; }
+
+void mnes_::cpu::tax()
 {
-	SET_DECIMAL(false);
+  cpureg.x = cpureg.a;
+  set_nz(cpureg.x);
 }
 
-static inline void cpu_cli() 
+void mnes_::cpu::tay()
 {
-	GRegisters().delayed = delayed_i::no;
+  cpureg.y = cpureg.a;
+  set_nz(cpureg.y);
 }
 
-static inline void cpu_clv() {
-	SET_OVERFLOW(false);
-}
-
-static inline void cpu_sec() {
-	set_carry(true);
-}
-
-static inline void cpu_sed() 
+void mnes_::cpu::tsx()
 {
-	SET_DECIMAL(true);//maybe we should do nothing...cuz this is illegal on nes
+  cpureg.x = cpureg.stack;
+  set_nz(cpureg.x);
 }
 
-static inline void cpu_sei() 
+void mnes_::cpu::txa()
 {
-	GRegisters().delayed = delayed_i::yes;
+  cpureg.a = cpureg.x;
+  set_nz(cpureg.a);
 }
 
-static inline void cpu_tax() {
-	GRegisters().x = GRegisters().a;
-	set_nz(GRegisters().x);
+void mnes_::cpu::txs() { cpureg.stack = cpureg.x; }
+
+void mnes_::cpu::tya()
+{
+  cpureg.a = cpureg.y;
+  set_nz(cpureg.a);
 }
 
-static inline void cpu_tay() {
-	GRegisters().y = GRegisters().a;
-	set_nz(GRegisters().y);
+void mnes_::cpu::inx()
+{
+  cpureg.x = (cpureg.x + 1) & 0xFF;
+  set_nz(cpureg.x);
 }
 
-static inline void cpu_tsx() {
-	GRegisters().x = GRegisters().stack;
-	set_nz(GRegisters().x);
+void mnes_::cpu::iny()
+{
+  cpureg.y = (cpureg.y + 1) & 0xFF;
+  set_nz(cpureg.y);
 }
 
-static inline void cpu_txa() {
-	GRegisters().a = GRegisters().x;
-	set_nz(GRegisters().a);
+void mnes_::cpu::dex()
+{
+  cpureg.x = (cpureg.x - 1) & 0xFF;
+  set_nz(cpureg.x);
 }
 
-static inline void cpu_txs() {
-	GRegisters().stack = GRegisters().x;
+void mnes_::cpu::dey()
+{
+  cpureg.y = (cpureg.y - 1) & 0xFF;
+  set_nz(cpureg.y);
 }
 
-static inline void cpu_tya() {
-	GRegisters().a = GRegisters().y;
-	set_nz(GRegisters().a);
-}
 
-static inline void cpu_inx() {
-	GRegisters().x = (GRegisters().x + 1) & 0xFF;
-	set_nz(GRegisters().x);
 }
-
-static inline void cpu_iny() {
-	GRegisters().y = (GRegisters().y + 1) & 0xFF;
-	set_nz(GRegisters().y);
-}
-
-static inline void cpu_dex() {
-	GRegisters().x = (GRegisters().x - 1) & 0xFF;
-	set_nz(GRegisters().x);
-}
-
-static inline void cpu_dey() {
-	GRegisters().y = (GRegisters().y - 1) & 0xFF;
-	set_nz(GRegisters().y);
-}
-

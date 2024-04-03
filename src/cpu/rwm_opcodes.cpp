@@ -2,102 +2,94 @@
 ASL, LSR, ROL, ROR, INC, DEC,
 SLO, SRE/LSE, RLA, RRA, ISB/ISC, DCP
 */
+namespace {
 
-namespace internals {
-	static inline void cpu_asl(uint& value)
-	{
-		set_carry((value & 0x80) == 0x80);
-		value <<= 1;
-		value &= 0xFF;
-		set_nz(value);
-	}
-}
-
-static inline void cpu_asl() 
+void mnes_::cpu::internals::asl(uint &value)
 {
-	internals::cpu_asl(GRegisters().byteLatch);
+  set_carry((value & 0x80) == 0x80);
+  value <<= 1;
+  value &= 0xFF;
+  set_nz(value);
 }
 
-namespace internals {
-	static inline void cpu_lsr(uint& value) {
-		set_carry((value & 1) == 1);
-		value >>= 1;
-		set_nz(value);
-	}
-}
-
-static inline void cpu_lsr() {
-	internals::cpu_lsr(GRegisters().byteLatch);
-}
-
-namespace internals {
-	static inline void cpu_rol(uint& value)
-	{
-		value <<= 1;
-		if (is_carry()) value |= 1;
-		set_carry(value > 0xff);
-		value &= 0xff;
-		set_nz(value);
-	}
-}
-
-static inline void cpu_rol() {
-	internals::cpu_rol(GRegisters().byteLatch);
-}
-
-namespace internals {
-	static inline void cpu_ror(uint& value) {
-		if (is_carry()) value |= 0x100;
-		set_carry((value & 1) == 1);
-		value >>= 1;
-		set_nz(value);
-	}
-}
-
-static inline void cpu_ror() {
-	internals::cpu_ror(GRegisters().byteLatch);
-}
-
-static inline void cpu_inc() {
-	GRegisters().byteLatch = (GRegisters().byteLatch + 1) & 0xFF;
-	set_nz(GRegisters().byteLatch);
-}
-
-static inline void cpu_dec() {
-	GRegisters().byteLatch = (GRegisters().byteLatch - 1) & 0xFF;
-	set_nz(GRegisters().byteLatch);
-}
-
-static inline void cpu_slo()
+void mnes_::cpu::internals::lsr(uint &value)
 {
-	cpu_asl();
-	cpu_ora();
+  set_carry((value & 1) == 1);
+  value >>= 1;
+  set_nz(value);
 }
 
-static inline void cpu_lse() {
-	cpu_lsr();
-	cpu_eor();
-}
-
-static inline void cpu_rla()
+void mnes_::cpu::internals::rol(uint &value)
 {
-	cpu_rol();
-	cpu_and();
+  value <<= 1;
+  if (is_carry()) value |= 1;
+  set_carry(value > 0xff);
+  value &= 0xff;
+  set_nz(value);
 }
 
-
-static inline void cpu_rra() {
-	cpu_ror();
-	cpu_adc();
-}
-
-static inline void cpu_isc() {
-	cpu_inc();
-	cpu_sbc();
-}
-
-static inline void cpu_dcp()
+void mnes_::cpu::internals::ror(uint &value)
 {
-	cpu_dec();
-	cpu_cmp();
+  if (is_carry()) value |= 0x100;
+  set_carry((value & 1) == 1);
+  value >>= 1;
+  set_nz(value);
+}
+
+void mnes_::cpu::asl() { internals::asl(cpureg.byteLatch); }
+
+void mnes_::cpu::lsr() { internals::lsr(cpureg.byteLatch); }
+
+void mnes_::cpu::rol() { internals::rol(cpureg.byteLatch); }
+
+void mnes_::cpu::ror() { internals::ror(cpureg.byteLatch); }
+
+void mnes_::cpu::inc()
+{
+  cpureg.byteLatch = (cpureg.byteLatch + 1) & 0xFF;
+  set_nz(cpureg.byteLatch);
+}
+
+void mnes_::cpu::dec()
+{
+  cpureg.byteLatch = (cpureg.byteLatch - 1) & 0xFF;
+  set_nz(cpureg.byteLatch);
+}
+
+void mnes_::cpu::slo()
+{
+  asl();
+  ora();
+}
+
+void mnes_::cpu::lse()
+{
+  lsr();
+  eor();
+}
+
+void mnes_::cpu::rla()
+{
+  rol();
+  and_();
+}
+
+void mnes_::cpu::rra()
+{
+  ror();
+  adc();
+}
+
+void mnes_::cpu::isc()
+{
+  inc();
+  sbc();
+}
+
+void mnes_::cpu::dcp()
+{
+  dec();
+  cmp();
+}
+
 }

@@ -6,32 +6,28 @@
 
 struct GLFWwindow;
 
-namespace GfxEngine::Platform::OpenGL330
-{
+namespace GfxEngine::Platform::OpenGL330 {
 
 using namespace ::std::string_view_literals;
 
-namespace Window 
-{
+namespace Window {
 
-using WindowHandle = GLFWwindow*;
+  using WindowHandle = GLFWwindow *;
 
-class OpenGLWindow
-{
-public:
-
+  class OpenGLWindow
+  {
+  public:
     WindowHandle Create(int width, int height, std::string_view title = ""sv);
 
     void SetOnWindowClose(OnWindowCloseFn onClose);
     void SetOnKeyEvent(OnKeyEvent onKeyEvent);
 
-private:
-
+  private:
     OpenGLWindowData m_Data;
-    WindowHandle m_Handle{nullptr};
-};
+    WindowHandle m_Handle{ nullptr };
+  };
 
 
-}
+}// namespace Window
 
-}
+}// namespace GfxEngine::Platform::OpenGL330

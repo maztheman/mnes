@@ -1,8 +1,11 @@
 #pragma once
 
-#include <span>
 #include <cstdint>
+#include <span>
 
-static constexpr auto SCREEN_DATA_SIZE = 256U * 256U * 3;
-
-std::span<uint8_t, SCREEN_DATA_SIZE> getScreenData();
+namespace mnes::gfx {
+constexpr auto SCREEN_DATA_SIZE = 256U * 256U * 3U;
+std::span<uint8_t, SCREEN_DATA_SIZE> screen_data();
+void update_texture_from_screen_data();
+void clear_off_screen_data();
+}

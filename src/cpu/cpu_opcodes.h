@@ -23,11 +23,11 @@ constexpr uint8_t OPCODE_ASL_ZP = 0x06;
 constexpr uint8_t OPCODE_ASL_ZP_X = 0x16;
 constexpr uint8_t OPCODE_ASL_AB = 0x0E;
 constexpr uint8_t OPCODE_ASL_AB_X = 0x1E;
-constexpr uint8_t OPCODE_BCC = 	0x90;
+constexpr uint8_t OPCODE_BCC = 0x90;
 constexpr uint8_t OPCODE_BCS = 0xB0;
 constexpr uint8_t OPCODE_BEQ = 0xF0;
-constexpr uint8_t OPCODE_BIT_ZP = 	0x24;
-constexpr uint8_t OPCODE_BIT_AB = 	0x2C;
+constexpr uint8_t OPCODE_BIT_ZP = 0x24;
+constexpr uint8_t OPCODE_BIT_AB = 0x2C;
 constexpr uint8_t OPCODE_BMI = 0x30;
 constexpr uint8_t OPCODE_BNE = 0xD0;
 constexpr uint8_t OPCODE_BPL = 0x10;
@@ -52,9 +52,9 @@ constexpr uint8_t OPCODE_CPX_AB = 0xEC;
 constexpr uint8_t OPCODE_CPY_OP = 0xC0;
 constexpr uint8_t OPCODE_CPY_ZP = 0xC4;
 constexpr uint8_t OPCODE_CPY_AB = 0xCC;
-constexpr uint8_t OPCODE_DEC_ZP = 	0xC6;
+constexpr uint8_t OPCODE_DEC_ZP = 0xC6;
 constexpr uint8_t OPCODE_DEC_ZP_X = 0xD6;
-constexpr uint8_t OPCODE_DEC_AB = 	0xCE;
+constexpr uint8_t OPCODE_DEC_AB = 0xCE;
 constexpr uint8_t OPCODE_DEC_AB_X = 0xDE;
 constexpr uint8_t OPCODE_DEX = 0xCA;
 constexpr uint8_t OPCODE_DEY = 0x88;
@@ -66,15 +66,15 @@ constexpr uint8_t OPCODE_EOR_AB_X = 0x5D;
 constexpr uint8_t OPCODE_EOR_AB_Y = 0x59;
 constexpr uint8_t OPCODE_EOR_IN_X = 0x41;
 constexpr uint8_t OPCODE_EOR_IN_Y = 0x51;
-constexpr uint8_t OPCODE_INC_ZP = 	0xE6;
+constexpr uint8_t OPCODE_INC_ZP = 0xE6;
 constexpr uint8_t OPCODE_INC_ZP_X = 0xF6;
-constexpr uint8_t OPCODE_INC_AB = 	0xEE;
+constexpr uint8_t OPCODE_INC_AB = 0xEE;
 constexpr uint8_t OPCODE_INC_AB_X = 0xFE;
 constexpr uint8_t OPCODE_INX = 0xE8;
 constexpr uint8_t OPCODE_INY = 0xC8;
-constexpr uint8_t OPCODE_JMP_AB = 	0x4C;
-constexpr uint8_t OPCODE_JMP_IN = 	0x6C;
-constexpr uint8_t OPCODE_JSR_AB = 	0x20;
+constexpr uint8_t OPCODE_JMP_AB = 0x4C;
+constexpr uint8_t OPCODE_JMP_IN = 0x6C;
+constexpr uint8_t OPCODE_JSR_AB = 0x20;
 constexpr uint8_t OPCODE_LDA_OP = 0xA9;
 constexpr uint8_t OPCODE_LDA_ZP = 0xA5;
 constexpr uint8_t OPCODE_LDA_ZP_X = 0xB5;
@@ -170,7 +170,7 @@ constexpr uint8_t OPCODE_RLA_ZP = 0x27;
 constexpr uint8_t OPCODE_RLA_ZP_X = 0x37;
 constexpr uint8_t OPCODE_RLA_IN_X = 0x23;
 constexpr uint8_t OPCODE_RLA_IN_Y = 0x33;
-//aka SRE;
+// aka SRE;
 constexpr uint8_t OPCODE_LSE_AB = 0x4F;
 constexpr uint8_t OPCODE_LSE_AB_X = 0x5F;
 constexpr uint8_t OPCODE_LSE_AB_Y = 0x5B;
@@ -202,7 +202,7 @@ constexpr uint8_t OPCODE_DCP_ZP = 0xC7;
 constexpr uint8_t OPCODE_DCP_ZP_X = 0xD7;
 constexpr uint8_t OPCODE_DCP_IN_X = 0xC3;
 constexpr uint8_t OPCODE_DCP_IN_Y = 0xD3;
-//aka ISB;
+// aka ISB;
 constexpr uint8_t OPCODE_ISC_AB = 0xEF;
 constexpr uint8_t OPCODE_ISC_AB_X = 0xFF;
 constexpr uint8_t OPCODE_ISC_AB_Y = 0xFB;
@@ -238,7 +238,7 @@ constexpr uint8_t OPCODE_NOP_04_ZP = 0x04;
 constexpr uint8_t OPCODE_NOP_44_ZP = 0x44;
 constexpr uint8_t OPCODE_NOP_64_ZP = 0x64;
 
-//missing for sure:
+// missing for sure:
 constexpr uint8_t OPCODE_SHY_AB_X = 0x9C;
 constexpr uint8_t OPCODE_SHX_AB_Y = 0x9E;
 
@@ -259,18 +259,18 @@ constexpr uint8_t OPCODE_LAX_IMM = 0xAB;
 constexpr uint8_t OPCODE_SAX_ZP = 0x87;
 constexpr uint8_t OPCODE_SAX_ZP_Y = 0x97;
 
-}
+}// namespace mnes::opcodes
 
 struct SDebugOpCode
 {
-	const char* sOpCode;
-	int nParams;
-	int nType;
+  const char *sOpCode;
+  int nParams;
+  int nType;
 };
 
 struct SDebugOpCodeFormat
 {
-	const char* pcszFormat;
+  const char *pcszFormat;
 };
 
 extern SDebugOpCode OpCodes[256];

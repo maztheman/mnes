@@ -1,19 +1,14 @@
 #pragma once
 
-using uint = unsigned int;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace mnes::apu {
 
-void apu_initialize();
-void apu_destroy();
-void apu_reset();
-void apu_do_cycle();
+void initialize();
+void destroy();
+void reset();
+void do_cycle();
 
-void apu_memory_write(uint addr, uint value);
-uint apu_memory_read(uint address);
+void write(uint32_t addr, uint32_t value);
+uint read(uint32_t address);
 
-#ifdef __cplusplus
 }
-#endif

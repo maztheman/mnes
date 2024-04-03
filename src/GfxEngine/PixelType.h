@@ -1,11 +1,7 @@
 #pragma once
 
-namespace GfxEngine
-{
+namespace GfxEngine {
 
-enum class PixelType
-{
-    RGB8, RGBA8
-};
+enum class PixelType { RGB8, RGBA8 };
 
 }

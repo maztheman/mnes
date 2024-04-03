@@ -1,13 +1,8 @@
 #pragma once
 
+namespace mnes::ppu {
+//public ppu register functions
+uint32_t scanline();
+void set_last_r2002_read(uint32_t value);
 
-static constexpr uint32_t NULL_LAST_READ = static_cast<uint32_t>(-5);
-
-struct ppu_registers 
-{
-	uint32_t scanline;
-	uint32_t last_2002_read;
-};
-
-ppu_registers& PPURegs();
-uint32_t ppu_scanline();
+}

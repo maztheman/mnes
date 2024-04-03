@@ -1,5 +1,7 @@
-static inline void memory_immediate()
+namespace {
+void mnes_::memory::immediate()
 {
-	//2.1
-	GRegisters().byteLatch = ext_memory_read(GRegisters().pc++);
+  // 2.1
+  cpureg.byteLatch = ext::read(cpureg.pc++);
+}
 }

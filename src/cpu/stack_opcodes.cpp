@@ -1,206 +1,207 @@
 /*
-	 BRK
+         BRK
 
-		#  address R/W description
-	   --- ------- --- -----------------------------------------------
-		1    PC     R  fetch opcode, increment PC
-		2    PC     R  read next instruction byte (and throw it away),
-					   increment PC
-		3  $0100,S  W  push PCH on stack (with B flag set), decrement S
-		4  $0100,S  W  push PCL on stack, decrement S
-		5  $0100,S  W  push P on stack, decrement S
-		6   $FFFE   R  fetch PCL
-		7   $FFFF   R  fetch PCH
+                #  address R/W description
+           --- ------- --- -----------------------------------------------
+                1    PC     R  fetch opcode, increment PC
+                2    PC     R  read next instruction byte (and throw it away),
+                                           increment PC
+                3  $0100,S  W  push PCH on stack (with B flag set), decrement S
+                4  $0100,S  W  push PCL on stack, decrement S
+                5  $0100,S  W  push P on stack, decrement S
+                6   $FFFE   R  fetch PCL
+                7   $FFFF   R  fetch PCH
 */
 
-static inline void cpu_brk() 
+namespace {
+
+void mnes_::cpu::brk()
 {
-	uint pcl_addr = 0;
-	uint pch_addr = 0;
-	//2
-	ext_memory_read(GRegisters().pc);
-	if (GRegisters().actual_irq == doing_irq::brk) {
-		GRegisters().pc++;
-	}
-	//3-4
-	memory_push_pc();
-	//Poll the most up to date irq lines so we can interrupt
-	if (GRegisters().nmi || GRegisters().actual_irq == doing_irq::nmi) {
-		GRegisters().nmi = false;
-		pcl_addr = NMILO;
-		pch_addr = NMIHI;
+  uint pcl_addr = 0;
+  uint pch_addr = 0;
+  // 2
+  ext::read(cpureg.pc);
+  if (cpureg.actual_irq == doing_irq::brk) { cpureg.pc++; }
+  // 3-4
+  push_pc();
+  // Poll the most up to date irq lines so we can interrupt
+  if (cpureg.nmi || cpureg.actual_irq == doing_irq::nmi) {
+    cpureg.nmi = false;
+    pcl_addr = NMILO;
+    pch_addr = NMIHI;
 #ifdef USE_LOG
-		if (GRegisters().actual_irq == doing_irq::brk) {
-			VLog().AddLine("** NMI INTERRUPTED BRK **\n");
-		} else if (GRegisters().actual_irq == doing_irq::irq) {
-			VLog().AddLine("** NMI INTERRUPTED IRQ **\n");
-		}
+    if (cpureg.actual_irq == doing_irq::brk) {
+      VLog().AddLine("** NMI INTERRUPTED BRK **\n");
+    } else if (cpureg.actual_irq == doing_irq::irq) {
+      VLog().AddLine("** NMI INTERRUPTED IRQ **\n");
+    }
 #endif
-	} else {
-		pcl_addr = BRKLO;
-		pch_addr = BRKHI;
+  } else {
+    pcl_addr = BRKLO;
+    pch_addr = BRKHI;
 
 #ifdef USE_LOG
-		if (GRegisters().actual_irq == doing_irq::brk) {
-			VLog().AddLine("** IRQ INTERRUPTED BRK **\n");
-		}
+    if (cpureg.actual_irq == doing_irq::brk) { VLog().AddLine("** IRQ INTERRUPTED BRK **\n"); }
 #endif
-	}
-	//5
-	memory_push_byte((GRegisters().actual_irq != doing_irq::brk) ? (GRegisters().status | BFLAG_10_MASK) : (GRegisters().status | BFLAG_10_MASK | BFLAG_01_MASK ));
-	//6
-	GRegisters().pc = (GRegisters().pc & 0xFF00) | ext_memory_read(pcl_addr);
-	SET_INTERRUPT(true);
-	//7
-	GRegisters().pc = (GRegisters().pc & 0x00FF) | (ext_memory_read(pch_addr) << 8);
+  }
+  // 5
+  push_byte((cpureg.actual_irq != doing_irq::brk) ? (cpureg.status | BFLAG_10_MASK)
+                                                               : (cpureg.status | BFLAG_10_MASK | BFLAG_01_MASK));
+  // 6
+  cpureg.pc = (cpureg.pc & 0xFF00) | ext::read(pcl_addr);
+  SET_INTERRUPT(true);
+  // 7
+  cpureg.pc = (cpureg.pc & 0x00FF) | (ext::read(pch_addr) << 8);
 }
 
 /*
-	RTI
+        RTI
 
-		#  address R/W description
-	   --- ------- --- -----------------------------------------------
-		1    PC     R  fetch opcode, increment PC
-		2    PC     R  read next instruction byte (and throw it away)
-		3  $0100,S  R  increment S
-		4  $0100,S  R  pull P from stack, increment S
-		5  $0100,S  R  pull PCL from stack, increment S
-		6  $0100,S  R  pull PCH from stack
+                #  address R/W description
+           --- ------- --- -----------------------------------------------
+                1    PC     R  fetch opcode, increment PC
+                2    PC     R  read next instruction byte (and throw it away)
+                3  $0100,S  R  increment S
+                4  $0100,S  R  pull P from stack, increment S
+                5  $0100,S  R  pull PCL from stack, increment S
+                6  $0100,S  R  pull PCH from stack
 */
 
-static inline void cpu_rti()
+void mnes_::cpu::rti()
 {
-	//2
-	ext_memory_read(GRegisters().pc);
-	//3
-	cpu_do_cycle();
-	memory_inc_stack();
-	//4
-	GRegisters().status = ext_memory_read(0x100 + GRegisters().stack) & BFLAG_CLEAR_MASK;
-	memory_inc_stack();
-	//5
-	GRegisters().pc = (GRegisters().pc & 0xFF00) |  ext_memory_read(0x100 + GRegisters().stack);
-	memory_inc_stack();
-	//6
-	GRegisters().pc = (GRegisters().pc & 0x00FF) | (ext_memory_read(0x100 + GRegisters().stack) << 8);
+  // 2
+  ext::read(cpureg.pc);
+  // 3
+  do_cycle();
+  inc_stack();
+  // 4
+  cpureg.status = ext::read(0x100 + cpureg.stack) & BFLAG_CLEAR_MASK;
+  inc_stack();
+  // 5
+  cpureg.pc = (cpureg.pc & 0xFF00) | ext::read(0x100 + cpureg.stack);
+  inc_stack();
+  // 6
+  cpureg.pc = (cpureg.pc & 0x00FF) | (ext::read(0x100 + cpureg.stack) << 8);
 }
 
 /*
-	 RTS
+         RTS
 
-		#  address R/W description
-	   --- ------- --- -----------------------------------------------
-		1    PC     R  fetch opcode, increment PC
-		2    PC     R  read next instruction byte (and throw it away)
-		3  $0100,S  R  increment S
-		4  $0100,S  R  pull PCL from stack, increment S
-		5  $0100,S  R  pull PCH from stack
-		6    PC     R  increment PC
+                #  address R/W description
+           --- ------- --- -----------------------------------------------
+                1    PC     R  fetch opcode, increment PC
+                2    PC     R  read next instruction byte (and throw it away)
+                3  $0100,S  R  increment S
+                4  $0100,S  R  pull PCL from stack, increment S
+                5  $0100,S  R  pull PCH from stack
+                6    PC     R  increment PC
 */
 
-static inline void cpu_rts() 
+void mnes_::cpu::rts()
 {
-	//2
-	ext_memory_read(GRegisters().pc);
-	//3
-	cpu_do_cycle();
-	memory_inc_stack();
-	//4
-	GRegisters().pc = (GRegisters().pc & 0xFF00) | ext_memory_read(0x100 + GRegisters().stack);
-	memory_inc_stack();
-	//5
-	GRegisters().pc = (GRegisters().pc & 0x00FF) | (ext_memory_read(0x100 + GRegisters().stack) << 8);
-	//6
-	cpu_do_cycle();
-	GRegisters().pc++;
+  // 2
+  ext::read(cpureg.pc);
+  // 3
+  do_cycle();
+  inc_stack();
+  // 4
+  cpureg.pc = (cpureg.pc & 0xFF00) | ext::read(0x100 + cpureg.stack);
+  inc_stack();
+  // 5
+  cpureg.pc = (cpureg.pc & 0x00FF) | (ext::read(0x100 + cpureg.stack) << 8);
+  // 6
+  do_cycle();
+  cpureg.pc++;
 }
 
 /*
-	 PHA, PHP
+         PHA, PHP
 
-		#  address R/W description
-	   --- ------- --- -----------------------------------------------
-		1    PC     R  fetch opcode, increment PC
-		2    PC     R  read next instruction byte (and throw it away)
-		3  $0100,S  W  push register on stack, decrement S
+                #  address R/W description
+           --- ------- --- -----------------------------------------------
+                1    PC     R  fetch opcode, increment PC
+                2    PC     R  read next instruction byte (and throw it away)
+                3  $0100,S  W  push register on stack, decrement S
 */
 
-static inline void cpu_pha()
+void mnes_::cpu::pha()
 {
-	//2
-	ext_memory_read(GRegisters().pc);
-	//3
-	memory_push_byte(GRegisters().a);
+  // 2
+  ext::read(cpureg.pc);
+  // 3
+  push_byte(cpureg.a);
 }
 
-static inline void cpu_php()
+void mnes_::cpu::php()
 {
-	//2
-	ext_memory_read(GRegisters().pc);
-	//3
-	memory_push_byte(GRegisters().status | BFLAG_01_MASK | BFLAG_10_MASK);
+  // 2
+  ext::read(cpureg.pc);
+  // 3
+  push_byte(cpureg.status | BFLAG_01_MASK | BFLAG_10_MASK);
 }
 
 /*
-	 PLA, PLP
+         PLA, PLP
 
-		#  address R/W description
-	   --- ------- --- -----------------------------------------------
-		1    PC     R  fetch opcode, increment PC
-		2    PC     R  read next instruction byte (and throw it away)
-		3  $0100,S  R  increment S
-		4  $0100,S  R  pull register from stack
+                #  address R/W description
+           --- ------- --- -----------------------------------------------
+                1    PC     R  fetch opcode, increment PC
+                2    PC     R  read next instruction byte (and throw it away)
+                3  $0100,S  R  increment S
+                4  $0100,S  R  pull register from stack
 */
 
-static inline void cpu_pla()
+void mnes_::cpu::pla()
 {
-	//2
-	ext_memory_read(GRegisters().pc);
-	//3
-	cpu_do_cycle();
-	memory_inc_stack();
-	//4
-	GRegisters().a = ext_memory_read(0x100 + GRegisters().stack);
-	set_nz(GRegisters().a);
+  // 2
+  ext::read(cpureg.pc);
+  // 3
+  do_cycle();
+  inc_stack();
+  // 4
+  cpureg.a = ext::read(0x100 + cpureg.stack);
+  set_nz(cpureg.a);
 }
 
-static inline void cpu_plp()
+void mnes_::cpu::plp()
 {
-	//2
-	ext_memory_read(GRegisters().pc);
-	//3
-	cpu_do_cycle();
-	memory_inc_stack();
-	//4
-	bool old = IF_INTERRUPT();
-	GRegisters().status = ext_memory_read(0x100 + GRegisters().stack) & BFLAG_CLEAR_MASK;
-	GRegisters().delayed = IF_INTERRUPT() ? delayed_i::yes : delayed_i::no;
-	SET_INTERRUPT(old);
+  // 2
+  ext::read(cpureg.pc);
+  // 3
+  do_cycle();
+  inc_stack();
+  // 4
+  bool old = IF_INTERRUPT();
+  cpureg.status = ext::read(0x100 + cpureg.stack) & BFLAG_CLEAR_MASK;
+  cpureg.delayed = IF_INTERRUPT() ? delayed_i::yes : delayed_i::no;
+  SET_INTERRUPT(old);
 }
 
 /*
-	 JSR
+         JSR
 
-		#  address R/W description
-	   --- ------- --- -------------------------------------------------
-		1    PC     R  fetch opcode, increment PC
-		2    PC     R  fetch low address byte, increment PC
-		3  $0100,S  R  internal operation (predecrement S?)
-		4  $0100,S  W  push PCH on stack, decrement S
-		5  $0100,S  W  push PCL on stack, decrement S
-		6    PC     R  copy low address byte to PCL, fetch high address
-					   byte to PCH
+                #  address R/W description
+           --- ------- --- -------------------------------------------------
+                1    PC     R  fetch opcode, increment PC
+                2    PC     R  fetch low address byte, increment PC
+                3  $0100,S  R  internal operation (predecrement S?)
+                4  $0100,S  W  push PCH on stack, decrement S
+                5  $0100,S  W  push PCL on stack, decrement S
+                6    PC     R  copy low address byte to PCL, fetch high address
+                                           byte to PCH
 */
 
-static inline void cpu_jsr() 
+void mnes_::cpu::jsr()
 {
-	//2
-	uint pcl = ext_memory_read(GRegisters().pc++);
-	//3
-	cpu_do_cycle();
-	//4-5
-	memory_push_pc();
-	//6
-	GRegisters().pc = pcl | (ext_memory_read(GRegisters().pc) << 8);
-	MLOG(" $%04X", GRegisters().pc);
+  // 2
+  uint pcl = ext::read(cpureg.pc++);
+  // 3
+  do_cycle();
+  // 4-5
+  push_pc();
+  // 6
+  cpureg.pc = pcl | (ext::read(cpureg.pc) << 8);
+  MLOG(" $%04X", cpureg.pc);
+}
+
 }

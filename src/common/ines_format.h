@@ -30,22 +30,26 @@ using uint8_t = unsigned char;
     +--------+------+------------------------------------------+
 */
 
-struct ines_format_t {
-	uint8_t reserved[3];
-	uint8_t file_version;
-	uint8_t prg_rom_count;
-	uint8_t chr_rom_count;
-	uint8_t rom_control_1;
-	uint8_t rom_control_2;
-	uint8_t alignment[8];
+struct ines_format_t
+{
+  ines_format_t() = default;
+
+  uint8_t reserved[3];
+  uint8_t file_version;
+  uint8_t prg_rom_count;
+  uint8_t chr_rom_count;
+  uint8_t rom_control_1;
+  uint8_t rom_control_2;
+  uint8_t alignment[8];
 };
 
-struct ines_format2 {
-    uint8_t reserved[3];
-    uint8_t file_version;
-    uint8_t prg_rom_count;
-    uint8_t chr_rom_count;
-    uint8_t rom_control_1;
-    uint8_t rom_control_2;
-    uint8_t alignment[8];
+struct ines_format2
+{
+  uint8_t reserved[3];
+  uint8_t file_version;
+  uint8_t prg_rom_count;
+  uint8_t chr_rom_count;
+  uint8_t rom_control_1;
+  uint8_t rom_control_2;
+  uint8_t alignment[8];
 };
