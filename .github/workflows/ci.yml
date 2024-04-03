@@ -136,6 +136,10 @@ jobs:
 
           gcovr: true
           opencppcoverage: true
+      
+      - name: Setup ubuntu x11
+        if: runner.os == "ubuntu"
+        run: sudo apt install libx11-dev
 
       - name: Cleanup Conan system packages (they are not properly cached)
         run: |
