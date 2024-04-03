@@ -139,7 +139,7 @@ jobs:
       
       - name: Setup ubuntu x11
         if: ${{ contains(matrix.os, 'ubuntu') }}
-        run: sudo apt install -y libx11-dev libxrandr-dev libxinerama-dev libxcb1-dev libxcb-xkb-dev libxcb-cursor-dev libxcb-xinput-dev
+        run: sudo apt install -y libx11-dev libxrandr-dev libxinerama-dev libxcb1-dev libxcb-xkb-dev libxcb-cursor-dev libxcb-xinput-dev libxcursor-dev
 
       - name: Cleanup Conan system packages (they are not properly cached)
         run: |
