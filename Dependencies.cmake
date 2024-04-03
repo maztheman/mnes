@@ -27,7 +27,7 @@ if(NOT TARGET CLI11::CLI11)
 endif()
 
 if (NOT TARGET GLFW::glfw)
-    cpmaddpackage("gh:glfw/glfw#3.3.8")
+    cpmaddpackage("gh:glfw/glfw#3.4")
 endif()
 
 add_library(glad_lib STATIC)
@@ -43,6 +43,9 @@ cpmaddpackage(NAME freetype2
               GIT_TAG master
               DOWNLOAD_ONLY TRUE)
 add_subdirectory(${freetype2_SOURCE_DIR}/freetype2)
+add_library(freetype2 INTERFACE)
+target_include_directories(freetype2 INTERFACE ${freetype2_SOURCE_DIR}/freetype2/include)
+target_link_libraries(freetype2 INTERFACE freetype)
 
 if (NOT TARGET imgui)
     #find_path(FT_INCLUDE_DIR freetype2/ft2build.h)
@@ -64,7 +67,7 @@ if (NOT TARGET imgui)
     )
     message("freetype 2 is: ${FT_INCLUDE_DIR}")
     target_include_directories(imgui_bindings PUBLIC ${imgui_SOURCE_DIR}/backends ${imgui_SOURCE_DIR} ${FT_INCLUDE_DIR}/freetype2)
-    target_link_libraries(imgui_bindings PUBLIC glfw glad_lib freetype)
+    target_link_libraries(imgui_bindings PUBLIC glfw glad_lib freetype2)
 endif()
 
 

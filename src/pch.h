@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <span>
+#include <array>
 
 using uint = unsigned int;
 using vuchar = std::vector<uint8_t>;

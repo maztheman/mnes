@@ -6,6 +6,7 @@
 #include "OpenGLImGui.h"
 
 #include <mutex>
+#include <array>
 
 #include <glm/glm.hpp>
 

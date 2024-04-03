@@ -28,6 +28,7 @@ static GLenum PixelTypeToOpenGLInternalFormat(PixelType type)
         case RGBA8:
             return GL_RGBA8;
     }
+    throw std::runtime_error("unhandled pixel type");
 }
 
 static GLenum PixelTypeToOpenGLType(PixelType)

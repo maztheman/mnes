@@ -129,6 +129,9 @@ jobs:
         run: |
           conan remove -f '*/system'
 
+      - name: Setup ubuntu x11
+        run: sudo apt install -y libx11-dev libxrandr-dev libxinerama-dev libxcb1-dev libxcb-xkb-dev libxcb-cursor-dev libxcb-xinput-dev libxcursor-dev libxi-dev libgl1-mesa-dev libwayland-dev libwayland-egl-backend-dev waylandpp-dev wayland-protocols wayland-scanner++ libxkbcommon-dev libxkbcommon-x11-dev
+  
       - name: Test simple configuration to make sure nothing broke
         run: |
           cmake -S . -B ./build -G "${{ matrix.generator }}" -DCMAKE_BUILD_TYPE:STRING=${{ matrix.build_type }} -DENABLE_DEVELOPER_MODE:BOOL=${{ matrix.developer_mode }} -DOPT_ENABLE_COVERAGE:BOOL=OFF
@@ -230,6 +233,9 @@ jobs:
       - name: Cleanup Conan system packages (they are not properly cached)
         run: |
           conan remove -f '*/system'
+
+      - name: Setup ubuntu x11
+        run: sudo apt install -y libx11-dev libxrandr-dev libxinerama-dev libxcb1-dev libxcb-xkb-dev libxcb-cursor-dev libxcb-xinput-dev libxcursor-dev libxi-dev libgl1-mesa-dev libwayland-dev libwayland-egl-backend-dev waylandpp-dev wayland-protocols wayland-scanner++ libxkbcommon-dev libxkbcommon-x11-dev
 
       - name: Test simple configuration to make sure nothing broke (default compiler,cmake,developer_mode OFF)
         run: |

@@ -22,6 +22,13 @@ project(
   HOMEPAGE_URL "https://github.com/maztheman/mnes"
   LANGUAGES CXX C)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+if(PROJECT_IS_TOP_LEVEL)
+  include(MnesProjectSettings)
+endif()
+
+
 include(Dependencies.cmake)
 mnes_setup_dependencies()
 

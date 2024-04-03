@@ -13,6 +13,7 @@
 
 #include <fstream>
 #include <execution>
+#include <inttypes.h>
 
 const std::shared_ptr<MainLayer>& Main()
 {
@@ -155,7 +156,7 @@ void MainLayer::OnImGui()
     if (ImGuiWindowFlags outputFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysVerticalScrollbar; ImGui::Begin("Output", nullptr, outputFlags))
     {
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::Text("Tick: %llu  ", GRegisters().tick_count);
+        ImGui::Text("Tick: %" PRIu64, GRegisters().tick_count);
         ImGui::End();
     }
 
@@ -181,7 +182,7 @@ void MainLayer::OnImGui()
                     {
                         if (entry.is_regular_file() && (entry.path().extension() == ".nes" || entry.path().extension() == ".NES"))
                         {
-                            if (ImGui::Selectable(entry.path().filename().c_str()))
+                            if (ImGui::Selectable(entry.path().filename().string().c_str()))
                             {
                                 Stop();
                                 if (CFileLoader::LoadRom(entry.path()))
@@ -196,7 +197,7 @@ void MainLayer::OnImGui()
                         } 
                         else if (entry.is_directory())
                         {
-                            if (ImGui::Selectable(fmt::format("[D] {}", entry.path().filename().c_str()).c_str()))
+                            if (ImGui::Selectable(fmt::format("[D] {}", entry.path().filename().string()).c_str()))
                             {
                                 shouldMoveDir = true;
                                 movedDir = entry;
