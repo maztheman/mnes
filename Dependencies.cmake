@@ -38,8 +38,14 @@ if (NOT TARGET glm::glm)
     cpmaddpackage("gh:g-truc/glm#0.9.9.8")
 endif()
 
+cpmaddpackage(NAME freetype2 
+              GITHUB_REPOSITORY servo/libfreetype2
+              GIT_TAG master
+              DOWNLOAD_ONLY TRUE)
+add_subdirectory(${freetype2_SOURCE_DIR}/freetype2)
+
 if (NOT TARGET imgui)
-    find_path(FT_INCLUDE_DIR freetype2/ft2build.h)
+    #find_path(FT_INCLUDE_DIR freetype2/ft2build.h)
     cpmaddpackage("gh:ocornut/imgui#v1.89.8-docking")
     add_library(imgui_bindings STATIC)
     target_sources(imgui_bindings PRIVATE
@@ -58,7 +64,7 @@ if (NOT TARGET imgui)
     )
     message("freetype 2 is: ${FT_INCLUDE_DIR}")
     target_include_directories(imgui_bindings PUBLIC ${imgui_SOURCE_DIR}/backends ${imgui_SOURCE_DIR} ${FT_INCLUDE_DIR}/freetype2)
-    target_link_libraries(imgui_bindings PUBLIC glfw glad_lib)
+    target_link_libraries(imgui_bindings PUBLIC glfw glad_lib freetype)
 endif()
 
 
