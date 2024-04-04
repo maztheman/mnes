@@ -1,13 +1,13 @@
 #include "mapper.h"
 #include <cstring>
 
-#include <ppu/ppu_memory.h>
-#include <ppu/ppu_registers.h>
+#include <common/Log.h>
 #include <cpu/cpu_registers.h>
 #include <cpu/memory.h>
-#include <common/Log.h>
+#include <ppu/ppu_memory.h>
+#include <ppu/ppu_registers.h>
 
-extern uint		ppu_addr_bus();
+extern uint ppu_addr_bus();
 
 static bool s_bSaveRam;
 static uint s_IdleCount{ 0 };
@@ -54,8 +54,8 @@ static uint s_r5104;
 /// Nametable Mapping
 /// <para>0 - On-board VRAM page 0</para>
 /// <para>1 - On - board VRAM page 1</para>
-/// <para>2 - Internal Expansion RAM, only if the Extended RAM mode allows it($5104 is 00 / 01); otherwise, the nametable will read as all zeros,</para>
-/// <para>3 - Fill - mode data</para>
+/// <para>2 - Internal Expansion RAM, only if the Extended RAM mode allows it($5104 is 00 / 01); otherwise, the
+/// nametable will read as all zeros,</para> <para>3 - Fill - mode data</para>
 /// </summary>
 static uint s_r5105;
 
@@ -74,7 +74,7 @@ static uint s_r5106;
 static uint s_r5107;
 
 /// <summary>
-/// PRG Ram Bank switch 
+/// PRG Ram Bank switch
 /// <para>All Modes 0x6000 (8kb)</para>
 /// <para>Bit 7 ignored</para>
 /// </summary>
@@ -181,9 +181,8 @@ static uint s_r5206;
 
 /// <summary>
 /// Expansion RAM
-/// <para>Mode 0/1 - Not readable (returns open bus), can only be written while the PPU is rendering (otherwise, 0 is written)</para>
-/// <para>Mode 2 - Readable and writable</para>
-/// <para>Mode 3 - Read - only</para>
+/// <para>Mode 0/1 - Not readable (returns open bus), can only be written while the PPU is rendering (otherwise, 0 is
+/// written)</para> <para>Mode 2 - Readable and writable</para> <para>Mode 3 - Read - only</para>
 /// </summary>
 static uint8_t s_r5C00[0x400];
 
@@ -200,126 +199,117 @@ static void mmc5_set_chr_mode();
 static void mmc5_setup_prg();
 static uint mmc5_mode_3_read(uint address);
 
-mapper_t& mapperMMC5()
+mapper_t &mapperMMC5()
 {
-	static mapper_t instance =
-	{
-		mmc5_read, mmc5_read_ppu_memory, mmc5_write, mmc5_do_cpu_cycle, mmc5_do_ppu_cycle, mmc5_reset, mnes::mappers::MMC5, false
-	};
-	return instance;
+  static mapper_t instance = { mmc5_read,
+    mmc5_read_ppu_memory,
+    mmc5_write,
+    mmc5_do_cpu_cycle,
+    mmc5_do_ppu_cycle,
+    mmc5_reset,
+    mnes::mappers::MMC5,
+    false };
+  return instance;
 }
 
 
 static uint mmc5_read(uint address)
 {
-	if (address == 0xFFFA || address == 0xFFFB) {
-		s_bInFrame = false;
-		s_LastAddr = ~0U;
-	}
+  if (address == 0xFFFA || address == 0xFFFB) {
+    s_bInFrame = false;
+    s_LastAddr = ~0U;
+  }
 
-	if (address < 0x6000) {
-		return 0;
-	}
-	if (address >= 0x6000 && address < 0x8000) {
-		//address range is not this hah
+  if (address < 0x6000) { return 0; }
+  if (address >= 0x6000 && address < 0x8000) {
+    // address range is not this hah
 
 
-		if (s_bSaveRam) {
-			return SRam()[address & 0x1FFF];
-		}
-		return 0;
-	}
-	if (address >= 0x8000 && address < 0xA000) {
-		if ((s_r5114 & 0x80) == 0x00) {
-			return 0xFF;
-		}
-	} else if (address >= 0xA000 && address < 0xC000) {
-		if ((s_r5115 & 0x80) == 0x00) {
-			return 0xFF;
-		}
-	} else if (address > 0xC000 && address < 0xE000) {
-		if ((s_r5116 & 0x80) == 0x00) {
-			return 0xFF;
-		}
-	}
-	if (address >= 0x8000 && address <= 0xFFFF) {
-		switch (s_r5100 & 3) {
-		case 0:
-			break;
-		case 1:
-			break;
-		case 2:
-			break;
-		case 3:
-			return mmc5_mode_3_read(address);
+    if (s_bSaveRam) { return SRam()[address & 0x1FFF]; }
+    return 0;
+  }
+  if (address >= 0x8000 && address < 0xA000) {
+    if ((s_r5114 & 0x80) == 0x00) { return 0xFF; }
+  } else if (address >= 0xA000 && address < 0xC000) {
+    if ((s_r5115 & 0x80) == 0x00) { return 0xFF; }
+  } else if (address > 0xC000 && address < 0xE000) {
+    if ((s_r5116 & 0x80) == 0x00) { return 0xFF; }
+  }
+  if (address >= 0x8000 && address <= 0xFFFF) {
+    switch (s_r5100 & 3) {
+    case 0:
+      break;
+    case 1:
+      break;
+    case 2:
+      break;
+    case 3:
+      return mmc5_mode_3_read(address);
+    }
+  }
 
-		}
-	}
-
-	return 0;
+  return 0;
 }
 
 static void mmc5_write(uint address, uint value)
 {
-	if (address == 0x2001 && (value & 0x18) == 0) {
-		s_bInFrame = false;
-		s_LastAddr = ~0U;
-	}
+  if (address == 0x2001 && (value & 0x18) == 0) {
+    s_bInFrame = false;
+    s_LastAddr = ~0U;
+  }
 
-	if (address == 0x5100) {
-		s_r5100 = value & 3;
-	} else if (address == 0x5101) {
-		s_r5101 = value & 3;
-	} else if (address == 0x5102) {
-		s_r5102 = value & 3;
-	} else if (address == 0x5103) {
-		s_r5103 = value & 3;
-	} else if (address == 0x5104) {
-		s_r5104 = value & 3;
-	} else if (address == 0x5105) {
-		s_r5105 = value & 0xFF;
-	} else if (address == 0x5106) {
-		s_r5106 = value & 0xFF;
-	} else if (address == 0x5107) {
-		s_r5107 = value & 0x3;
-	} else if (address == 0x5113) {
-		s_r5113 = value & 0xFF;
-	} else if (address == 0x5114) {
-		s_r5114 = value & 0xFF;
-	} else if (address == 0x5115) {
-		s_r5115 = value & 0xFF;
-	} else if (address == 0x5116) {
-		s_r5116 = value & 0xFF;
-	} else if (address == 0x5117) {
-		s_r5117 = value & 0xFF;
-	} else if (address >= 0x5120 && address <= 0x512B) {
-		address &= 0x000F;
-		s_r512x[address] = value & 0xFF;
-	} else if (address == 0x5130) {
-		s_r5130 = value & 0xFF;
-	} else if (address == 0x5200) {
-		s_r5200 = value & 0xFF;
-	} else if (address == 0x5201) {
-		s_r5201 = value & 0xFF;
-	} else if (address == 0x5202) {
-		s_r5202 = value & 0xFF;
-	} else if (address == 0x5203) {
-		s_r5203 = value & 0xFF;
-	} else if (address == 0x5204) {
-		s_r5204 = value & 0xFF;
-	} else if (address == 0x5205) {
-		s_r5205 = value & 0xFF;
-	} else if (address == 0x5206) {
-		s_r5206 = value & 0xFF;
-	} else if (address >= 0x5C00 && address <= 0x5FFF) {
-		//
-		s_r5C00[address & 0x3FF] = value & 0xFF;
-	} else {
-		
-	}
+  if (address == 0x5100) {
+    s_r5100 = value & 3;
+  } else if (address == 0x5101) {
+    s_r5101 = value & 3;
+  } else if (address == 0x5102) {
+    s_r5102 = value & 3;
+  } else if (address == 0x5103) {
+    s_r5103 = value & 3;
+  } else if (address == 0x5104) {
+    s_r5104 = value & 3;
+  } else if (address == 0x5105) {
+    s_r5105 = value & 0xFF;
+  } else if (address == 0x5106) {
+    s_r5106 = value & 0xFF;
+  } else if (address == 0x5107) {
+    s_r5107 = value & 0x3;
+  } else if (address == 0x5113) {
+    s_r5113 = value & 0xFF;
+  } else if (address == 0x5114) {
+    s_r5114 = value & 0xFF;
+  } else if (address == 0x5115) {
+    s_r5115 = value & 0xFF;
+  } else if (address == 0x5116) {
+    s_r5116 = value & 0xFF;
+  } else if (address == 0x5117) {
+    s_r5117 = value & 0xFF;
+  } else if (address >= 0x5120 && address <= 0x512B) {
+    address &= 0x000F;
+    s_r512x[address] = value & 0xFF;
+  } else if (address == 0x5130) {
+    s_r5130 = value & 0xFF;
+  } else if (address == 0x5200) {
+    s_r5200 = value & 0xFF;
+  } else if (address == 0x5201) {
+    s_r5201 = value & 0xFF;
+  } else if (address == 0x5202) {
+    s_r5202 = value & 0xFF;
+  } else if (address == 0x5203) {
+    s_r5203 = value & 0xFF;
+  } else if (address == 0x5204) {
+    s_r5204 = value & 0xFF;
+  } else if (address == 0x5205) {
+    s_r5205 = value & 0xFF;
+  } else if (address == 0x5206) {
+    s_r5206 = value & 0xFF;
+  } else if (address >= 0x5C00 && address <= 0x5FFF) {
+    //
+    s_r5C00[address & 0x3FF] = value & 0xFF;
+  } else {
+  }
 
-	mmc5_setup_prg();
-
+  mmc5_setup_prg();
 }
 
 /*
@@ -369,135 +359,119 @@ PPU $1800-$1BFF: 1 KB switchable CHR bank
 PPU $1C00-$1FFF: 1 KB switchable CHR bank
 */
 
-//initialize the base mmc5 stuff here
+// initialize the base mmc5 stuff here
 
 static void mmc5_reset()
 {
-	s_bSaveRam = false;
-	
-	s_r5100 = 0x3; //PRG Rom MMC5 defaulting to mode 3 at power on.
-	s_r5117 = 0xFF; //games apparently think this should be 0xFF on start up
-	s_r5205 = 0xFF;
-	s_r5206 = 0xFF;
-	mmc5_setup_prg();
-	memset(&s_r512x[0], 0, sizeof(uint) * 12);
+  s_bSaveRam = false;
+
+  s_r5100 = 0x3;// PRG Rom MMC5 defaulting to mode 3 at power on.
+  s_r5117 = 0xFF;// games apparently think this should be 0xFF on start up
+  s_r5205 = 0xFF;
+  s_r5206 = 0xFF;
+  mmc5_setup_prg();
+  memset(&s_r512x[0], 0, sizeof(uint) * 12);
 }
 
-static void mmc5_nop()
-{
+static void mmc5_nop() {}
 
-}
+static void mmc5_do_scanline() {}
 
-static void mmc5_do_scanline()
-{
-
-}
-
-static void mmc5_do_ppu_cycle()
-{
-
-}
+static void mmc5_do_ppu_cycle() {}
 
 static void mmc5_do_cpu_cycle()
 {
-	if (s_bPPUIsReading) {
-		s_IdleCount = 0;
-	} else {
-		s_IdleCount++;
-		if (s_IdleCount == 3) {
-			s_bInFrame = false;
-			s_LastAddr = ~0U;
-		}
-	}
-	s_bPPUIsReading = false;
+  if (s_bPPUIsReading) {
+    s_IdleCount = 0;
+  } else {
+    s_IdleCount++;
+    if (s_IdleCount == 3) {
+      s_bInFrame = false;
+      s_LastAddr = ~0U;
+    }
+  }
+  s_bPPUIsReading = false;
 }
 
 static void mmc5_set_prg_mode()
 {
-	switch (s_r5100 & 0x3) {
-	case 0:
-		break;
-	case 1:
-		break;
-	case 2:
-		break;
-	case 3:
-		break;
-
-	}
+  switch (s_r5100 & 0x3) {
+  case 0:
+    break;
+  case 1:
+    break;
+  case 2:
+    break;
+  case 3:
+    break;
+  }
 }
 
 static void mmc5_set_chr_mode()
 {
-	switch (s_r5101 & 0x3) {
-	case 0:
-		break;
-	case 1:
-		break;
-	case 2:
-		break;
-	case 3:
-		break;
-
-	}
+  switch (s_r5101 & 0x3) {
+  case 0:
+    break;
+  case 1:
+    break;
+  case 2:
+    break;
+  case 3:
+    break;
+  }
 }
 
-static uint mmc5_read_ppu_memory(uint address) 
-{ 
-	static uint s_LastPPUAddrIdx = 0;
+static uint mmc5_read_ppu_memory(uint address)
+{
+  static uint s_LastPPUAddrIdx = 0;
 
-	if (address >= 0x2000 && address <= 0x2FFF && address == s_LastAddr) {
-		s_LastPPUAddrIdx++;
-		if (s_LastPPUAddrIdx == 2) {
-			if (s_bInFrame == false) {
-				s_bInFrame = true;
-				s_ScanLineCount = 0;
-			} else {
-				s_ScanLineCount++;
-				if (s_ScanLineCount == s_r5203) {
-					s_bIRQPending = true;
-				}
-			}
-		}
-	} else {
-		s_LastPPUAddrIdx = 0;
-	}
+  if (address >= 0x2000 && address <= 0x2FFF && address == s_LastAddr) {
+    s_LastPPUAddrIdx++;
+    if (s_LastPPUAddrIdx == 2) {
+      if (s_bInFrame == false) {
+        s_bInFrame = true;
+        s_ScanLineCount = 0;
+      } else {
+        s_ScanLineCount++;
+        if (s_ScanLineCount == s_r5203) { s_bIRQPending = true; }
+      }
+    }
+  } else {
+    s_LastPPUAddrIdx = 0;
+  }
 
-	s_LastAddr = address;
-	s_bPPUIsReading = true;
+  s_LastAddr = address;
+  s_bPPUIsReading = true;
 
-	return 0; 
+  return 0;
 }
 
 
 /// <summary>
 /// Take into account 1) curent mode 2) banks for all the spots 3) do it now
 /// </summary>
-static void mmc5_setup_prg()
-{
-
-}
+static void mmc5_setup_prg() {}
 
 static uint mmc5_mode_3_read(uint address)
 {
-	static auto& romData = RomData();
-	auto& format = nes_format();
-	auto rawData = RawData();
+  static auto &romData = RomData();
+  auto &format = nes_format();
+  auto rawData = RawData();
 
-	if (address < 0x8000) {
-		//ram stuff
+  if (address < 0x8000) {
+    // ram stuff
 
-	} else if (address < 0xA000) {
+  } else if (address < 0xA000) {
 
-	} else if (address < 0xC000) {
+  } else if (address < 0xC000) {
 
-	} else if (address < 0xE000) {
+  } else if (address < 0xE000) {
 
-	} else if (address < 0x10000) {
-		address &= 0x1FFF;
-		address |= ((s_r5117 & 0x7F) << 13);
-		return rawData.subspan(address)[0];
-	}
+  } else if (address < 0x10000) {
+    address &= 0x1FFF;
+    address |= ((s_r5117 & 0x7F) << 13);
+    return rawData.subspan(address)[0];
+  }
 
-	return ~0U;//basically a bad null 
+  return ~0U;// basically a bad null
 }

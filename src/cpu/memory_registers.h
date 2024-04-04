@@ -2,21 +2,21 @@
 
 struct MemoryRegisters
 {
-	uint32_t	r2000{0U};
-	uint32_t	r2001{0U};
-	uint32_t	r2002{0U};
-	uint32_t	r2003{0U};
-	uint32_t	r2006{0U};
-	bool		r2006Latch{false};
-	uint32_t	r2006Temp{0U};
-	uint32_t	r2006ByteLatch{0U};
-	uint32_t	TileXOffset{0U};
-	bool		oam_clear_reads{false};
-	uint32_t	ppu_addr_bus{0U};
-	uint32_t	ppu_latch_byte{0U};
+  uint32_t r2000{ 0U };
+  uint32_t r2001{ 0U };
+  uint32_t r2002{ 0U };
+  uint32_t r2003{ 0U };
+  uint32_t r2006{ 0U };
+  bool r2006Latch{ false };
+  uint32_t r2006Temp{ 0U };
+  uint32_t r2006ByteLatch{ 0U };
+  uint32_t TileXOffset{ 0U };
+  bool oam_clear_reads{ false };
+  uint32_t ppu_addr_bus{ 0U };
+  uint32_t ppu_latch_byte{ 0U };
 };
 
-MemoryRegisters& GMemoryRegisters();
+MemoryRegisters &GMemoryRegisters();
 
 void set_sprite_overflow();
 void set_vblank();

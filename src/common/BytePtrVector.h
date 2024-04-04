@@ -1,23 +1,18 @@
 #pragma once
 
-class CBytePtrVector : public std::vector<unsigned char*>
+class CBytePtrVector : public std::vector<unsigned char *>
 {
 public:
-	CBytePtrVector() {}
-	~CBytePtrVector()
-	{
-		ResetContent();
-	}
+  CBytePtrVector() {}
+  ~CBytePtrVector() { ResetContent(); }
 
-	void ResetContent()
-	{
-		if (empty()) return;//stop recursive
-		for (auto& p : *this) {
-			delete p;
-		}
+  void ResetContent()
+  {
+    if (empty()) return;// stop recursive
+    for (auto &p : *this) { delete p; }
 
-		clear();
+    clear();
 
-		CBytePtrVector().swap(*this);
-	}
+    CBytePtrVector().swap(*this);
+  }
 };

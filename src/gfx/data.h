@@ -1,7 +1,7 @@
 #pragma once
 
-#include <span>
 #include <cstdint>
+#include <span>
 
 static constexpr auto SCREEN_DATA_SIZE = 256U * 256U * 3;
 

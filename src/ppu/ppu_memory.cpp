@@ -2,120 +2,91 @@
 
 #include <cpu/memory_registers.h>
 
-#include <span>
 #include <array>
+#include <span>
 
 using namespace mnes::memory;
 
 struct ppu_memory_t
 {
-	std::array<uint8_t*, 8> PPUTable = {
-		nullptr, nullptr, nullptr, nullptr, 
-		nullptr, nullptr, nullptr, nullptr
-	};
-	std::array<uint8_t*, 4> Tables = {
-		nullptr, nullptr, nullptr, nullptr
-	};
-	std::unique_ptr<uint8_t[]> VRAM = std::make_unique<uint8_t[]>(VRAM_SIZE);
+  std::array<uint8_t *, 8> PPUTable = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+  std::array<uint8_t *, 4> Tables = { nullptr, nullptr, nullptr, nullptr };
+  std::unique_ptr<uint8_t[]> VRAM = std::make_unique<uint8_t[]>(VRAM_SIZE);
 
-	vram_memory_t VRAMSPAN()
-	{
-		return vram_memory_t(VRAM.get(), VRAM_SIZE);
-	}
+  vram_memory_t VRAMSPAN() { return vram_memory_t(VRAM.get(), VRAM_SIZE); }
 
-	palette_memory_t Palette()
-	{
-		return palette_memory_t(VRAMSPAN().subspan(PALETTE_OFFSET, PALETTE_SIZE));
-	}
+  palette_memory_t Palette() { return palette_memory_t(VRAMSPAN().subspan(PALETTE_OFFSET, PALETTE_SIZE)); }
 
-	ntram_memory_t NTRam()
-	{
-		return ntram_memory_t(VRAMSPAN().subspan(NTRAM_OFFSET, NTRAM_SIZE));
-	}
+  ntram_memory_t NTRam() { return ntram_memory_t(VRAMSPAN().subspan(NTRAM_OFFSET, NTRAM_SIZE)); }
 };
 
-ppu_memory_t& ppu_memory()
+ppu_memory_t &ppu_memory()
 {
-	static ppu_memory_t instance;
-	return instance;
+  static ppu_memory_t instance;
+  return instance;
 }
 
-std::array<uint8_t*, 8>& PPUTable()
-{
-	return ppu_memory().PPUTable;
-}
+std::array<uint8_t *, 8> &PPUTable() { return ppu_memory().PPUTable; }
 
-std::array<uint8_t*, 4>& Tables()
-{
-	return ppu_memory().Tables;
-}
+std::array<uint8_t *, 4> &Tables() { return ppu_memory().Tables; }
 
-palette_memory_t Palette()
-{
-	return ppu_memory().Palette();
-}
+palette_memory_t Palette() { return ppu_memory().Palette(); }
 
-ntram_memory_t NTRam()
-{
-	return ppu_memory().NTRam();
-}
+ntram_memory_t NTRam() { return ppu_memory().NTRam(); }
 
-static auto& ppuTable = PPUTable();
-static auto& tables = Tables();
+static auto &ppuTable = PPUTable();
+static auto &tables = Tables();
 
 uint ppu_memory_main_read(uint address)
 {
-	//GMemoryRegisters().ppu_addr_bus = address;
+  // GMemoryRegisters().ppu_addr_bus = address;
 
-	address &= 0x3FFF;
+  address &= 0x3FFF;
 
-	current_mapper()->read_ppu_memory(address);//allow mapper to read shit man
+  current_mapper()->read_ppu_memory(address);// allow mapper to read shit man
 
-	//Pattern Table
-	if (address < 0x2000) {
-		return ppuTable[address >> 0xA][address & 0x3FF];
-	}
+  // Pattern Table
+  if (address < 0x2000) { return ppuTable[address >> 0xA][address & 0x3FF]; }
 
-	//Name Table
-	if (address < 0x3F00) {
-		uint index = (address & 0xC00) >> 10;
-		return tables[index][address & 0x3FF];
-	}
+  // Name Table
+  if (address < 0x3F00) {
+    uint index = (address & 0xC00) >> 10;
+    return tables[index][address & 0x3FF];
+  }
 
-	address &= 0x1F;
-	return ppu_memory().Palette()[address];
+  address &= 0x1F;
+  return ppu_memory().Palette()[address];
 }
 
 void ppu_memory_main_write(uint address, uint value)
 {
-	//GMemoryRegisters().ppu_addr_bus = address;
+  // GMemoryRegisters().ppu_addr_bus = address;
 
-	address &= 0x3FFF;
+  address &= 0x3FFF;
 
-	//Pattern Table
-	if (address < 0x2000) {
-		ppu_memory().PPUTable[address >> 0xAU][address & 0x3FF] = TO_BYTE(value);
-		return;
-	}
+  // Pattern Table
+  if (address < 0x2000) {
+    ppu_memory().PPUTable[address >> 0xAU][address & 0x3FF] = TO_BYTE(value);
+    return;
+  }
 
-	//Name Table
-	if (address < 0x3F00) {
-		size_t index = (address&0xC00)>>10;
-		ppu_memory().Tables[index][address & 0x3FF] = TO_BYTE(value);
-		return;
-	}
+  // Name Table
+  if (address < 0x3F00) {
+    size_t index = (address & 0xC00) >> 10;
+    ppu_memory().Tables[index][address & 0x3FF] = TO_BYTE(value);
+    return;
+  }
 
-	//Palette
-	uint tmp = address & 0x1F;
-	uint val = value & 0x3F;
+  // Palette
+  uint tmp = address & 0x1F;
+  uint val = value & 0x3F;
 
-	if (auto palette = ppu_memory().Palette(); tmp <= 0x10)
-	{
-		tmp &= 0xF;
-		palette[tmp] = TO_BYTE(val);
-		palette[0xC] = palette[0x8] = palette[0x4] = palette[0x0];
-		palette[0x10] = palette[0x1C] = palette[0x18] = palette[0x14] = palette[0x0];
-	} else {
-		palette[tmp] = TO_BYTE(val);
-	}
+  if (auto palette = ppu_memory().Palette(); tmp <= 0x10) {
+    tmp &= 0xF;
+    palette[tmp] = TO_BYTE(val);
+    palette[0xC] = palette[0x8] = palette[0x4] = palette[0x0];
+    palette[0x10] = palette[0x1C] = palette[0x18] = palette[0x14] = palette[0x0];
+  } else {
+    palette[tmp] = TO_BYTE(val);
+  }
 }

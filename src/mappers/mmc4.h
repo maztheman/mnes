@@ -2,4 +2,4 @@
 
 struct mapper_t;
 
-mapper_t& mapperMMC4();
+mapper_t &mapperMMC4();

@@ -1,19 +1,7 @@
 #pragma once
 
-namespace GfxEngine
-{
+namespace GfxEngine {
 
-enum Key : int
-{
-    Invalid = -1,
-    A = 0,
-    W,
-    D,
-    S,
-    Apos,
-    Semicolon,
-    L,
-    K
-};
+enum Key : int { Invalid = -1, A = 0, W, D, S, Apos, Semicolon, L, K };
 
 }

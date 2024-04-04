@@ -1,4 +1,4 @@
-static constexpr const char* VERTEX_SOURCE = R"vert(#version 330 core
+static constexpr const char *VERTEX_SOURCE = R"vert(#version 330 core
 
 layout (location = 0) in vec4 vertex;
 

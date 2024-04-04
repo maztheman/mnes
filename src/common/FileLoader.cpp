@@ -1,65 +1,60 @@
 #include "FileLoader.h"
 
-#include "ines_format.h"
 #include "File.h"
+#include "ines_format.h"
 
 #include <mappers/mapper.h>
 
 #include <fstream>
 
-//mappers
-vuchar		g_arRawData;
+// mappers
+vuchar g_arRawData;
 
-//maybe attach the mapper to the application instead of global variable ?
+// maybe attach the mapper to the application instead of global variable ?
 
-CFileLoader::CFileLoader()
+CFileLoader::CFileLoader() {}
+
+CFileLoader::~CFileLoader() {}
+
+bool CFileLoader::LoadRom(const std::filesystem::path &fileName)
 {
-}
+  std::ifstream file(fileName, std::ios::binary | std::ios::in);
 
-CFileLoader::~CFileLoader()
-{
-}
+  if (!file) {
+    fmt::print(stderr, "Could not open rom {}\n", fileName.generic_string());
+    return false;
+  }
 
-bool CFileLoader::LoadRom(const std::filesystem::path& fileName)
-{
-	std::ifstream file(fileName, std::ios::binary | std::ios::in);
+  auto &format = nes_format();
 
-	if (!file)
-	{
-		fmt::print(stderr, "Could not open rom {}\n", fileName.generic_string());
-		return false;
-	}
+  file.read(reinterpret_cast<char *>(&format), 16);
 
-	auto& format = nes_format();
+  if (!(format.reserved[0] == 'N' && format.reserved[1] == 'E' && format.reserved[2] == 'S'
+        && format.file_version == 0x1A)) {
+    return false;// wrong format i guess
+  }
 
-	file.read(reinterpret_cast<char*>(&format), 16);
+  uint nMapperNo = ((format.rom_control_1 & 0xF0) >> 4) | (format.rom_control_2 & 0xF0);
 
-	if (!(format.reserved[0] == 'N' && format.reserved[1] == 'E' && format.reserved[2] == 'S' && format.file_version == 0x1A)) 
-	{
-		return false;//wrong format i guess
-	}
+  set_mapper(nMapperNo);
+  auto mp = current_mapper();
 
-	uint nMapperNo = ((format.rom_control_1 & 0xF0) >> 4) | (format.rom_control_2 & 0xF0);
+  if (mp == nullptr) {
+    fmt::print(stderr, "mapper {} is not supported\n", nMapperNo);
+    return false;
+  }
 
-	set_mapper(nMapperNo);
-	auto mp = current_mapper();
+  // bool ines20 = (format.rom_control_1 & 0xC) == 0x8;
 
-	if (mp == nullptr) 
-	{
-		fmt::print(stderr, "mapper {} is not supported\n", nMapperNo);
-		return false;
-	}
+  // prg + chr + trainer
+  std::streamsize nFileSize =
+    (format.prg_rom_count * 16384) + (format.chr_rom_count * 8192) + (((format.rom_control_1 & 4) == 4) ? 512 : 0);
 
-	//bool ines20 = (format.rom_control_1 & 0xC) == 0x8;
+  fmt::print(stderr, "Detected rom size of {}\n", nFileSize);
 
-	//prg + chr + trainer
-	std::streamsize nFileSize = (format.prg_rom_count * 16384 ) + ( format.chr_rom_count * 8192 ) + (( (format.rom_control_1 & 4) == 4) ? 512 : 0);
+  set_romdata_from_stream(file, nFileSize);
 
-	fmt::print(stderr, "Detected rom size of {}\n", nFileSize);
+  mp->reset();
 
-	set_romdata_from_stream(file, nFileSize);
-
-	mp->reset();
-
-	return true;
+  return true;
 }

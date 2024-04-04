@@ -5,5 +5,5 @@ static std::unique_ptr<uint8_t[]> screenData = std::make_unique<uint8_t[]>(SCREE
 
 std::span<uint8_t, SCREEN_DATA_SIZE> getScreenData()
 {
-    return std::span<uint8_t, SCREEN_DATA_SIZE>(screenData.get(), SCREEN_DATA_SIZE);
+  return std::span<uint8_t, SCREEN_DATA_SIZE>(screenData.get(), SCREEN_DATA_SIZE);
 }

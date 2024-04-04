@@ -2,4 +2,4 @@
 
 struct mapper_t;
 
-mapper_t& mapperCNROM();
+mapper_t &mapperCNROM();

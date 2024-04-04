@@ -11,12 +11,12 @@
 
 void memory_jmp_absolute()
 {
-    //2
-    uint pcl = ext_memory_read(GRegisters().pc++);
-    //3
-    GRegisters().pc = pcl | (ext_memory_read(GRegisters().pc) << 8);
+  // 2
+  uint pcl = ext_memory_read(GRegisters().pc++);
+  // 3
+  GRegisters().pc = pcl | (ext_memory_read(GRegisters().pc) << 8);
 #ifdef USE_LOG
-    VLog().AddLine(" $%04X", GRegisters().pc);
+  VLog().AddLine(" $%04X", GRegisters().pc);
 #endif
 }
 
@@ -37,12 +37,12 @@ void memory_jmp_absolute()
 
 void memory_jmp_absolute_indirect()
 {
-    //2
-    uint pointer_l = ext_memory_read(GRegisters().pc++);
-    //3
-    uint pointer_h = ext_memory_read(GRegisters().pc++) << 8;
-    //4
-    uint pcl = ext_memory_read(pointer_l | pointer_h);
-    //5
-    GRegisters().pc = pcl | (ext_memory_read(((pointer_l + 1) & 0xFF) | pointer_h) << 8);
+  // 2
+  uint pointer_l = ext_memory_read(GRegisters().pc++);
+  // 3
+  uint pointer_h = ext_memory_read(GRegisters().pc++) << 8;
+  // 4
+  uint pcl = ext_memory_read(pointer_l | pointer_h);
+  // 5
+  GRegisters().pc = pcl | (ext_memory_read(((pointer_l + 1) & 0xFF) | pointer_h) << 8);
 }

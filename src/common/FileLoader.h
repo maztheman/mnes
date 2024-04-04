@@ -2,15 +2,14 @@
 
 #include <filesystem>
 
-//re-write this using std::filesystem and istream::read() no c!
+// re-write this using std::filesystem and istream::read() no c!
 
 class CFileLoader
 {
-	CFileLoader();
+  CFileLoader();
+
 public:
+  ~CFileLoader();
 
-	~CFileLoader();
-
-	static bool LoadRom(const std::filesystem::path& fileName);
+  static bool LoadRom(const std::filesystem::path &fileName);
 };
-

@@ -2,4 +2,4 @@
 
 struct mapper_t;
 
-mapper_t& mapperNROM();
+mapper_t &mapperNROM();

@@ -1,18 +1,18 @@
 #include "application.h"
 
-#include <mutex>
 #include <functional>
+#include <mutex>
 
 #include "processor.h"
-#include <ppu/ppu.h>
+#include <common/global.h>
 #include <cpu/cpu.h>
 #include <cpu/cpu_registers.h>
-#include <sound/apu.h>
-#include <common/global.h>
 #include <imgui.h>
+#include <ppu/ppu.h>
+#include <sound/apu.h>
 
-#include <thread>
 #include <fstream>
+#include <thread>
 
 #include <common/FileLoader.h>
 
@@ -24,10 +24,8 @@ constexpr const int WINDOW_HEIGHT = 600;
 using namespace std::string_view_literals;
 
 MnesApplication::MnesApplication()
-: GfxEngine::Core::Application<ApplicationPlatform>(WINDOW_WIDTH, WINDOW_HEIGHT, "mnes 1.0.0"sv)
-{
-    
-}
+  : GfxEngine::Core::Application<ApplicationPlatform>(WINDOW_WIDTH, WINDOW_HEIGHT, "mnes 1.0.0"sv)
+{}
 
 #if 0
 void Application::showFileBrowser()
