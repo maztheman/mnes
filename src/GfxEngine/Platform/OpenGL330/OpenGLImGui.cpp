@@ -2,8 +2,8 @@
 
 #include "OpenGLPlatform.h"
 
-#include <GLFW/glfw3.h>
 #include <glad/gl.h>
+#include <GLFW/glfw3.h>
 
 #include <imgui_impl_glfw.cpp>
 #include <imgui_impl_opengl3.cpp>

@@ -40,9 +40,9 @@ uint8_t g_RGBPalette[64][3] = { 0 };
 uint32_t g_aBGColor[256] = { 0 };
 uint32_t PPU_cycles = 0;
 
-#include "background.cpp"
 #include "ppuaddr.cpp"
 #include "sprite.cpp"
+#include "background.cpp"
 
 static inline void ppu_update_scanline();
 

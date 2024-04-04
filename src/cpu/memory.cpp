@@ -32,18 +32,18 @@ template<typename T> static uint TO_ZERO_PAGE(T address) { return address & 0xFF
 
 // opcodes
 #include "imp_opcodes.cpp"
-#include "r_opcodes.cpp"
-#include "rel_opcodes.cpp"
 #include "rwm_opcodes.cpp"
-#include "stack_opcodes.cpp"
+#include "r_opcodes.cpp"
 #include "w_opcodes.cpp"
+#include "stack_opcodes.cpp"
+#include "rel_opcodes.cpp"
 
-#include "imm_addressing.cpp"
 #include "imp_addressing.cpp"
-#include "jump_addressing.cpp"
+#include "imm_addressing.cpp"
 #include "r_addressing.cpp"
-#include "rel_addressing.cpp"
 #include "w_addressing.cpp"
+#include "jump_addressing.cpp"
+#include "rel_addressing.cpp"
 
 
 struct joystick_shift_reg_t
