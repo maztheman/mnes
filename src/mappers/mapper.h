@@ -38,6 +38,6 @@ void SetOneScreenMirror();
 void set_romdata_from_stream(std::ifstream &stream, std::streamsize size);
 std::span<uint8_t> current_raw_data();
 std::array<uint8_t *, 8> &current_rom_data();
-ines_format_t &current_nes_format();
+mnes::file::ines_format_t &current_nes_format();
 
 }// namespace mnes::mappers

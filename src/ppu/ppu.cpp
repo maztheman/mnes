@@ -10,9 +10,8 @@
 
 #include <gfx/data.h>
 
-#include <common/File.h>
 #include <common/control_flags.h>
-#include <common/global.h>
+#include <common/Log.h>
 
 #include <mappers/mapper.h>
 

@@ -4,8 +4,6 @@ SET(SRCS
     data.cpp
     FileBrowser.cpp
     FileBrowser.h
-    input.cpp
-    input.h
     MainLayer.cpp
 )
 

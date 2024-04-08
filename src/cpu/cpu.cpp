@@ -4,7 +4,6 @@
 #include "memory.h"
 
 #include <common/Log.h>
-#include <gfx/input.h>
 #include <ppu/ppu.h>
 #include <sound/apu.h>
 

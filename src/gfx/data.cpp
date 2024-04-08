@@ -21,7 +21,7 @@ std::span<uint8_t, SCREEN_DATA_SIZE> NS screen_data()
 
 void NS update_texture_from_screen_data()
 {
-  g_bDisplayReady = g_bPatternTableReady = g_bNameTableReady = true;
+  common::set_all_display_ready(true);
   Main()->UpdateTexture();
 }
 

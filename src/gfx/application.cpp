@@ -4,7 +4,6 @@
 #include <mutex>
 
 #include "processor.h"
-#include <common/global.h>
 #include <cpu/cpu.h>
 #include <cpu/cpu_registers.h>
 #include <imgui.h>

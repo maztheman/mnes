@@ -2,7 +2,6 @@
 
 #include "data.h"
 #include "processor.h"
-#include <common/global.h>
 #include <cpu/cpu.h>
 #include <cpu/cpu_registers.h>
 #include <ppu/ppu.h>
@@ -136,7 +135,7 @@ void MainLayer::OnImGui()
             if (entry.is_regular_file() && (entry.path().extension() == ".nes" || entry.path().extension() == ".NES")) {
               if (ImGui::Selectable(entry.path().filename().string().c_str())) {
                 Stop();
-                if (CFileLoader::LoadRom(entry.path())) {
+                if (file::load_nes_file(entry.path())) {
                   reset();
                   Start();
                   m_bShowFileBrowser = false;

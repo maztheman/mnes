@@ -2,7 +2,6 @@
 
 
 #include <common/control_flags.h>
-#include <common/global.h>
 
 #include <cpu/cpu.h>
 #include <cpu/cpu_opcodes.h>
@@ -32,22 +31,22 @@ void CPUProcess(int64_t cyclesToExecute);
 
 void Process(int64_t cyclesToExecute)
 {
-  if (!g_bCpuRunning) { return; }
+  if (!common::is_cpu_running()) { return; }
 
   CPUProcess(cyclesToExecute);
 }
 
-void Stop() { g_bCpuRunning = false; }
+void Stop() { common::set_cpu_running(false); }
 
 void Start()
 {
   printf("init memory\n");
-  g_bDisplayReady = g_bPatternTableReady = g_bNameTableReady = false;
+  common::set_all_display_ready(false);
   memory::intialize();
-  g_bCpuRunning = true;
+  common::set_cpu_running(true);
 }
 
-void Resume() { g_bCpuRunning = true; }
+void Resume() { common::set_cpu_running(true); }
 
 void CPUProcess(int64_t cyclesToExecute)
 {
@@ -57,8 +56,8 @@ void CPUProcess(int64_t cyclesToExecute)
   while (cpu::get_cycle() > 0) {
     memory::pc_process();// should be cycle accurate
 
-    if (g_bDisplayReady) {
-      g_bDisplayReady = g_bPatternTableReady = g_bNameTableReady = false;
+    if (common::is_display_ready()) {
+      common::set_all_display_ready(false);
       // at the end of the frame lets just not care ? maybe we never care?
       break;// so we can write the texture
     }

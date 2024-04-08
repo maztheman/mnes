@@ -2,14 +2,7 @@
 
 #include <filesystem>
 
-// re-write this using std::filesystem and istream::read() no c!
-
-class CFileLoader
+namespace mnes::file
 {
-  CFileLoader();
-
-public:
-  ~CFileLoader();
-
-  static bool LoadRom(const std::filesystem::path &fileName);
-};
+  bool load_nes_file(const std::filesystem::path &fileName);
+}

@@ -1,7 +1,8 @@
+#if 0
 #include "Renderer.h"
 
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <glad/glad.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -159,3 +160,4 @@ void Renderer::initUniforms()
     glBindVertexArray(0);
 }
 */
+#endif

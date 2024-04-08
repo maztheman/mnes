@@ -1,6 +1,5 @@
 #pragma once
 
-using uint8_t = unsigned char;
 /*
 +--------+------+------------------------------------------+
     | Offset | Size | Content(s)                               |
@@ -30,6 +29,8 @@ using uint8_t = unsigned char;
     +--------+------+------------------------------------------+
 */
 
+namespace mnes::file {
+
 struct ines_format_t
 {
   ines_format_t() = default;
@@ -53,3 +54,5 @@ struct ines_format2
   uint8_t rom_control_2;
   uint8_t alignment[8];
 };
+
+}

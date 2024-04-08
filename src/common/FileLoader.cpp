@@ -1,6 +1,5 @@
 #include "FileLoader.h"
 
-#include "File.h"
 #include "ines_format.h"
 
 #include <mappers/mapper.h>
@@ -10,11 +9,7 @@
 using namespace mnes;
 // maybe attach the mapper to the application instead of global variable ?
 
-CFileLoader::CFileLoader() {}
-
-CFileLoader::~CFileLoader() {}
-
-bool CFileLoader::LoadRom(const std::filesystem::path &fileName)
+bool mnes::file::load_nes_file(const std::filesystem::path &fileName)
 {
   std::ifstream file(fileName, std::ios::binary | std::ios::in);
 

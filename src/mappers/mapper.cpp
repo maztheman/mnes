@@ -32,7 +32,7 @@ std::array<uint8_t *, 8> rom = { nullptr, nullptr, nullptr, nullptr, nullptr, nu
 struct nes_data
 {
   mapper_t *mapper{ nullptr };
-  ines_format_t ines_format;
+  mnes::file::ines_format_t ines_format;
   std::unique_ptr<uint8_t[]> romData;
   size_t romDataSize;
   
@@ -45,7 +45,7 @@ nes_data &GNesData()
 }
 }// namespace
 
-ines_format_t & NS current_nes_format() { return GNesData().ines_format; }
+mnes::file::ines_format_t & NS current_nes_format() { return GNesData().ines_format; }
 
 std::span<uint8_t> NS current_raw_data() { return { GNesData().romData.get(), GNesData().romDataSize }; }
 

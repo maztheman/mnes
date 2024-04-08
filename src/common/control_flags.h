@@ -1,20 +1,14 @@
 #pragma once
 
+namespace mnes::common {
+  bool is_cpu_running();
+  bool is_display_ready();
+  bool is_pattern_table_ready();
+  bool is_name_table_ready();
 
-struct runtime_variables
-{
-  bool CpuRunning{ false };
-  bool DisplayReady{ false };
-  bool PatternTableReady{ false };
-  bool NameTableReady{ false };
-
-  void setReady(bool value) { DisplayReady = PatternTableReady = NameTableReady = value; }
-};
-
-
-runtime_variables &RV();
-
-extern bool g_bCpuRunning;
-extern bool g_bDisplayReady;
-extern bool g_bPatternTableReady;
-extern bool g_bNameTableReady;
+  void set_cpu_running(bool value);
+  void set_display_ready(bool value);
+  void set_pattern_table_ready(bool value);
+  void set_name_table_ready(bool value);
+  void set_all_display_ready(bool value);
+}

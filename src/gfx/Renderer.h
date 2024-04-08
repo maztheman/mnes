@@ -1,5 +1,6 @@
 #pragma once
 
+#if 0
 class Renderer
 {
 public:
@@ -33,3 +34,4 @@ private:
   uint32_t program;
   uint64_t updateTick{ 0 };
 };
+#endif
