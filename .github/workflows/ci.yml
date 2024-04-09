@@ -121,7 +121,7 @@ jobs:
 
       - name: Setup Cpp
         if: ${{ !contains(matrix.os, 'macos') }}
-        uses: aminya/setup-cpp@v2
+        uses: aminya/setup-cpp@v1
         with:
           compiler: ${{ matrix.compiler }}
           vcvarsall: ${{ contains(matrix.os, 'windows' )}}
