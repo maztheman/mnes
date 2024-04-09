@@ -26,7 +26,7 @@ stages:
   source ~/.profile
 
 .test: &test |
-  # Build and Test
+  # Build
   cmake -S . -B ./build -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo
   cmake --build ./build --config RelWithDebInfo
 

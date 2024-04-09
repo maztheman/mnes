@@ -19,22 +19,22 @@ We have [setup-cpp](https://github.com/aminya/setup-cpp) that is a cross-platfor
 
 Please check [the setup-cpp documentation](https://github.com/aminya/setup-cpp) for more information.
 
-For example, on Windows, you can run the following to install llvm, cmake, ninja, ccache, conan, and cppcheck.
+For example, on Windows, you can run the following to install llvm, cmake, ninja, ccache, and cppcheck.
 ```ps1
 # windows example (open shell as admin)
 curl -LJO "https://github.com/aminya/setup-cpp/releases/download/v0.5.7/setup_cpp_windows.exe"
-./setup_cpp_windows --compiler llvm --cmake true --ninja true --ccache true --conan true --cppcheck true
+./setup_cpp_windows --compiler llvm --cmake true --ninja true --ccache true --conan false --cppcheck true
 
 RefreshEnv.cmd # reload the environment
 ```
 
 ### Necessary Dependencies
-1. A C++ compiler that supports C++17.
+1. A C++ compiler that supports C++20.
 See [cppreference.com](https://en.cppreference.com/w/cpp/compiler_support)
 to see which features are supported by each compiler.
 The following compilers should work:
 
-  * [gcc 7+](https://gcc.gnu.org/)
+  * [gcc 11+](https://gcc.gnu.org/)
 	<details>
 	<summary>Install command</summary>
 
@@ -51,7 +51,7 @@ The following compilers should work:
 			brew install gcc
 	</details>
 
-  * [clang 6+](https://clang.llvm.org/)
+  * [clang 18+](https://clang.llvm.org/)
 	<details>
 	<summary>Install command</summary>
 
@@ -103,25 +103,7 @@ The following compilers should work:
 	</details>
 
 
-2. [Conan](https://conan.io/)
-	<details>
-	<summary>Install Command</summary>
-
-	- Via pip - https://docs.conan.io/en/latest/installation.html#install-with-pip-recommended
-
-			pip install --user conan
-
-	- Windows:
-
-			choco install conan -y
-
-	- MacOS:
-
-			brew install conan
-
-	</details>
-
-3. [CMake 3.15+](https://cmake.org/)
+2. [CMake 3.15+](https://cmake.org/)
 	<details>
 	<summary>Install Command</summary>
 

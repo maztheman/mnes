@@ -39,16 +39,10 @@ if (NOT TARGET glm::glm)
 endif()
 
 cpmaddpackage(NAME freetype2 
-              GITHUB_REPOSITORY servo/libfreetype2
-              GIT_TAG master
-              DOWNLOAD_ONLY TRUE)
-add_subdirectory(${freetype2_SOURCE_DIR}/freetype2)
-add_library(freetype2 INTERFACE)
-target_include_directories(freetype2 INTERFACE ${freetype2_SOURCE_DIR}/freetype2/include)
-target_link_libraries(freetype2 INTERFACE freetype)
+                GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype.git
+                GIT_TAG master)
 
 if (NOT TARGET imgui)
-    #find_path(FT_INCLUDE_DIR freetype2/ft2build.h)
     cpmaddpackage("gh:ocornut/imgui#v1.89.8-docking")
     add_library(imgui_bindings STATIC)
     target_sources(imgui_bindings PRIVATE
@@ -65,9 +59,8 @@ if (NOT TARGET imgui)
         ${imgui_SOURCE_DIR}/misc/fonts/binary_to_compressed_c.cpp
         ${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp
     )
-    message("freetype 2 is: ${FT_INCLUDE_DIR}")
     target_include_directories(imgui_bindings PUBLIC ${imgui_SOURCE_DIR}/backends ${imgui_SOURCE_DIR} ${FT_INCLUDE_DIR}/freetype2)
-    target_link_libraries(imgui_bindings PUBLIC glfw glad_lib freetype2)
+    target_link_libraries(imgui_bindings PUBLIC glfw glad_lib freetype)
 endif()
 
 

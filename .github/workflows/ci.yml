@@ -109,7 +109,7 @@ jobs:
           script: |
             core.setFailed('There is a mismatch between configured llvm compiler and clang-tidy version chosen')
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Setup Cache
         uses: ./.github/actions/setup_cache
@@ -121,7 +121,7 @@ jobs:
 
       - name: Setup Cpp
         if: ${{ !contains(matrix.os, 'macos') }}
-        uses: aminya/setup-cpp@v1
+        uses: aminya/setup-cpp@v2
         with:
           compiler: ${{ matrix.compiler }}
           vcvarsall: ${{ contains(matrix.os, 'windows' )}}

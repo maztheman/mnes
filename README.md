@@ -4,13 +4,15 @@
 [![codecov](https://codecov.io/gh/maztheman/mnes/branch/main/graph/badge.svg)](https://codecov.io/gh/maztheman/mnes)
 [![CodeQL](https://github.com/maztheman/mnes/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/maztheman/mnes/actions/workflows/codeql-analysis.yml)
 
-LGTM Has to be set up manually after template is created:
-
-[![Language grade: C++](https://img.shields.io/lgtm/grade/cpp/github/maztheman/mnes)](https://lgtm.com/projects/g/maztheman/mnes/context:cpp)
-
 ## About mnes
 NES Emulator
 
+Inside the NES are a few different processors:
+- CPU (Modified 6502)
+- PPU
+- APU
+
+APU emulation is non-complete.
 
 ## More Details
 

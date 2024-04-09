@@ -17,7 +17,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Set the project name and language
 project(
   mnes
-  VERSION 0.3.0
+  VERSION 1.0.1
   DESCRIPTION "NES Emulator (cycle accurate)"
   HOMEPAGE_URL "https://github.com/maztheman/mnes"
   LANGUAGES CXX C)
@@ -59,24 +59,6 @@ add_subdirectory(src)
 # Don't even look at tests if we're not top level
 if(NOT PROJECT_IS_TOP_LEVEL)
   return()
-endif()
-
-# Adding the tests:
-include(CTest)
-
-if(BUILD_TESTING)
-  message(AUTHOR_WARNING "Building Tests. Be sure to check out test/constexpr_tests.cpp for constexpr testing")
-  add_subdirectory(test)
-endif()
-
-
-if(mnes_BUILD_FUZZ_TESTS)
-  message(AUTHOR_WARNING "Building Fuzz Tests, using fuzzing sanitizer https://www.llvm.org/docs/LibFuzzer.html")
-  if (NOT mnes_ENABLE_ADDRESS_SANITIZER AND NOT mnes_ENABLE_THREAD_SANITIZER)
-    message(WARNING "You need asan or tsan enabled for meaningful fuzz testing")
-  endif()
-  add_subdirectory(fuzz_test)
-
 endif()
 
 # If MSVC is being used, and ASAN is enabled, we need to set the debugger environment
