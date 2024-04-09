@@ -15,9 +15,9 @@ void mnes_::cpu::sax() { cpureg.byteLatch = cpureg.a & cpureg.x; }
 void mnes_::cpu::axs()
 {
         //immediate mode value used later
-        uint tmp = cpureg.byteLatch;
+        uint32_t tmp = cpureg.byteLatch;
         //used to restore a
-        uint oldA = cpureg.a;
+        uint32_t oldA = cpureg.a;
         //copies a into byteLatch
         cpu_sta();
         //copies x into a

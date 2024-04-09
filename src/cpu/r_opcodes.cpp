@@ -42,7 +42,7 @@ void mnes_::cpu::ora()
 
 void mnes_::cpu::adc()
 {
-  uint temp = cpureg.byteLatch + cpureg.a + (is_carry() ? 1 : 0);
+  uint32_t temp = cpureg.byteLatch + cpureg.a + (is_carry() ? 1 : 0);
   SET_OVERFLOW(!((cpureg.a ^ cpureg.byteLatch) & 0x80) && ((cpureg.a ^ temp) & 0x80));
   set_carry(temp > 0xff);
   cpureg.a = temp & 0xFF;
@@ -51,7 +51,7 @@ void mnes_::cpu::adc()
 
 void mnes_::cpu::sbc()
 {
-  uint temp = cpureg.a - cpureg.byteLatch - (is_carry() ? 0 : 1);
+  uint32_t temp = cpureg.a - cpureg.byteLatch - (is_carry() ? 0 : 1);
   SET_OVERFLOW(
     (((cpureg.a ^ cpureg.byteLatch) & 0x80) == 0x80) && (((cpureg.a ^ temp) & 0x80) == 0x80));
   set_carry(temp < 0x100);// value is 0 - 255 the carry is set else not!
@@ -61,22 +61,22 @@ void mnes_::cpu::sbc()
 
 void mnes_::cpu::cmp()
 {
-  uint temp = cpureg.a - cpureg.byteLatch;
+  uint32_t temp = cpureg.a - cpureg.byteLatch;
   set_carry(temp < 0x100);
   set_nz(temp);
 }
 
 void mnes_::cpu::cpx()
 {
-  uint temp = cpureg.x - cpureg.byteLatch;
+  uint32_t temp = cpureg.x - cpureg.byteLatch;
   set_carry(temp < 0x100);
   set_nz(temp);
 }
 
 void mnes_::cpu::cpy()
 {
-  uint temp = cpureg.y - cpureg.byteLatch;
-  set_carry(temp < 0x100);// because its uint, anything that made it less than 0 will cause it to be larger than 0x100
+  uint32_t temp = cpureg.y - cpureg.byteLatch;
+  set_carry(temp < 0x100);// because its uint32_t, anything that made it less than 0 will cause it to be larger than 0x100
   set_nz(temp);
 }
 
@@ -101,8 +101,8 @@ void mnes_::cpu::arr()
   cpureg.a &= cpureg.byteLatch;
   cpureg.a >>= 1;
   set_nz(cpureg.a);
-  uint b6 = (cpureg.a & 0x80) ? 1 : 0;
-  uint b5 = (cpureg.a & 0x40) ? 1 : 0;
+  uint32_t b6 = (cpureg.a & 0x80) ? 1 : 0;
+  uint32_t b5 = (cpureg.a & 0x40) ? 1 : 0;
   set_carry(b6);
   SET_OVERFLOW(b6 ^ b5);
 }

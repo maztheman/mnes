@@ -1,5 +1,14 @@
 #include "cpu_opcodes.h"
 
+namespace {
+  
+struct SDebugOpCode
+{
+  const char *sOpCode;
+  int nParams;
+  int nType;
+};
+
 SDebugOpCode OpCodes[256] = { /*+00*/ /*+01*/ /*+02*/ /*+03*/ /*+04*/ /*+05*/ /*+06*/ /*+07*/ /*+08*/ /*+09*/ /*+0A*/
   /*+0B*/ /*+0C*/ /*+0D*/ /*+0E*/ /*+0F*/ /*+10*/ /*+11*/ /*+12*/ /*+13*/ /*+14*/ /*+15*/ /*+16*/ /*+17*/ /*+18*/
   /*+19*/ /*+1A*/ /*+1B*/ /*+1C*/ /*+1D*/ /*+1E*/ /*+1F*/
@@ -259,17 +268,9 @@ SDebugOpCode OpCodes[256] = { /*+00*/ /*+01*/ /*+02*/ /*+03*/ /*+04*/ /*+05*/ /*
   { "SBC", 2, 6 },
   { "INC", 2, 6 },
   { "ISC", 2, 6 } };
+}
 
-SDebugOpCodeFormat OpCodeFormats[13] = { { "%s" },
-  { "%s #$%02X -> #%02X" },
-  { "%s $%02X -> #%02X" },
-  { "%s $%02X, X -> #%02X" },
-  { "%s $%02X, Y -> #%02X" },
-  { "%s $%02X%02X -> #%02X" },
-  { "%s $%02X%02X, X -> #%02X" },
-  { "%s $%02X%02X, Y -> #%02X" },
-  { "%s ($%02X), Y -> #%02X" },
-  { "%s ($%02X, X) -> #%02X" },
-  { "%s A -> #%02X" },
-  { "%s ($%02X%02X) -> #%02X" },
-  { "%s $%02X" } };
+const char* mnes::opcodes::opcode_to_string(uint32_t opcode)
+{
+  return OpCodes[opcode & 0xFF].sOpCode;
+}

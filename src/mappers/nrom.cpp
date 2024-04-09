@@ -4,33 +4,36 @@
 
 #include <cpu/memory.h>
 #include <ppu/ppu_memory.h>
+#include <common/Log.h>
 
+using namespace mnes;
+using namespace mnes::mappers;
+using mnes::memory::SRam;
 
 namespace {
-static std::vector<unsigned char> s_arVRAM;
+auto cvram = cart_vram();
+auto &ptable = ppu::memory::pattern_table();
 
 namespace nrom {
-uint read(uint address);
-void write(uint, uint);
+uint32_t read(uint32_t address);
+void write(uint32_t, uint32_t);
 void nop();
 void reset();
 }
+
+mapper_t this_mapper = {
+    nrom::read, ppu_read_nop, nrom::write, nrom::nop, nrom::nop, nrom::reset, NROM, false
+};
 }
 
-using namespace mnes::mappers;
-using mnes::memory::SRam;
-using namespace mnes::ppu::memory;
 
 mnes::mappers::mapper_t &mnes::mappers::mapperNROM()
 {
-  static mapper_t instance = {
-    nrom::read, ppu_read_nop, nrom::write, nrom::nop, nrom::nop, nrom::reset, NROM, false
-  };
-  return instance;
+  return this_mapper;
 }
 
 namespace {
-uint nrom::read(uint address)
+uint32_t nrom::read(uint32_t address)
 {
   static auto &romData = current_rom_data();
 
@@ -39,14 +42,14 @@ uint nrom::read(uint address)
   }
 
   if (address >= 0x8000 && address <= 0xFFFF) {
-    uint bank = (address >> 0xCU) - 8U;
+    uint32_t bank = (address >> 0xCU) - 8U;
     return romData[bank][address & 0xFFF];
   }
 
   return 0;
 }
 
-void nrom::write(uint, uint) {}
+void nrom::write(uint32_t, uint32_t) {}
 
 void nrom::nop() {}
 
@@ -56,8 +59,8 @@ void nrom::reset()
   auto &format = current_nes_format();
   auto rawData = current_raw_data();
 
-  printf("Mapper[nrom]:reset()\n");
-  uint nOffset = 0x4000;
+  log::main()->info("Mapper[nrom]:reset()");
+  uint32_t nOffset = 0x4000;
   if (format.prg_rom_count == 1) {
     // banks are 0x1000 in size
     romData[4] = romData[0] = rawData.subspan(0x0000).data();
@@ -76,15 +79,12 @@ void nrom::reset()
     romData[7] = rawData.subspan(0x7000).data();
   }
 
-  auto &ppuTable = PPUTable();
-
   if (format.chr_rom_count == 0) {
-    s_arVRAM.resize(0x2000, 0);
     // ppu pages are 1k or 0x400
-    for (uint n = 0; n < 8; n++) { ppuTable[n] = &s_arVRAM[(0x400 * n)]; }
+    for (uint32_t n = 0; n < 8; n++) { ptable[n] = cvram.subspan(0x400 * n).data(); }
   } else {
     // ppu pages are 1k or 0x400
-    for (uint n = 0; n < 8; n++) { ppuTable[n] = rawData.subspan(nOffset + (0x400 * n)).data(); }
+    for (uint32_t n = 0; n < 8; n++) { ptable[n] = rawData.subspan(nOffset + (0x400 * n)).data(); }
   }
 
   if ((format.rom_control_1 & 1) == 1) {

@@ -11,48 +11,49 @@
 
 using namespace mnes;
 using namespace mnes::mappers;
+using mnes::memory::SRam;
 
 namespace {
 bool s_bSaveRam;
-uint s_IdleCount{ 0 };
+uint32_t s_IdleCount{ 0 };
 bool s_bInFrame{ false };
-uint s_ScanLineCount = 0;
+uint32_t s_ScanLineCount = 0;
 bool s_bIRQPending = false;
 bool s_bPPUIsReading = false;
-uint s_LastAddr = ~0U;
+uint32_t s_LastAddr = ~0U;
 
 
 /// <summary>
 /// PRG Rom/Ram Mode 0 - 3
 /// <para>xxxx xxPP</para>
 /// </summary>
-uint s_r5100;
+uint32_t s_r5100;
 
 /// <summary>
 /// CHR Rom/Ram Mode 0 - 3
 /// <para>xxxx xxCC</para>
 /// </summary>
-uint s_r5101;
+uint32_t s_r5101;
 
 /// <summary>
 /// PRG RAM Protect 1
 /// <para>xxxx xxWW</para>
 /// <para>WW must be 10b (2) to be writable</para>
 /// </summary>
-uint s_r5102;
+uint32_t s_r5102;
 
 /// <summary>
 /// PRG Ram Protect 2
 /// <para>xxxx xxWW</para>
 /// <para>WW must be 01b (1) to be writable</para>
 /// </summary>
-uint s_r5103;
+uint32_t s_r5103;
 
 /// <summary>
 /// Extended RAM Mode
 /// <para>xxxx xxMM</para>
 /// </summary>
-uint s_r5104;
+uint32_t s_r5104;
 
 /// <summary>
 /// Nametable Mapping
@@ -61,28 +62,28 @@ uint s_r5104;
 /// <para>2 - Internal Expansion RAM, only if the Extended RAM mode allows it($5104 is 00 / 01); otherwise, the
 /// nametable will read as all zeros,</para> <para>3 - Fill - mode data</para>
 /// </summary>
-uint s_r5105;
+uint32_t s_r5105;
 
 /// <summary>
 /// Fill mode tile
 /// <para>TTTT TTTT</para>
 /// <para>All 8 bits for a tile number for fill-mode nametable</para>
 /// </summary>
-uint s_r5106;
+uint32_t s_r5106;
 
 /// <summary>
 /// Fill mode color
 /// <para>xxxx xxAA</para>
 /// <para>AA is the attribute byte for fill-mode nametable</para>
 /// </summary>
-uint s_r5107;
+uint32_t s_r5107;
 
 /// <summary>
 /// PRG Ram Bank switch
 /// <para>All Modes 0x6000 (8kb)</para>
 /// <para>Bit 7 ignored</para>
 /// </summary>
-uint s_r5113;
+uint32_t s_r5113;
 
 /// <summary>
 /// PRG Rom Bank switch
@@ -91,7 +92,7 @@ uint s_r5113;
 /// <para>- Mode 1 N/A</para>
 /// <para>- Mode 0 N/A</para>
 /// </summary>
-uint s_r5114;
+uint32_t s_r5114;
 
 /// <summary>
 /// PRG Rom Bank Switch
@@ -100,7 +101,7 @@ uint s_r5114;
 /// <para>- Mode 1 0x8000 (16kb)</para>
 /// <para>- Mode 0 N/A </para>
 /// </summary>
-uint s_r5115;
+uint32_t s_r5115;
 
 /// <summary>
 /// PRG Rom Bank Switch
@@ -109,7 +110,7 @@ uint s_r5115;
 /// <para>- Mode 1 N/A</para>
 /// <para>- Mode 0 N/A</para>
 /// </summary>
-uint s_r5116;
+uint32_t s_r5116;
 
 /// <summary>
 /// PRG Rom Bank Switch
@@ -119,18 +120,18 @@ uint s_r5116;
 /// <para>- Mode 0 0x8000 (32kb)</para>
 /// <para>Bit 7 ignored</para>
 /// </summary>
-uint s_r5117;
+uint32_t s_r5117;
 
 /// <summary>
 /// CHR Rom Bank Switch (r5120 - r512B)
 /// </summary>
-uint s_r512x[16];
+uint32_t s_r512x[16];
 
 /// <summary>
 /// Upper CHR Bank bits
 /// <para>xxxx xxBB</para>
 /// </summary>
-uint s_r5130;
+uint32_t s_r5130;
 
 /// <summary>
 /// Vertical Split Mode
@@ -139,25 +140,25 @@ uint s_r5130;
 /// <para>S Specify vertical split screen side (0:left; 1:right)</para>
 /// <para>W Specify vertical split start/stop tile</para>
 /// </summary>
-uint s_r5200;
+uint32_t s_r5200;
 
 /// <summary>
 /// Vertical Split Scroll
 /// <para>All eight bits specify the vertical scroll value to use in split region</para>
 /// </summary>
-uint s_r5201;
+uint32_t s_r5201;
 
 /// <summary>
 /// Vertical Split Bank
 /// <para>All eight bits select a 4 KB CHR bank at $0000-$0FFF and $1000-$1FFF while rendering the split region.</para>
 /// </summary>
-uint s_r5202;
+uint32_t s_r5202;
 
 /// <summary>
 /// IRQ Scanline Compare Value
 /// <para>Generate a Scanline IRQ when scanline equals this value.</para>
 /// </summary>
-uint s_r5203;
+uint32_t s_r5203;
 
 /// <summary>
 /// Scanline IRQ Status (Read/Write)
@@ -167,35 +168,37 @@ uint s_r5203;
 /// <para>S - Scanline IRQ Pending flag</para>
 /// <para>V - "In Frame" flag</para>
 /// </summary>
-uint s_r5204;
+uint32_t s_r5204;
 
 /// <summary>
 /// 16 Bit Multiplier 1
 /// <para>w: Unsigned 8-Bit Multiplicand</para>
 /// <para>r: Unsigned 16-Bit Product (Low Byte)</para>
 /// </summary>
-uint s_r5205;
+uint32_t s_r5205;
 
 /// <summary>
 /// 16 Bit Multipler 2
 /// <para>w: Unsigned 8-Bit Multiplier</para>
 /// <para>r: Unsigned 16-bit Product (High Byte)</para>
 /// </summary>
-uint s_r5206;
+uint32_t s_r5206;
 
 /// <summary>
 /// Expansion RAM
 /// <para>Mode 0/1 - Not readable (returns open bus), can only be written while the PPU is rendering (otherwise, 0 is
 /// written)</para> <para>Mode 2 - Readable and writable</para> <para>Mode 3 - Read - only</para>
 /// </summary>
-uint8_t s_r5C00[0x400];
+std::unique_ptr<uint8_t[]> s_r5C00 = std::make_unique<uint8_t[]>(0x400);
+auto &romData = current_rom_data();
+auto &format = current_nes_format();
 
 namespace mmc5 {
-uint read(uint address);
-void write(uint address, uint value);
+uint32_t read(uint32_t address);
+void write(uint32_t address, uint32_t value);
 void reset();
 void nop();
-uint read_ppu_memory(uint address);
+uint32_t read_ppu_memory(uint32_t address);
 void do_ppu_cycle();
 void do_cpu_cycle();
 void do_scanline();
@@ -203,13 +206,10 @@ void do_scanline();
 void set_prg_mode();
 void set_chr_mode();
 void setup_prg();
-uint mode_3_read(uint address);
-}
+uint32_t mode_3_read(uint32_t address);
 }
 
-mnes::mappers::mapper_t &mnes::mappers::mapperMMC5()
-{
-  static mapper_t instance = { mmc5::read,
+mapper_t this_mapper = { mmc5::read,
     mmc5::read_ppu_memory,
     mmc5::write,
     mmc5::do_cpu_cycle,
@@ -217,13 +217,15 @@ mnes::mappers::mapper_t &mnes::mappers::mapperMMC5()
     mmc5::reset,
     MMC5,
     false };
-  return instance;
 }
 
-using mnes::memory::SRam;
+mnes::mappers::mapper_t &mnes::mappers::mapperMMC5()
+{
+  return this_mapper;
+}
 
 namespace {
-uint mmc5::read(uint address)
+uint32_t mmc5::read(uint32_t address)
 {
   if (address == 0xFFFA || address == 0xFFFB) {
     s_bInFrame = false;
@@ -261,7 +263,7 @@ uint mmc5::read(uint address)
   return 0;
 }
 
-void mmc5::write(uint address, uint value)
+void mmc5::write(uint32_t address, uint32_t value)
 {
   if (address == 0x2001 && (value & 0x18) == 0) {
     s_bInFrame = false;
@@ -380,7 +382,7 @@ void mmc5::reset()
   s_r5205 = 0xFF;
   s_r5206 = 0xFF;
   mmc5::setup_prg();
-  memset(&s_r512x[0], 0, sizeof(uint) * 12);
+  memset(&s_r512x[0], 0, sizeof(uint32_t) * 12);
 }
 
 void mmc5::nop() {}
@@ -431,9 +433,9 @@ void mmc5::set_chr_mode()
   }
 }
 
-uint mmc5::read_ppu_memory(uint address)
+uint32_t mmc5::read_ppu_memory(uint32_t address)
 {
-  static uint s_LastPPUAddrIdx = 0;
+  static uint32_t s_LastPPUAddrIdx = 0;
 
   if (address >= 0x2000 && address <= 0x2FFF && address == s_LastAddr) {
     s_LastPPUAddrIdx++;
@@ -462,10 +464,8 @@ uint mmc5::read_ppu_memory(uint address)
 /// </summary>
 void mmc5::setup_prg() {}
 
-uint mmc5::mode_3_read(uint address)
+uint32_t mmc5::mode_3_read(uint32_t address)
 {
-  static auto &romData = current_rom_data();
-  auto &format = current_nes_format();
   auto rawData = current_raw_data();
 
   if (address < 0x8000) {

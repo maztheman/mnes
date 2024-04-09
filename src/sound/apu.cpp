@@ -1,6 +1,7 @@
 #include "apu.h"
 
 #include <cpu/cpu_registers.h>
+#include <common/Log.h>
 
 //#include "msound.h"
 
@@ -91,7 +92,7 @@ void NS initialize()
 	}
 #endif
 
-  printf("apu initialize finished\n");
+  log::main()->info("apu initialize finished");
 }
 
 void NS destroy()

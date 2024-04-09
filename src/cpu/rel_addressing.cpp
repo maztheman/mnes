@@ -39,7 +39,7 @@ void mnes_::memory::rel()
 {
   // 2.1
   int8_t operand = static_cast<int8_t>(ext::read(cpureg.pc++) & 0xFF);
-  MLOG(" $%02X %d", operand & 0xFF, operand);
+  MLOG("operand: ${:02X}", operand);
   // 2.2 Do Operation
   bool bTakeBranch = false;
   switch (cpureg.opCode) {
@@ -70,7 +70,7 @@ void mnes_::memory::rel()
     break;
   }
   if (bTakeBranch) {
-    MLOG(" [Taken]");
+    MLOG("Branch Taken");
     // Here is a good example of bad stuff happening due to pcl wrapping around
     //$F228 10 BPL $D0 -48 [Taken] pcl: FFFFFFFA pch: FFFA T:[$000000000001DD5C]
     // I think this is more correct:
@@ -84,29 +84,27 @@ void mnes_::memory::rel()
     ext::read(cpureg.pc);
     // 3.2 add operand to PCL
     pcl += static_cast<int>(operand);
-    MLOG(" pcl: %d [%04X]", pcl, pcl);
+    MLOG("pcl: {} pcl[hex]: [${:04X}]", pcl, pcl);
 
     // If the next opcode is in a different page, then read that open code (use a cycle)
     if (pcl < 0 || pcl > 0xFF) {
       // 4.1 - read, could be invalid, this is how CPU fixes PCL zero page boundaries.
-      ext::read(TO_ZERO_PAGE(pcl) | static_cast<uint>(pch));
+      ext::read(TO_ZERO_PAGE(pcl) | static_cast<uint32_t>(pch));
       // 4.2 Fix PCH
     }
     pch = (static_cast<int>(cpureg.pc) + operand) & 0xFFFF;
     // pch = (pcl | pch) & 0xFFFF;
-    MLOG(" pch: %04X", pch);
+    MLOG("pch: ${:04X}", pch);
     // if ((pch & 0xFF00) == (cpureg.pc & 0xFF00)) {
     // this next step should be done, however in this emulator the opcode fetch is done in the "next" iteration
     // in order to fix this I would need to be able to know if a opcode has been fetched already
     // 4.3 if they didnt change increase PC
     // pch = (pch + 1) & 0xFFFF;
     //}
-    cpureg.pc = static_cast<uint>(pch);
+    cpureg.pc = static_cast<uint32_t>(pch);
   }
-#ifdef USE_LOG
   else {
-    MLOG(" [Not Taken]");
+    MLOG("Branch Not Taken");
   }
-#endif
 }
 }

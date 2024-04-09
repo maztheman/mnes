@@ -1,23 +1,31 @@
+#define LOG_SPRITE_DETAILS(prefix) MLOG_PPU("{{\"prefix\":\"" prefix "\",\"ppu_addr_bus\":0x{:04X},\"scanline\":{},\"program_counter\":0x{:04X},\"scanline_cycle\":{},\"sprite_height\":{},\"tick_count\":{}}}", \
+  cmem::ppu_addr_bus(), scanline(), cpu::program_counter(), get_current_scanline_cycle(), cmem::get_sprite_height(), cpu::mnes_tick_count())
 
-
-signed int sprite_count[8] = { 0 };
-bool sprite_active[8] = { false };
-uint sprite_attribute_latch[8] = { 0 };
-spritebmp_t sprite_bmp0[8];
-spritebmp_t sprite_bmp1[8];
+struct spritebmp_t
+{
+  uint32_t reg;
+  void set(uint32_t value) { reg = value & 0xFF; }
+  void shift()
+  {
+    // clear top bit, then shift
+    reg &= 0x7F;
+    reg <<= 1;
+  }
+  uint8_t fetch() { return static_cast<uint8_t>((reg >> 7) & 1); }
+};
 
 struct spritedata_t
 {
-  uint bit0;
-  uint bit1;
-  uint attribute;
-  uint count;
+  uint32_t bit0;
+  uint32_t bit1;
+  uint32_t attribute;
+  uint32_t count;
   bool active;
 
-  void set_bit0(uint val) { bit0 = val & 0xFF; }
-  void set_bit1(uint val) { bit1 = val & 0xFF; }
-  void set_attribute(uint val) { attribute = val & 0xFF; }
-  void set_count(uint val) { attribute = val & 0xFF; }
+  void set_bit0(uint32_t val) { bit0 = val & 0xFF; }
+  void set_bit1(uint32_t val) { bit1 = val & 0xFF; }
+  void set_attribute(uint32_t val) { attribute = val & 0xFF; }
+  void set_count(uint32_t val) { attribute = val & 0xFF; }
 
 
   uint8_t color()
@@ -47,10 +55,10 @@ struct spritedata_t
 struct ppu_sprite_state_t
 {
   uint8_t oam_latch[4];
-  uint oam_index;
-  uint oam_m_index;
-  uint oam_2nd_index;
-  uint process_type;
+  uint32_t oam_index;
+  uint32_t oam_m_index;
+  uint32_t oam_2nd_index;
+  uint32_t process_type;
   bool sprite0_in_range;
 
   void reset()
@@ -92,9 +100,14 @@ struct ppu_sprite_state_t
   }
 };
 
+std::array<int32_t, 8> sprite_count = {0};
+std::array<bool, 8> sprite_active = { false, false, false, false, false, false, false, false };
+std::array<uint32_t, 8> sprite_attribute_latch = { 0 };
+std::array<spritebmp_t, 8> sprite_bmp0;
+std::array<spritebmp_t, 8> sprite_bmp1;
+std::array<spritedata_t, 8> sprite_cache;
+std::array<uint8_t, 32> oam_secondary;
 ppu_sprite_state_t sprite_state;
-spritedata_t sprite_cache[8];
-uint8_t oam_secondary[32];
 
 uint8_t reverse_byte(uint8_t x)
 {
@@ -360,32 +373,32 @@ uint8_t reverse_byte(uint8_t x)
 }
 
 
-void ppu_sprite_reset_active()
+void reset_active()
 {
-  for (int i = 0; i < 8; i++) { sprite_active[i] = false; }
+  sprite_active.fill(false);
 }
 
-void ppu_sprite_initalize(const uint &ppu_cycle)
+void initalize(const uint32_t &ppu_cycle)
 {
   bool even_cycle = (ppu_cycle & 1) == 0 ? true : false;
   if (ppu_cycle == 1) { cmem::set_oam_clear_reads(true); }
 
   if (!even_cycle) {
-    uint idx = ppu_cycle / 2;
+    uint32_t idx = ppu_cycle / 2;
     oam_secondary[idx] = 0xFF;
   }
 }
 
-bool is_sprite_in_range(uint scanline, uint sprite_top)
+bool is_sprite_in_range(uint32_t scanline, uint32_t sprite_top)
 {
-  uint sprite_bottom = sprite_top + cmem::get_sprite_height();
+  uint32_t sprite_bottom = sprite_top + cmem::get_sprite_height();
   return scanline >= sprite_top && scanline < sprite_bottom;
 }
 
-void ppu_sprite_process_1()
+void process_1()
 {
-  static uint8_t *oam2nd = &oam_secondary[0];
-  uint idx = sprite_state.oam_2nd_index * 4;
+  static uint8_t *oam2nd = oam_secondary.data();
+  uint32_t idx = sprite_state.oam_2nd_index * 4;
   oam2nd[idx + 0] = sprite_state.oam_latch[0];
   if (is_sprite_in_range(scanline(), sprite_state.oam_latch[0])) {
     // the scanline is in range (0-7 or 0-15)
@@ -399,10 +412,10 @@ void ppu_sprite_process_1()
   sprite_state.inc_oam_index();
 }
 
-void ppu_sprite_process_2()
+void process_2()
 {
   static const uint8_t *oam = SPRRam().data();
-  uint idx = sprite_state.oam_index * 4;
+  uint32_t idx = sprite_state.oam_index * 4;
   if (is_sprite_in_range(scanline(), oam[idx + sprite_state.oam_m_index])) {
     cmem::set_sprite_overflow();
     sprite_state.inc_oam_index();
@@ -416,10 +429,10 @@ void ppu_sprite_process_2()
   }
 }
 
-void ppu_sprite_process_3() { sprite_state.inc_oam_index(); }
+void process_3() { sprite_state.inc_oam_index(); }
 
 
-void ppu_sprite_copy_to_secondary(const uint &ppu_cycle)
+void copy_to_secondary(const uint32_t &ppu_cycle)
 {
   bool even_cycle = (ppu_cycle & 1) == 0 ? true : false;
   if (ppu_cycle == 65) {
@@ -432,26 +445,26 @@ void ppu_sprite_copy_to_secondary(const uint &ppu_cycle)
     memcpy(&sprite_state.oam_latch[0], oam + (4 * sprite_state.oam_index), 4);
   } else {
     if (sprite_state.process_type == 1) {
-      ppu_sprite_process_1();
+      process_1();
     } else if (sprite_state.process_type == 2) {
-      ppu_sprite_process_2();
+      process_2();
     } else if (sprite_state.process_type == 3) {
-      ppu_sprite_process_3();
+      process_3();
     }
   }
 }
 
-void ppu_sprite_fetch_sprite_data(const uint &ppu_cycle)
+void fetch_sprite_data(const uint32_t &ppu_cycle)
 {
-  //	const uint tmp = ppu_cycle & 7;
-  static uint selected_index = 0;
-  static uint8_t *oam2nd = &oam_secondary[0];
+  //	const uint32_t tmp = ppu_cycle & 7;
+  static uint32_t selected_index = 0;
+  static uint8_t *oam2nd = oam_secondary.data();
 
-  uint sprite_cycle = (ppu_cycle - 257) & 7;
+  uint32_t sprite_cycle = (ppu_cycle - 257) & 7;
 
   if (ppu_cycle == 257) { selected_index = 0; }
 
-  uint idx = selected_index * 4;
+  uint32_t idx = selected_index * 4;
 
   /*
   * 1. Garbage nametable byte 0,1
@@ -469,9 +482,9 @@ void ppu_sprite_fetch_sprite_data(const uint &ppu_cycle)
   */
 
 #if 1
-  static uint pattern_table_addr = 0;
+  static uint32_t pattern_table_addr = 0;
   // use this switch eventually
-  // const uint cuHeight = cmem::get_sprite_height();
+  // const uint32_t cuHeight = cmem::get_sprite_height();
   // sprite cycle 0, 1, 2, 3 -- Garbage fetches
   // something must have happen in 0 and 2 but its junk
   switch (sprite_cycle) {
@@ -505,14 +518,14 @@ void ppu_sprite_fetch_sprite_data(const uint &ppu_cycle)
   } else if (sprite_cycle == 3) {
     pmem::read(cmem::ppu_addr_bus());// read and throw away
   } else if (sprite_cycle == 4) {// sprite cycle 4, 6 set ppu_addr
-    uint height = cmem::get_sprite_height();
+    uint32_t height = cmem::get_sprite_height();
     if (selected_index >= sprite_state.oam_2nd_index) {
       sprite_attribute_latch[selected_index] = 0xFF;
       sprite_count[selected_index] = 0xFF;
 
       uint8_t tile = 0xFF;
-      uint ptable = 0;
-      uint addr = 0;
+      uint32_t ptable = 0;
+      uint32_t addr = 0;
 
       if (height == 16) {
         ptable = (tile & 1) ? 0x1000 : 0x0000;
@@ -523,8 +536,8 @@ void ppu_sprite_fetch_sprite_data(const uint &ppu_cycle)
       cmem::set_ppu_addr_bus(addr);
     } else {
       uint8_t tile = oam2nd[idx + 1];
-      uint FineY = scanline() - oam2nd[idx + 0];
-      uint ptable = 0;
+      uint32_t FineY = scanline() - oam2nd[idx + 0];
+      uint32_t ptable = 0;
       sprite_attribute_latch[selected_index] = oam2nd[idx + 2];
 
       if (height == 16) {
@@ -540,30 +553,17 @@ void ppu_sprite_fetch_sprite_data(const uint &ppu_cycle)
         ptable = cmem::get_sprite_pattern_table_addr();
         if (sprite_attribute_latch[selected_index] & 0x80) { FineY = 7 - FineY; }
       }
-
-      MLOG_PPU("Sprite C4: O:$%04X", cmem::ppu_addr_bus());
+      LOG_SPRITE_DETAILS("Sprite C4 (Before)");
       pattern_table_addr = ptable | (tile << 4) | (FineY & 0x7);
       cmem::set_ppu_addr_bus(pattern_table_addr);
-      MLOG_PPU(" N:$%04X SL:%ld PC:$%04X C:%ld H:%ld T:[$%016lX]\n",
-        cmem::ppu_addr_bus(),
-        ppu::scanline(),
-        cpu::program_counter(),
-        ppu::get_current_scanline_cycle(),
-        height,
-        cpu::mnes_tick_count())
-
+      LOG_SPRITE_DETAILS("Sprite C4 (After)");
       sprite_count[selected_index] = oam2nd[idx + 3];
     }
   } else if (sprite_cycle == 6) {
     cmem::inc_ppu_addr_bus(8);
     pattern_table_addr += 8;
     if (selected_index < sprite_state.oam_2nd_index) {
-      MLOG_PPU("Sprite C6: A:$%04X SL:%ld PC:$%04X C:%ld H:%ld\n",
-        cmem::ppu_addr_bus(),
-        ppu::scanline(),
-        cpu::program_counter(),
-        ppu::get_current_scanline_cycle(),
-        cmem::get_sprite_height())
+      LOG_SPRITE_DETAILS("Sprite C6");
     }
   } else if (sprite_cycle == 5) {
     if (selected_index >= sprite_state.oam_2nd_index) {
@@ -571,16 +571,10 @@ void ppu_sprite_fetch_sprite_data(const uint &ppu_cycle)
       sprite_bmp0[selected_index].set(0);
     } else {
       uint8_t b0 = TO_BYTE(pmem::read(cmem::ppu_addr_bus()));
-      MLOG_PPU("Sprite C5: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n",
-        cmem::ppu_addr_bus(),
-        b0,
-        ppu::scanline(),
-        cpu::program_counter(),
-        ppu::get_current_scanline_cycle(),
-        cmem::get_sprite_height())
+      LOG_SPRITE_DETAILS("Sprite C5");
       if (cmem::ppu_addr_bus() != pattern_table_addr) {
         MLOG_PPU(
-          "Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", cmem::ppu_addr_bus(), pattern_table_addr)
+          "Sprite Pattern table is not the same PPU_addr:${:04X} vs ${:04X}", cmem::ppu_addr_bus(), pattern_table_addr);
       }
       if (sprite_attribute_latch[selected_index] & 0x40) { b0 = reverse_byte(b0); }
       sprite_bmp0[selected_index].set(b0);
@@ -591,16 +585,10 @@ void ppu_sprite_fetch_sprite_data(const uint &ppu_cycle)
       sprite_bmp1[selected_index].set(0);
     } else {
       uint8_t b1 = TO_BYTE(pmem::read(cmem::ppu_addr_bus()));
-      MLOG_PPU("Sprite C7: A:$%04X <- $%02X SL:%ld PC:$%04X C:%ld H:%ld\n",
-        cmem::ppu_addr_bus(),
-        b1,
-        ppu::scanline(),
-        cpu::program_counter(),
-        ppu::get_current_scanline_cycle(),
-        cmem::get_sprite_height())
+      LOG_SPRITE_DETAILS("Sprite C7");
       if (cmem::ppu_addr_bus() != pattern_table_addr) {
         MLOG_PPU(
-          "Sprite Pattern table is not the same PPU_addr:$%04X vs $%04X", cmem::ppu_addr_bus(), pattern_table_addr)
+          "Sprite Pattern table is not the same PPU_addr:${:04X} vs ${:04X}", cmem::ppu_addr_bus(), pattern_table_addr);
       }
       if (sprite_attribute_latch[selected_index] & 0x40) { b1 = reverse_byte(b1); }
 
@@ -632,14 +620,14 @@ void ppu_sprite_fetch_sprite_data(const uint &ppu_cycle)
 
 
 	if (tmp == 0) {
-		uint height = cmem::get_sprite_height();
+		uint32_t height = cmem::get_sprite_height();
 		if (selected_index >= sprite_state.oam_2nd_index) {
 			sprite_attribute_latch[selected_index] = 0xFF;
 			sprite_count[selected_index] = 0xFF;
 
 			uint8_t tile = 0xFF;
-			uint ptable = 0;
-			uint addr = 0;
+			uint32_t ptable = 0;
+			uint32_t addr = 0;
 
 			if (height == 16) {
 				ptable = (tile & 1) ? 0x1000 : 0x0000;
@@ -657,8 +645,8 @@ void ppu_sprite_fetch_sprite_data(const uint &ppu_cycle)
 			sprite_attribute_latch[selected_index] = oam2nd[idx + 2];
 
 			uint8_t tile = oam2nd[idx + 1];
-			uint FineY = ppu_scanline() - oam2nd[idx + 0];
-			uint ptable = 0, addr = 0, addr2 = 0;
+			uint32_t FineY = ppu_scanline() - oam2nd[idx + 0];
+			uint32_t ptable = 0, addr = 0, addr2 = 0;
 
 			if (height == 16) {
 				ptable = (tile & 1) ? 0x1000 : 0x0000;
@@ -703,21 +691,21 @@ void ppu_sprite_fetch_sprite_data(const uint &ppu_cycle)
 #endif
 }
 
-void ppu_sprite_evaluation(const uint &ppu_cycle)
+void evaluation(const uint32_t &ppu_cycle)
 {
   if (ppu_cycle == 0) {
     // placeholder if we need to init shit
-    ppu_sprite_reset_active();
+    reset_active();
   } else if (ppu_cycle >= 1 && ppu_cycle <= 64) {
-    ppu_sprite_initalize(ppu_cycle);
+    initalize(ppu_cycle);
   } else if (ppu_cycle >= 65 && ppu_cycle <= 256) {
-    ppu_sprite_copy_to_secondary(ppu_cycle);
+    copy_to_secondary(ppu_cycle);
   } else if (ppu_cycle >= 257 && ppu_cycle <= 320) {
-    ppu_sprite_fetch_sprite_data(ppu_cycle);
+    fetch_sprite_data(ppu_cycle);
   }
 }
 
-void ppu_sprite_post_process_regs()
+void post_process_regs()
 {
   for (int i = 0; i < 8; i++) {
     sprite_count[i]--;
@@ -728,14 +716,14 @@ void ppu_sprite_post_process_regs()
   }
 }
 
-void ppu_sprite_get_active()
+void get_active()
 {
   for (int i = 0; i < 8; i++) {
     if (!sprite_active[i]) { sprite_active[i] = sprite_count[i] == 0; }
   }
 }
 
-void ppu_sprite_draw(const uint &ppu_cycle)
+void draw(const uint32_t &ppu_cycle)
 {
   if (ppu_cycle < 9 && cmem::show_sprite_leftmost_8px() == false) { return; }
 
@@ -746,9 +734,9 @@ void ppu_sprite_draw(const uint &ppu_cycle)
   for (int i = 0; i < 8; i++) {
     if (sprite_active[i]) {
 
-      uint RealX = (ppu_cycle - 1);
-      uint RealY = scanline();
-      uint index = (768 * RealY) + (RealX * 3);
+      uint32_t RealX = (ppu_cycle - 1);
+      uint32_t RealY = scanline();
+      uint32_t index = (768 * RealY) + (RealX * 3);
       auto palette = pmem::Palette();
 
       uint8_t b0 = sprite_bmp0[i].fetch();

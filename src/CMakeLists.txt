@@ -16,6 +16,8 @@ target_link_libraries(
 target_include_directories(mnes PRIVATE "${CMAKE_BINARY_DIR}/configured_files/include" ".")
 
 target_precompile_headers(mnes PRIVATE "pch.h")
+# uncomment line below to add trace logging, with this not set then at compile time the trace logs are not used.
+#target_compile_definitions(mnes PRIVATE "SPDLOG_ACTIVE_LEVEL=0")
 
 add_subdirectory(GfxEngine)
 add_subdirectory(common)
@@ -53,7 +55,5 @@ add_custom_target(
     RuntimeFiles
     DEPENDS ${OUT_FILES}
 )
-
-
 
 add_dependencies(mnes RuntimeFiles)

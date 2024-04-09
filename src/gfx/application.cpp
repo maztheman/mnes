@@ -17,13 +17,16 @@
 
 #include "MainLayer.h"
 
+#include <internal_use_only/config.hpp>
+
 constexpr const int WINDOW_WIDTH = 800;
 constexpr const int WINDOW_HEIGHT = 600;
 
 using namespace std::string_view_literals;
 
 MnesApplication::MnesApplication()
-  : GfxEngine::Core::Application<ApplicationPlatform>(WINDOW_WIDTH, WINDOW_HEIGHT, "mnes 1.0.0"sv)
+  : GfxEngine::Core::Application<ApplicationPlatform>(WINDOW_WIDTH, WINDOW_HEIGHT, fmt::format("{} {}", 
+    mnes_project::cmake::project_name, mnes_project::cmake::project_version))
 {}
 
 #if 0

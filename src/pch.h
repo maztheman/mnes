@@ -8,11 +8,13 @@ using uint = unsigned int;
 using vuchar = std::vector<uint8_t>;
 using span_bytes = std::span<uint8_t>;
 
-template<size_t SZ> using fixed_span_bytes = std::span<uint8_t, SZ>;
+template<size_t SZ>
+using fixed_span_bytes = std::span<uint8_t, SZ>;
 
 #include <mappers/mapper.h>
 
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include <Platform/OpenGL330/OpenGLPlatform.h>
 #include <PlatformType.h>

@@ -13,7 +13,7 @@ namespace {
 void mnes_::memory::jmp_absolute()
 {
   // 2
-  uint pcl = ext::read(cpureg.pc++);
+  uint32_t pcl = ext::read(cpureg.pc++);
   // 3
   cpureg.pc = pcl | (ext::read(cpureg.pc) << 8);
 #ifdef USE_LOG
@@ -39,11 +39,11 @@ void mnes_::memory::jmp_absolute()
 void mnes_::memory::jmp_absolute_indirect()
 {
   // 2
-  uint pointer_l = ext::read(cpureg.pc++);
+  uint32_t pointer_l = ext::read(cpureg.pc++);
   // 3
-  uint pointer_h = ext::read(cpureg.pc++) << 8;
+  uint32_t pointer_h = ext::read(cpureg.pc++) << 8;
   // 4
-  uint pcl = ext::read(pointer_l | pointer_h);
+  uint32_t pcl = ext::read(pointer_l | pointer_h);
   // 5
   cpureg.pc = pcl | (ext::read(((pointer_l + 1) & 0xFF) | pointer_h) << 8);
 }

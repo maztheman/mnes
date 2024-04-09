@@ -6,10 +6,9 @@
 #include <common/Log.h>
 #include <ppu/ppu.h>
 #include <sound/apu.h>
+#include <gfx/input.h>
 
 #include <algorithm>
-
-#include "gfx/MainLayer.h"
 
 using namespace mnes;
 using namespace mnes::cpu;
@@ -58,5 +57,5 @@ void mnes::cpu::reset()
   reset_registers();
   apu::reset();
   ppu::reset();
-  fmt::print(stderr, "cpu reset\n");
+  log::main()->info("cpu reset");
 }

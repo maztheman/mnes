@@ -1,10 +1,13 @@
 #include "FileLoader.h"
 
 #include "ines_format.h"
+#include "Log.h"
 
 #include <mappers/mapper.h>
 
 #include <fstream>
+
+
 
 using namespace mnes;
 // maybe attach the mapper to the application instead of global variable ?
@@ -14,7 +17,8 @@ bool mnes::file::load_nes_file(const std::filesystem::path &fileName)
   std::ifstream file(fileName, std::ios::binary | std::ios::in);
 
   if (!file) {
-    fmt::print(stderr, "Could not open rom {}\n", fileName.generic_string());
+
+    log::main()->error("Could not open rom {}", fileName.generic_string());
     return false;
   }
 
@@ -33,7 +37,7 @@ bool mnes::file::load_nes_file(const std::filesystem::path &fileName)
   auto mp = mappers::current();
 
   if (mp == nullptr) {
-    fmt::print(stderr, "mapper {} is not supported\n", nMapperNo);
+    log::main()->error("mapper {} is not supported", nMapperNo);
     return false;
   }
 
@@ -43,7 +47,7 @@ bool mnes::file::load_nes_file(const std::filesystem::path &fileName)
   std::streamsize nFileSize =
     (format.prg_rom_count * 16384) + (format.chr_rom_count * 8192) + (((format.rom_control_1 & 4) == 4) ? 512 : 0);
 
-  fmt::print(stderr, "Detected rom size of {}\n", nFileSize);
+  log::main()->info("Detected rom size of {}", nFileSize);
 
   mappers::set_romdata_from_stream(file, nFileSize);
 

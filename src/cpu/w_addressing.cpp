@@ -14,9 +14,9 @@ namespace {
 void mnes_::memory::w_absolute()
 {
   // 2
-  uint pcl = ext::read(cpureg.pc++);
+  uint32_t pcl = ext::read(cpureg.pc++);
   // 3
-  uint pch = ext::read(cpureg.pc++) << 8;
+  uint32_t pch = ext::read(cpureg.pc++) << 8;
   // 4.1 Do Operation
   switch (cpureg.opCode) {
     using namespace mnes::opcodes;
@@ -31,7 +31,7 @@ void mnes_::memory::w_absolute()
     break;
   }
   // 4.2
-  MLOG(" $%04X <= $%02X", pcl | pch, cpureg.byteLatch);
+  MLOG(" ${:04X} <= ${:02X}", pcl | pch, cpureg.byteLatch);
   ext::write(pcl | pch, cpureg.byteLatch);
 }
 
@@ -48,7 +48,7 @@ void mnes_::memory::w_absolute()
 void mnes_::memory::w_zero_page()
 {
   // 2
-  uint address = ext::read(cpureg.pc++);
+  uint32_t address = ext::read(cpureg.pc++);
   // 3.1
   switch (cpureg.opCode) {
     using namespace mnes::opcodes;
@@ -66,7 +66,7 @@ void mnes_::memory::w_zero_page()
     break;
   }
   // 3.2
-  MLOG(" $%02X <= $%02X", address, cpureg.byteLatch)
+  MLOG("address: ${:02X} <= data: ${:02X}", address, cpureg.byteLatch);
 
   ext::write(address, cpureg.byteLatch);
 }
@@ -87,13 +87,13 @@ void mnes_::memory::w_zero_page()
                                 i.e. page boundary crossings are not handled.
 */
 
-void mnes_::memory::w_zero_page_indexed(const uint &indexRegister)
+void mnes_::memory::w_zero_page_indexed(const uint32_t &indexRegister)
 {
   // 2
-  uint address = ext::read(cpureg.pc++);
+  uint32_t address = ext::read(cpureg.pc++);
   // 3.1 read from address
   ext::read(address);
-  MLOG(" $%02X, I[$%02X]", address, indexRegister);
+  MLOG(" ${:02X}, I[${:02X}]", address, indexRegister);
   // 3.2 add index register to address
   address = TO_ZERO_PAGE(address + indexRegister);
   // 4.1 Do Operation
@@ -113,7 +113,7 @@ void mnes_::memory::w_zero_page_indexed(const uint &indexRegister)
     break;
   }
   // 4.2
-  MLOG(" A:$%02X <= $%02X", address, cpureg.byteLatch)
+  MLOG("address:${:02X} <= data:${:02X}", address, cpureg.byteLatch);
   ext::write(address, cpureg.byteLatch);
 }
 
@@ -143,20 +143,20 @@ void mnes_::memory::w_zero_page_indexed_y() { w_zero_page_indexed(cpureg.y); }
                                 address, it always reads from the address first.
 */
 
-void mnes_::memory::w_absolute_indexed(const uint &indexRegister)
+void mnes_::memory::w_absolute_indexed(const uint32_t &indexRegister)
 {
   // 2
-  uint pcl = ext::read(cpureg.pc++);
+  uint32_t pcl = ext::read(cpureg.pc++);
   // 3.1 fetch high byte of address
-  uint pch = ext::read(cpureg.pc++) << 8;
-  MLOG(" $%04X, I[$%02X]", pcl | pch, indexRegister);
+  uint32_t pch = ext::read(cpureg.pc++) << 8;
+  MLOG(" ${:04X}, I[${:02X}]", pcl | pch, indexRegister);
   // 3.2 add index register to low address byte
   pcl += indexRegister;
   // 3.3 increase PC (already done)
   // 4.1 read from effective address
   ext::read(TO_ZERO_PAGE(pcl) | pch);
   // 4.2 fix high byte
-  uint address = (pcl + pch) & 0xFFFF;
+  uint32_t address = (pcl + pch) & 0xFFFF;
   // 5.1 Do Operation
   switch (cpureg.opCode) {
     using namespace mnes::opcodes;
@@ -174,7 +174,7 @@ void mnes_::memory::w_absolute_indexed(const uint &indexRegister)
     break;
   }
   // 5.2
-  MLOG(" A:$%04X <= $%02X", address, cpureg.byteLatch)
+  MLOG("address:${:04X} <= data: ${:02X}", address, cpureg.byteLatch);
   ext::write(address, cpureg.byteLatch);
 }
 
@@ -201,16 +201,16 @@ void mnes_::memory::w_absolute_indexed_y() { w_absolute_indexed(cpureg.y); }
 void mnes_::memory::w_indexed_indirect()
 {
   // 2
-  uint pointer = ext::read(cpureg.pc++);
-  MLOG(" ($%02X, X[$%02X])", pointer, cpureg.x)
+  uint32_t pointer = ext::read(cpureg.pc++);
+  MLOG("(${:02X}, X[${:02X}])", pointer, cpureg.x);
   // 3.1 read from pointer address, throw away data
   ext::read(pointer);
   // 3.2 add X to pointer address
   pointer += cpureg.x;
   // 4
-  uint pcl = ext::read(TO_ZERO_PAGE(pointer));
+  uint32_t pcl = ext::read(TO_ZERO_PAGE(pointer));
   // 5
-  uint pch = ext::read(TO_ZERO_PAGE(pointer + 1)) << 8;
+  uint32_t pch = ext::read(TO_ZERO_PAGE(pointer + 1)) << 8;
   // 6.1 Do Operation
   switch (cpureg.opCode) {
     using namespace mnes::opcodes;
@@ -219,7 +219,7 @@ void mnes_::memory::w_indexed_indirect()
     break;
   }
   // 6.2
-  MLOG(" A:$%04X <= $%02X", pcl | pch, cpureg.byteLatch)
+  MLOG("address:${:04X} <= data:${:02X}", pcl | pch, cpureg.byteLatch);
   ext::write(pcl | pch, cpureg.byteLatch);
 }
 /*
@@ -246,18 +246,18 @@ void mnes_::memory::w_indexed_indirect()
 void mnes_::memory::w_indirect_indexed()
 {
   // 2
-  uint pointer = ext::read(cpureg.pc++);
-  MLOG(" ($%02X), Y[%02X]", pointer, cpureg.y);
+  uint32_t pointer = ext::read(cpureg.pc++);
+  MLOG(" (${:02X}), Y[{:02X}]", pointer, cpureg.y);
   // 3
-  uint pcl = ext::read(pointer);
+  uint32_t pcl = ext::read(pointer);
   // 4.1 fetch high byte of effective address
-  uint pch = ext::read(TO_ZERO_PAGE(pointer + 1)) << 8;
+  uint32_t pch = ext::read(TO_ZERO_PAGE(pointer + 1)) << 8;
   // 4.2 add Y to low byte of effective address
   pcl += cpureg.y;
   // 5.1 read from effective address could be invalid
   ext::read(TO_ZERO_PAGE(pcl) | pch);
   // 5.2 fix high byte of effective address
-  uint address = (pcl + pch) & 0xFFFF;
+  uint32_t address = (pcl + pch) & 0xFFFF;
   // 6.1 Do Operation
   switch (cpureg.opCode) {
     using namespace mnes::opcodes;
@@ -266,7 +266,7 @@ void mnes_::memory::w_indirect_indexed()
     break;
   }
   // 6.2
-  MLOG(" A:$%04X <= $%02X", address, cpureg.byteLatch);
+  MLOG(" A:${:04X} <= ${:02X}", address, cpureg.byteLatch);
   ext::write(address, cpureg.byteLatch);
 }
 

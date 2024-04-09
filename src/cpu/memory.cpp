@@ -115,10 +115,10 @@ namespace {
     bool bvs();
     // rwm_opcodes
     namespace internals {
-      void asl(uint &value);
-      void lsr(uint &value);
-      void rol(uint &value);
-      void ror(uint &value);
+      void asl(uint32_t &value);
+      void lsr(uint32_t &value);
+      void rol(uint32_t &value);
+      void ror(uint32_t &value);
     }// namespace internals
     void asl();
     void lsr();
@@ -171,10 +171,10 @@ namespace {
 
     void inc_stack();
     void dec_stack();
-    void push_byte(uint nValue);
+    void push_byte(uint32_t nValue);
     void push_pc();
-    uint pc_peek(uint address);
-    uint pop_byte();
+    uint32_t pc_peek(uint32_t address);
+    uint32_t pop_byte();
     void pop_pc();
     void read_opcode();
     // imm_addressing
@@ -185,10 +185,10 @@ namespace {
     void r_immediate();
     void r_absolute();
     void r_zero_page();
-    void r_zero_page_indexed(const uint &indexRegister);
+    void r_zero_page_indexed(const uint32_t &indexRegister);
     void r_zero_page_indexed_x();
     void r_zero_page_indexed_y();
-    void r_absolute_indexed(const uint &indexRegister);
+    void r_absolute_indexed(const uint32_t &indexRegister);
     void r_absolute_indexed_x();
     void r_absolute_indexed_y();
     void r_indexed_indirect();
@@ -196,7 +196,7 @@ namespace {
     // rel_addressing
     void rel();
     // rwm_addressing
-    void rmw_absolute_indexed(const uint &indexRegister);
+    void rmw_absolute_indexed(const uint32_t &indexRegister);
     void rmw_absolute_indexed_x();
     void rmw_absolute_indexed_y();
     void rwm_absolute();
@@ -207,10 +207,10 @@ namespace {
     // w_addressing
     void w_absolute();
     void w_zero_page();
-    void w_zero_page_indexed(const uint &indexRegister);
+    void w_zero_page_indexed(const uint32_t &indexRegister);
     void w_zero_page_indexed_x();
     void w_zero_page_indexed_y();
-    void w_absolute_indexed(const uint &indexRegister);
+    void w_absolute_indexed(const uint32_t &indexRegister);
     void w_absolute_indexed_x();
     void w_absolute_indexed_y();
     void w_indexed_indirect();
@@ -219,7 +219,7 @@ namespace {
     void jmp_absolute();
     void jmp_absolute_indirect();
 
-    template<typename T> uint TO_ZERO_PAGE(T address);
+    template<typename T> uint32_t TO_ZERO_PAGE(T address);
   }
 }
 
@@ -229,7 +229,7 @@ using namespace mnes::memory;
 using namespace mnes_::cpu;
 using namespace mnes_::memory;
 
-template<typename T> uint mnes_::memory::TO_ZERO_PAGE(T address) { return address & 0xFF; }
+template<typename T> uint32_t mnes_::memory::TO_ZERO_PAGE(T address) { return address & 0xFF; }
 
 // clang-format off
 // cpu registers
@@ -253,21 +253,21 @@ template<typename T> uint mnes_::memory::TO_ZERO_PAGE(T address) { return addres
 // clang-format on
 
 namespace {
-uint mnes_::memory::pc_peek(uint address) { return mappers::current()->read_memory(address); }
+uint32_t mnes_::memory::pc_peek(uint32_t address) { return mappers::current()->read_memory(address); }
 
 
 struct joystick_shift_reg_t
 {
-  uint reg = 0;
-  uint shifted = 0;
+  uint32_t reg = 0;
+  uint32_t shifted = 0;
 
-  void set(uint value)
+  void set(uint32_t value)
   {
     reg = value;
     shifted = 8;
   }
 
-  uint fetch()
+  uint32_t fetch()
   {
     if (shifted == 0) { return 1; }
     return reg & 1;
@@ -286,44 +286,50 @@ struct memory_data_t
 {
   joystick_shift_reg_t joy1;
   joystick_shift_reg_t joy2;
-  std::unique_ptr<uint8_t[]> memory = std::make_unique<uint8_t[]>(MEMORY_SIZE);
+  std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(MEMORY_SIZE);
 
-  memory_t Memory() { return memory_t(memory.get(), MEMORY_SIZE); }
+  void initialize()
+  {
+    memset(data.get(), 0, MEMORY_SIZE);
+  }
+
+  memory_t Memory() { return memory_t(data.get(), MEMORY_SIZE); }
 };
 
-memory_data_t &MemoryData()
+memory_data_t &singleton()
 {
   static memory_data_t instance;
   return instance;
 }
+
 }// namespace
 
-main_memory_t mnes::memory::Main() { return main_memory_t(MemoryData().Memory().subspan(MAIN_OFFSET, MAIN_SIZE)); }
+main_memory_t mnes::memory::Main() { return main_memory_t(singleton().Memory().subspan(MAIN_OFFSET, MAIN_SIZE)); }
 
-sram_memory_t mnes::memory::SRam() { return sram_memory_t(MemoryData().Memory().subspan(SRAM_OFFSET, SRAM_SIZE)); }
+sram_memory_t mnes::memory::SRam() { return sram_memory_t(singleton().Memory().subspan(SRAM_OFFSET, SRAM_SIZE)); }
 
-spr_ram_t mnes::memory::SPRRam() { return spr_ram_t(MemoryData().Memory().subspan(SPR_RAM_OFFSET, SPR_RAM_SIZE)); }
+spr_ram_t mnes::memory::SPRRam() { return spr_ram_t(singleton().Memory().subspan(SPR_RAM_OFFSET, SPR_RAM_SIZE)); }
 
 tmp_spr_ram_t mnes::memory::TmpSPRRam()
 {
-  return tmp_spr_ram_t(MemoryData().Memory().subspan(TMP_SPR_RAM_OFFSET, TMP_SPR_RAM_SIZE));
+  return tmp_spr_ram_t(singleton().Memory().subspan(TMP_SPR_RAM_OFFSET, TMP_SPR_RAM_SIZE));
 }
 
 void mnes::memory::intialize()
 {
   memreg = MemoryRegisters{};
   cpureg.tick_count = 0;
-  memset(MemoryData().memory.get(), 0, MEMORY_SIZE);
-  fmt::print("init memory finished.\n");
+  singleton().initialize();
+  log::main()->info("Init memory finished.");
 }
 
-uint mnes::memory::read(uint address)
+uint32_t mnes::memory::read(uint32_t address)
 {
-  uint nMapperAnswer = mappers::current()->read_memory(address);
+  uint32_t nMapperAnswer = mappers::current()->read_memory(address);
 
   if (address < 0x2000) { return Main()[address & 0x7FF]; }
 
-  uint nRetval = 0;
+  uint32_t nRetval = 0;
 
   if (address < 0x4000) {
     address &= 7;
@@ -369,8 +375,8 @@ uint mnes::memory::read(uint address)
       break;
     case 7:// RW
       // read from ppu
-      MLOG(" @ PPU Cycle %ld", ppu_get_current_scanline_cycle())
-      uint ppuaddress = memreg.r2006;
+      MLOG("PPU Cycle {}", ppu::get_current_scanline_cycle());
+      uint32_t ppuaddress = memreg.r2006;
       memreg.r2006 = (memreg.r2006 + ((memreg.r2000 & 0x4) ? 32 : 1)) & 0x7FFF;
       memreg.ppu_addr_bus = memreg.r2006;
       if (ppuaddress >= 0x3F00) {
@@ -388,8 +394,8 @@ uint mnes::memory::read(uint address)
   }
 
   if (address < 0x6000) {
-    const uint original = address;
-    uint open_bus = original >> 8;
+    const uint32_t original = address;
+    uint32_t open_bus = original >> 8;
     address &= 0x1F;
 
     if (original == 0x4015) { return apu::read(original); }
@@ -401,12 +407,12 @@ uint mnes::memory::read(uint address)
       nRetval = open_bus;// open bus !!
       break;
     case 0x16:// rw - joystick #0 - hardcode to say its connected but no button pressed.
-      nRetval = (open_bus & 0xE0) | MemoryData().joy1.fetch();
-      MemoryData().joy1.shift();
+      nRetval = (open_bus & 0xE0) | singleton().joy1.fetch();
+      singleton().joy1.shift();
       break;
     case 0x17:// rw - joystick #1 - hardcode to say its not connected
-      nRetval = (open_bus & 0xE0) | MemoryData().joy2.fetch();
-      MemoryData().joy2.shift();
+      nRetval = (open_bus & 0xE0) | singleton().joy2.fetch();
+      singleton().joy2.shift();
       break;
     default:
       nRetval = open_bus;
@@ -421,7 +427,7 @@ uint mnes::memory::read(uint address)
   return nMapperAnswer;
 }
 
-void mnes::memory::write(uint address, uint value)
+void mnes::memory::write(uint32_t address, uint32_t value)
 {
   mappers::current()->write_memory(address, value);
   // g_pCurrentMapper->WriteMemory(address, value);
@@ -441,7 +447,7 @@ void mnes::memory::write(uint address, uint value)
       memreg.r2006Temp &= 0xF3FF;
       memreg.r2006Temp |= (value & 0x3) << 10;
       if (bNmiEnabled == false && (memreg.r2000 & 0x80) == 0x80 && is_vblank()) {
-        printf("nmi set to true\n");
+        log::main()->info("nmi set to true");
         cpureg.nmi = true;
       }
       memreg.ppu_latch_byte = value;
@@ -485,7 +491,7 @@ void mnes::memory::write(uint address, uint value)
         memreg.r2006Temp |= value;// set bottom
         memreg.r2006 = memreg.r2006Temp;
         if (memreg.r2006 < 0x3F00) {
-          MLOG(" @ PPU cycle %ld old $%04X", ppu_get_current_scanline_cycle(), memreg.ppu_addr_bus)
+          MLOG("PPU cycle {} old ${:04X}", ppu::get_current_scanline_cycle(), memreg.ppu_addr_bus);
           memreg.ppu_addr_bus = memreg.r2006;
         }
       } else {// first write
@@ -498,10 +504,10 @@ void mnes::memory::write(uint address, uint value)
     }
     case 7:// RW
     {
-      uint ppuAddress = memreg.r2006;
+      uint32_t ppuAddress = memreg.r2006;
       memreg.r2006 = (memreg.r2006 + ((memreg.r2000 & 0x4) ? 32 : 1)) & 0x7FFF;
       if (memreg.r2006 < 0x3F00) {
-        MLOG(" @ PPU cycle %ld old $%04X", ppu_get_current_scanline_cycle(), memreg.ppu_addr_bus)
+        MLOG("PPU cycle {} old ${:04X}", ppu::get_current_scanline_cycle(), memreg.ppu_addr_bus);
         memreg.ppu_addr_bus = memreg.r2006;
       }
       ppu::memory::write(ppuAddress, value);
@@ -546,7 +552,7 @@ void mnes::memory::write(uint address, uint value)
       break;
     case 0x14:// w
     {
-      uint nStartAddress = 0x100 * value;
+      uint32_t nStartAddress = 0x100 * value;
       // keep the cpu and ppu in sync while dma is happening
       if (ppu::is_odd_cycle()) {
         do_cycle();
@@ -554,7 +560,7 @@ void mnes::memory::write(uint address, uint value)
       } else {
         do_cycle();
       }
-      for (uint i = 0; i < 256; i++) { ext::write(0x2004, ext::read(nStartAddress + i)); }
+      for (uint32_t i = 0; i < 256; i++) { ext::write(0x2004, ext::read(nStartAddress + i)); }
 
       return;
     }
@@ -563,8 +569,8 @@ void mnes::memory::write(uint address, uint value)
       static int strobe = -1;
       if ((value & 1) == 1) { strobe = 1; }
       if ((value & 1) == 0 && strobe == 1) {
-        MemoryData().joy1.set(get_joy1());
-        MemoryData().joy2.set(get_joy2());
+        singleton().joy1.set(get_joy1());
+        singleton().joy2.set(get_joy2());
         strobe = -1;
       }
     } break;
@@ -582,19 +588,20 @@ void mnes::memory::write(uint address, uint value)
   }
 }
 
-uint mnes::memory::ext::read(uint address)
+uint32_t mnes::memory::ext::read(uint32_t address)
 {
   do_cycle();
   return memory::read(address);
 }
 
-void mnes::memory::ext::write(uint address, uint value)
+void mnes::memory::ext::write(uint32_t address, uint32_t value)
 {
   do_cycle();
   memory::write(address, value);
 }
 
 namespace {
+
 void mnes_::memory::inc_stack()
 {
   cpureg.stack++;
@@ -607,16 +614,16 @@ void mnes_::memory::dec_stack()
   cpureg.stack &= 0xFF;
 }
 
-void mnes_::memory::push_byte(uint nValue)
+void mnes_::memory::push_byte(uint32_t nValue)
 {
   ext::write(cpureg.stack + 0x100, nValue);
   dec_stack();
 }
 
-uint mnes_::memory::pop_byte()
+uint32_t mnes_::memory::pop_byte()
 {
   inc_stack();
-  uint retval = ext::read(cpureg.stack + 0x100);
+  uint32_t retval = ext::read(cpureg.stack + 0x100);
   return retval;
 }
 
@@ -643,12 +650,12 @@ void mnes_::cpu::check_for_hardware_irq()
   if (cpureg.prev_nmi) {
     cpureg.opCode = 0x00;
     cpureg.actual_irq = doing_irq::nmi;
-    MLOG("NMI -> ")
+    MLOG("**NMI**");
   } else if (IF_INTERRUPT() == false) {
     if (cpureg.irq) {
       cpureg.opCode = 0x00;
       cpureg.actual_irq = doing_irq::irq;
-      MLOG("IRQ -> ")
+      MLOG("**IRQ**");
     } else {
       cpureg.actual_irq = doing_irq::none;
       cpureg.pc++;
@@ -681,15 +688,11 @@ void mnes_::memory::read_opcode()
 {
   cpureg.opCode = ext::read(cpureg.pc);
 
-#ifdef USE_LOG
-  uint pc = cpureg.pc;
-#endif
-
   check_for_hardware_irq();
   check_for_software_irq();
   check_for_delayed_i_flag();
 
-  MLOG("$%04X %02X %s", pc, cpureg.opCode, OpCodes[cpureg.opCode].sOpCode);
+  MLOG("${:04X} {:02X} {}", cpureg.pc, cpureg.opCode, opcodes::opcode_to_string(cpureg.opCode));
 }
 }
 
@@ -982,7 +985,7 @@ void mnes::memory::pc_process()
     rts();
     break;
   case OPCODE_PHA:
-    MLOG(" | A:$%02X ->", cpureg.a)
+    MLOG("A:${:02X} ->", cpureg.a);
     pha();
     break;
   case OPCODE_PHP:
@@ -990,7 +993,7 @@ void mnes::memory::pc_process()
     break;
   case OPCODE_PLA:
     pla();
-    MLOG(" | A:$%02X ->", cpureg.a)
+    MLOG("A:${:02X} ->", cpureg.a);
     break;
   case OPCODE_PLP:
     plp();
@@ -1048,11 +1051,12 @@ void mnes::memory::pc_process()
     implied_or_accumulator();
     break;
   default:
-    MLOG(" Unknown opcode found %02X", cpureg.opCode)
+    MLOG("Unknown opcode found ${:02X}", cpureg.opCode);
     break;
   }
 
-  MLOG(" T:[$%016lX]\n", cpureg.tick_count);
+  MLOG("T:[${:016X}]", cpureg.tick_count);
+  //TODO: replace with single line that logs everything about the current opcode.
 
   cpureg.tick_count++;
 }

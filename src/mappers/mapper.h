@@ -13,6 +13,9 @@ constexpr auto MMC5 = 5;
 constexpr auto AOROM = 7;
 constexpr auto MMC2 = 9;
 constexpr auto MMC4 = 10;
+constexpr auto CART_VRAM_SIZE = 0x2000U;
+
+using cart_vram_t = fixed_span_bytes<CART_VRAM_SIZE>;
 
 struct mapper_t
 {
@@ -39,5 +42,6 @@ void set_romdata_from_stream(std::ifstream &stream, std::streamsize size);
 std::span<uint8_t> current_raw_data();
 std::array<uint8_t *, 8> &current_rom_data();
 mnes::file::ines_format_t &current_nes_format();
+cart_vram_t cart_vram();
 
 }// namespace mnes::mappers

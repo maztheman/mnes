@@ -4,7 +4,7 @@ void mnes_::memory::r_immediate()
   // 2.1
   cpureg.byteLatch = ext::read(cpureg.pc++);
 
-  MLOG(" #$%02X", cpureg.byteLatch);
+  MLOG("#${:02X}", cpureg.byteLatch);
 
   // 2.2 Do Operation
   switch (cpureg.opCode) {
@@ -115,12 +115,12 @@ void mnes_::memory::r_immediate()
 void mnes_::memory::r_absolute()
 {
   // 2
-  uint pcl = ext::read(cpureg.pc++);
+  uint32_t pcl = ext::read(cpureg.pc++);
   // 3
-  uint pch = ext::read(cpureg.pc++);
+  uint32_t pch = ext::read(cpureg.pc++);
   // 4.1
   cpureg.byteLatch = ext::read(pcl | (pch << 8));
-  MLOG(" $%04X <- $%02X", pcl | (pch << 8), cpureg.byteLatch);
+  MLOG("${:04X} <- ${:02X}", pcl | (pch << 8), cpureg.byteLatch);
   // 4.2 - Do Operation
   switch (cpureg.opCode) {
     using namespace mnes::opcodes;
@@ -180,10 +180,10 @@ void mnes_::memory::r_absolute()
 void mnes_::memory::r_zero_page()
 {
   // 2
-  uint address = ext::read(cpureg.pc++);
+  uint32_t address = ext::read(cpureg.pc++);
   // 3.1
   cpureg.byteLatch = ext::read(address);
-  MLOG(" $%02X <- $%02X", address, cpureg.byteLatch);
+  MLOG("${:02X} <- ${:02X}", address, cpureg.byteLatch);
   // 3.2
   switch (cpureg.opCode) {
     using namespace mnes::opcodes;
@@ -207,7 +207,7 @@ void mnes_::memory::r_zero_page()
     break;
   case OPCODE_ADC_ZP:
     adc();
-    MLOG(" A<=$%02X", cpureg.a)
+    MLOG("A<=${:02X}", cpureg.a);
     break;
   case OPCODE_SBC_ZP:
     sbc();
@@ -248,15 +248,15 @@ void mnes_::memory::r_zero_page()
 
 */
 
-void mnes_::memory::r_zero_page_indexed(const uint &indexRegister)
+void mnes_::memory::r_zero_page_indexed(const uint32_t &indexRegister)
 {
   // 2
-  uint address = ext::read(cpureg.pc++);
+  uint32_t address = ext::read(cpureg.pc++);
   // 3
   ext::read(address);
   // 4.1
   cpureg.byteLatch = ext::read((address + indexRegister) & 0xFF);
-  MLOG(" $%02X, I[%02X] A:$%02X <- $%02X",
+  MLOG("${:02X}, I[{:02X}] A:${:02X} <- ${:02X}",
     address,
     indexRegister,
     (address + indexRegister) & 0xFF,
@@ -325,22 +325,22 @@ void mnes_::memory::r_zero_page_indexed_y() { r_zero_page_indexed(cpureg.y); }
                 was invalid during cycle #4, i.e. page boundary was crossed.
 */
 
-void mnes_::memory::r_absolute_indexed(const uint &indexRegister)
+void mnes_::memory::r_absolute_indexed(const uint32_t &indexRegister)
 {
   // 2
-  uint pcl = ext::read(cpureg.pc++);
+  uint32_t pcl = ext::read(cpureg.pc++);
   // 3
-  uint pch = ext::read(cpureg.pc++) << 8;
-  MLOG(" $%04X, I[$%02X]", pcl | pch, indexRegister);
+  uint32_t pch = ext::read(cpureg.pc++) << 8;
+  MLOG("${:04X}, I[${:02X}]", pcl | pch, indexRegister);
   pcl += indexRegister;
   // 4
   cpureg.byteLatch = ext::read((pcl & 0xFF) | pch);
   if (pcl > 0xFF) {
     // 5
     cpureg.byteLatch = ext::read((pch + pcl) & 0xFFFF);
-    MLOG(" AF:$%04X <- $%02X", (pch + pcl) & 0xFFFF, cpureg.byteLatch);
+    MLOG("AF:${:04X} <- ${:02X}", (pch + pcl) & 0xFFFF, cpureg.byteLatch);
   } else {
-    MLOG(" A:$%04X <- $%02X", (pcl & 0xFF) | pch, cpureg.byteLatch);
+    MLOG("A:${:04X} <- ${:02X}", (pcl & 0xFF) | pch, cpureg.byteLatch);
   }
   // Do Operation
   switch (cpureg.opCode) {
@@ -408,17 +408,17 @@ void mnes_::memory::r_absolute_indexed_y() { r_absolute_indexed(cpureg.y); }
 void mnes_::memory::r_indexed_indirect()
 {
   // 2
-  uint pointer = ext::read(cpureg.pc++);
-  MLOG(" ($%02X, X[$%02X])", pointer, cpureg.x)
+  uint32_t pointer = ext::read(cpureg.pc++);
+  MLOG("(${:02X}, X[${:02X}])", pointer, cpureg.x);
   // 3
   ext::read(pointer);
   // 4
-  uint pcl = ext::read(TO_ZERO_PAGE(pointer + cpureg.x));
+  uint32_t pcl = ext::read(TO_ZERO_PAGE(pointer + cpureg.x));
   // 5
-  uint pch = ext::read(TO_ZERO_PAGE(pointer + cpureg.x + 1)) << 8;
+  uint32_t pch = ext::read(TO_ZERO_PAGE(pointer + cpureg.x + 1)) << 8;
   // 6.1
   cpureg.byteLatch = ext::read(pcl | pch);
-  MLOG(" A:$%04X <- $%02X", pcl | pch, cpureg.byteLatch)
+  MLOG("address:${:04X} <- data: ${:02X}", pcl | pch, cpureg.byteLatch);
   // 6.2 Do Operation
   switch (cpureg.opCode) {
     using namespace mnes::opcodes;
@@ -477,12 +477,12 @@ void mnes_::memory::r_indexed_indirect()
 void mnes_::memory::r_indirect_indexed()
 {
   // 2
-  uint pointer = ext::read(cpureg.pc++);
-  MLOG(" ($%02X), Y[%02X]", pointer, cpureg.y);
+  uint32_t pointer = ext::read(cpureg.pc++);
+  MLOG("(${:02X}), Y[{:02X}]", pointer, cpureg.y);
   // 3
-  uint pcl = ext::read(pointer);
+  uint32_t pcl = ext::read(pointer);
   // 4
-  uint pch = ext::read(TO_ZERO_PAGE(pointer + 1)) << 8;
+  uint32_t pch = ext::read(TO_ZERO_PAGE(pointer + 1)) << 8;
   pcl += cpureg.y;
   // 5
   // Could be invalid read
@@ -490,9 +490,9 @@ void mnes_::memory::r_indirect_indexed()
   if (pcl > 0xFF) {
     // 6*, we are here because the effective address was off by $100
     cpureg.byteLatch = ext::read((pcl + pch) & 0xFFFF);
-    MLOG(" A:$%04X < $%02X", (pcl + pch) & 0xFFFF, cpureg.byteLatch);
+    MLOG("A:${:04X} < ${:02X}", (pcl + pch) & 0xFFFF, cpureg.byteLatch);
   } else {
-    MLOG(" A:$%04X < $%02X", TO_ZERO_PAGE(pcl) | pch, cpureg.byteLatch);
+    MLOG("A:${:04X} < ${:02X}", TO_ZERO_PAGE(pcl) | pch, cpureg.byteLatch);
   }
   // Do Operation
   switch (cpureg.opCode) {

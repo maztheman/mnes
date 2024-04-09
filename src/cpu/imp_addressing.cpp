@@ -18,19 +18,19 @@ void mnes_::memory::implied_or_accumulator()
     break;
   case OPCODE_DEX:
     dex();
-    MLOG(" | X:$%02X", cpureg.x);
+    MLOG(" | X:${:02X}", cpureg.x);
     break;
   case OPCODE_DEY:
     dey();
-    MLOG(" | Y:$%02X", cpureg.y);
+    MLOG(" | Y:${:02X}", cpureg.y);
     break;
   case OPCODE_INX:
     inx();
-    MLOG(" | X:$%02X", cpureg.x);
+    MLOG(" | X:${:02X}", cpureg.x);
     break;
   case OPCODE_INY:
     iny();
-    MLOG(" | Y:$%02X", cpureg.y);
+    MLOG(" | Y:${:02X}", cpureg.y);
     break;
   case OPCODE_NOP:
     nop();
@@ -46,47 +46,47 @@ void mnes_::memory::implied_or_accumulator()
     break;
   case OPCODE_TAX:
     tax();
-    MLOG(" | X:$%02X", cpureg.x);
+    MLOG(" | X:${:02X}", cpureg.x);
     break;
   case OPCODE_TAY:
     tay();
-    MLOG(" | Y:$%02X", cpureg.y);
+    MLOG(" | Y:${:02X}", cpureg.y);
     break;
   case OPCODE_TSX:
     tsx();
-    MLOG(" | X:$%02X", cpureg.x);
+    MLOG(" | X:${:02X}", cpureg.x);
     break;
   case OPCODE_TXA:
     txa();
-    MLOG(" | A:$%02X", cpureg.a);
+    MLOG(" | A:${:02X}", cpureg.a);
     break;
   case OPCODE_TXS:
     txs();
-    MLOG(" | S:$%02X", cpureg.stack);
+    MLOG(" | S:${:02X}", cpureg.stack);
     break;
   case OPCODE_TYA:
     tya();
-    MLOG(" | A:$%02X", cpureg.a);
+    MLOG(" | A:${:02X}", cpureg.a);
     break;
   case OPCODE_ASL_A:
-    MLOG(" | A:$%02X ->", cpureg.a)
+    MLOG(" | A:${:02X} ->", cpureg.a);
     internals::asl(cpureg.a);
-    MLOG(" A:$%02X", cpureg.a);
+    MLOG(" A:${:02X}", cpureg.a);
     break;
   case OPCODE_LSR_A:
-    MLOG(" | A:$%02X ->", cpureg.a)
+    MLOG(" | A:${:02X} ->", cpureg.a);
     internals::lsr(cpureg.a);
-    MLOG(" A:$%02X", cpureg.a)
+    MLOG(" A:${:02X}", cpureg.a);
     break;
   case OPCODE_ROL_A:
-    MLOG(" | A:$%02X ->", cpureg.a)
+    MLOG(" | A:${:02X} ->", cpureg.a);
     internals::rol(cpureg.a);
-    MLOG(" A:$%02X", cpureg.a)
+    MLOG(" A:${:02X}", cpureg.a);
     break;
   case OPCODE_ROR_A:
-    MLOG(" | A:$%02X ->", cpureg.a)
+    MLOG(" | A:${:02X} ->", cpureg.a);
     internals::ror(cpureg.a);
-    MLOG(" A:$%02X", cpureg.a)
+    MLOG(" A:${:02X}", cpureg.a);
     break;
   }
 }

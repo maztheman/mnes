@@ -17,8 +17,8 @@ namespace {
 
 void mnes_::cpu::brk()
 {
-  uint pcl_addr = 0;
-  uint pch_addr = 0;
+  uint32_t pcl_addr = 0;
+  uint32_t pch_addr = 0;
   // 2
   ext::read(cpureg.pc);
   if (cpureg.actual_irq == doing_irq::brk) { cpureg.pc++; }
@@ -194,14 +194,14 @@ void mnes_::cpu::plp()
 void mnes_::cpu::jsr()
 {
   // 2
-  uint pcl = ext::read(cpureg.pc++);
+  uint32_t pcl = ext::read(cpureg.pc++);
   // 3
   do_cycle();
   // 4-5
   push_pc();
   // 6
   cpureg.pc = pcl | (ext::read(cpureg.pc) << 8);
-  MLOG(" $%04X", cpureg.pc);
+  MLOG("program_counter: ${:04X}", cpureg.pc);
 }
 
 }

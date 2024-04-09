@@ -4,7 +4,7 @@ SLO, SRE/LSE, RLA, RRA, ISB/ISC, DCP
 */
 namespace {
 
-void mnes_::cpu::internals::asl(uint &value)
+void mnes_::cpu::internals::asl(uint32_t &value)
 {
   set_carry((value & 0x80) == 0x80);
   value <<= 1;
@@ -12,14 +12,14 @@ void mnes_::cpu::internals::asl(uint &value)
   set_nz(value);
 }
 
-void mnes_::cpu::internals::lsr(uint &value)
+void mnes_::cpu::internals::lsr(uint32_t &value)
 {
   set_carry((value & 1) == 1);
   value >>= 1;
   set_nz(value);
 }
 
-void mnes_::cpu::internals::rol(uint &value)
+void mnes_::cpu::internals::rol(uint32_t &value)
 {
   value <<= 1;
   if (is_carry()) value |= 1;
@@ -28,7 +28,7 @@ void mnes_::cpu::internals::rol(uint &value)
   set_nz(value);
 }
 
-void mnes_::cpu::internals::ror(uint &value)
+void mnes_::cpu::internals::ror(uint32_t &value)
 {
   if (is_carry()) value |= 0x100;
   set_carry((value & 1) == 1);

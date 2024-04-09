@@ -19,13 +19,46 @@
 #include <cpu/memory.h>
 #include <cpu/memory_registers.h>
 
+#include <inttypes.h>
+
+using mnes::memory::SPRRam;
+using namespace mnes;
+using namespace mnes::ppu;
+
+namespace pmem = mnes::ppu::memory;
+namespace cmem = mnes::memory;
 
 //Declare private functions and data
 namespace {
-  constexpr uint32_t PPU_CYCLE_PER_FRAME = 89342U;
+  namespace scanline_ {
+    constexpr uint32_t VISIBLE_START      = 0U;
+    constexpr uint32_t VISIBLE_END        = 239U;
+    constexpr uint32_t POST_RENDER_START  = 240U;
+    constexpr uint32_t VBLANK             = 241U;
+    constexpr uint32_t POST_RENDER_END    = 260U;
+    constexpr uint32_t PRE_RENDER         = 261U;
+    constexpr uint32_t COUNT              = PRE_RENDER + 1;
+  }
+  namespace pcycle {
+    constexpr uint32_t IDLE               = 0U;
+
+  }
+  constexpr uint32_t PPU_CYCLE_PER_LINE_COUNT = 341U;
+  constexpr uint32_t PPU_CYCLE_PER_FRAME_COUNT = PPU_CYCLE_PER_LINE_COUNT * scanline_::COUNT;
+  
+  uint8_t g_RGBPalette[64][3] = { 0 };
+  std::array<uint32_t, 256> g_aBGColor = { 0 };
+  uint32_t PPU_cycles = 0;
+  std::vector<uint32_t> s_arMod341(PPU_CYCLE_PER_FRAME_COUNT, 0);
+  std::vector<int32_t> s_arCycle2Scanline(PPU_CYCLE_PER_FRAME_COUNT, 0);
+  bool s_bEvenFrame = true;
 
   namespace mnes_::ppu {
     void update_scanline();
+    void inc_cycle();
+    void process_visible_frame(const uint &ppu_cycle);
+    void process_prerender_frame(const uint &ppu_cycle);
+
     constexpr uint32_t NULL_LAST_READ = static_cast<uint32_t>(-5);
 
     struct ppu_registers
@@ -34,64 +67,35 @@ namespace {
       uint32_t last_2002_read;
     };
 
-    namespace bg {
+    ppu_registers ppuregs = { scanline_::VBLANK, NULL_LAST_READ };
 
+    namespace bg {
+#include "background.cpp"
     }
     namespace sprite {
-
+#include "sprite.cpp"
     }
   }
 }
 
-using mnes::memory::SPRRam;
-using namespace mnes;
-using namespace mnes::ppu;
 using namespace mnes_::ppu;
-
-namespace pmem = mnes::ppu::memory;
-namespace cmem = mnes::memory;
 
 // clang-format off
 #include "ppu_registers.cpp"
 // clang-format on
 
 namespace {
-struct spritebmp_t
-{
-  uint32_t reg;
-  void set(uint32_t value) { reg = value & 0xFF; }
-  void shift()
-  {
-    // clear top bit, then shift
-    reg &= 0x7F;
-    reg <<= 1;
-  }
-  uint8_t fetch() { return static_cast<uint8_t>((reg >> 7) & 1); }
-};
-
-uint8_t g_RGBPalette[64][3] = { 0 };
-uint32_t g_aBGColor[256] = { 0 };
-uint32_t PPU_cycles = 0;
-std::vector<uint32_t> s_arMod341(PPU_CYCLE_PER_FRAME, 0);
-std::vector<int32_t> s_arCycle2Scanline(PPU_CYCLE_PER_FRAME, 0);
-bool s_bEvenFrame = true;
-
-// clang-format off
-#include "sprite.cpp"
-#include "background.cpp"
-// clang-format on
-
-void ppu_process_visible_frame(const uint &ppu_cycle)
+void mnes_::ppu::process_visible_frame(const uint &ppu_cycle)
 {
   if (cmem::is_rendering_enabled()) {
-    ppu_sprite_evaluation(ppu_cycle);
+    sprite::evaluation(ppu_cycle);
     if (ppu_cycle >= 1 && ppu_cycle <= 256) {
-      ppu_bg_pre_process_shift_regs(ppu_cycle, 7);
-      if (cmem::is_bg_enabled()) { ppu_bg_draw(ppu_cycle); }
-      ppu_sprite_get_active();
-      if (cmem::is_sprite_enabled()) { ppu_sprite_draw(ppu_cycle); }
-      ppu_bg_post_process_shift_regs(ppu_cycle);
-      ppu_sprite_post_process_regs();
+      bg::pre_process_shift_regs(ppu_cycle, 7);
+      if (cmem::is_bg_enabled()) { bg::draw(ppu_cycle); }
+      sprite::get_active();
+      if (cmem::is_sprite_enabled()) { sprite::draw(ppu_cycle); }
+      bg::post_process_shift_regs(ppu_cycle);
+      sprite::post_process_regs();
     }
     if (ppu_cycle == 256) {
       cmem::inc_fine_y();
@@ -99,15 +103,15 @@ void ppu_process_visible_frame(const uint &ppu_cycle)
       cmem::set_horiz_v_from_temp();
       // ppu_bg_pre_process_shift_regs(ppu_cycle, 8);//so the reload happens
     } else if (ppu_cycle >= 321 && ppu_cycle <= 336) {
-      ppu_bg_pre_process_shift_regs(ppu_cycle, 327);
-      ppu_bg_post_process_shift_regs(ppu_cycle);
+      bg::pre_process_shift_regs(ppu_cycle, 327);
+      bg::post_process_shift_regs(ppu_cycle);
     } else if (ppu_cycle == 337) {
       // ppu_bg_pre_process_shift_regs(ppu_cycle, 327);
     }
   }
 }
 
-void ppu_process_prerender_frame(const uint &ppu_cycle)
+void mnes_::ppu::process_prerender_frame(const uint &ppu_cycle)
 {
   if (ppu_cycle == 1) {
     cmem::clear_vblank();
@@ -117,11 +121,11 @@ void ppu_process_prerender_frame(const uint &ppu_cycle)
 
   if (cmem::is_rendering_enabled()) {
     if (ppu_cycle >= 1 && ppu_cycle <= 256) {
-      ppu_bg_pre_process_shift_regs(ppu_cycle, 7);
-      ppu_bg_post_process_shift_regs(ppu_cycle);
+      bg::pre_process_shift_regs(ppu_cycle, 7);
+      bg::post_process_shift_regs(ppu_cycle);
     }
 
-    if (ppu_cycle >= 257 && ppu_cycle <= 320) { ppu_sprite_fetch_sprite_data(ppu_cycle); }
+    if (ppu_cycle >= 257 && ppu_cycle <= 320) { sprite::fetch_sprite_data(ppu_cycle); }
 
     if (ppu_cycle == 256) {
       cmem::inc_fine_y();
@@ -131,11 +135,11 @@ void ppu_process_prerender_frame(const uint &ppu_cycle)
     } else if (ppu_cycle >= 280 && ppu_cycle <= 304) {
       cmem::set_vert_v_from_temp();
     } else if (ppu_cycle >= 321 && ppu_cycle <= 336) {
-      ppu_bg_pre_process_shift_regs(ppu_cycle, 327);
-      ppu_bg_post_process_shift_regs(ppu_cycle);
+      bg::pre_process_shift_regs(ppu_cycle, 327);
+      bg::post_process_shift_regs(ppu_cycle);
     } else if (ppu_cycle >= 337 && ppu_cycle <= 340) {
       // unused ppu fetch
-      ppu_bg_pre_process_shift_regs(ppu_cycle, 343);
+      bg::pre_process_shift_regs(ppu_cycle, 343);
     }
   }
 }
@@ -145,17 +149,17 @@ void mnes_::ppu::update_scanline()
   auto scanline = s_arCycle2Scanline[PPU_cycles];// look up the scanline for this cycle
 
   if (scanline < 0) {
-    ppuregs.scanline = 241U + static_cast<uint32_t>(21 + scanline);
+    ppuregs.scanline = scanline_::VBLANK + static_cast<uint32_t>(21 + scanline);
   } else {
     ppuregs.scanline = static_cast<uint32_t>(scanline);
   }
 }
 
-void ppu_inc_cycle()
+void mnes_::ppu::inc_cycle()
 {
   PPU_cycles++;
-  if (PPU_cycles >= PPU_CYCLE_PER_FRAME) {
-    PPU_cycles -= PPU_CYCLE_PER_FRAME;
+  if (PPU_cycles >= PPU_CYCLE_PER_FRAME_COUNT) {
+    PPU_cycles -= PPU_CYCLE_PER_FRAME_COUNT;
     s_bEvenFrame = !s_bEvenFrame;
     ppuregs.last_2002_read = NULL_LAST_READ;
   }
@@ -172,18 +176,19 @@ void mnes::ppu::initialize()
     file.read(reinterpret_cast<char *>(&g_RGBPalette[0][0]), 192);
   }
 
-  for (uint32_t i = 0U; i < 262U; i++) {
-    for (uint32_t x = 0U; x < 341U; x++) {
-      size_t index = i * 341U + x;
+  for (uint32_t i = 0U; i < scanline_::COUNT; i++) {
+    for (uint32_t x = 0U; x < PPU_CYCLE_PER_LINE_COUNT; x++) {
+      size_t index = i * PPU_CYCLE_PER_LINE_COUNT + x;
       s_arMod341[index] = x;
     }
   }
 
   for (int32_t i = 0; auto &value : s_arCycle2Scanline) {
-    value = (i / 341) - 21;
+    value = (i / PPU_CYCLE_PER_LINE_COUNT) - 21;
     i++;
   }
-  fmt::print(stderr, "ppu initialize finished\n");
+
+  log::main()->info("ppu initialize finished");
 }
 
 void mnes::ppu::reset()
@@ -192,17 +197,17 @@ void mnes::ppu::reset()
   memset(screenBuffer.data(), 0xCD, screenBuffer.size());
 
   ppuregs.last_2002_read = NULL_LAST_READ;
-  ppuregs.scanline = 241;
+  ppuregs.scanline = scanline_::VBLANK;
 
-  PPU_cycles = 0;
+  PPU_cycles = 0U;
   update_scanline();
 }
 
 bool mnes::ppu::is_odd_cycle() { return (PPU_cycles & 1) == 1; }
 
-uint mnes::ppu::get_cycle() { return PPU_cycles; }
+uint32_t mnes::ppu::get_cycle() { return PPU_cycles; }
 
-uint mnes::ppu::get_current_scanline_cycle() { return s_arMod341[PPU_cycles]; }
+uint32_t mnes::ppu::get_current_scanline_cycle() { return s_arMod341[PPU_cycles]; }
 
 void mnes::ppu::do_cycle()
 {
@@ -210,9 +215,9 @@ void mnes::ppu::do_cycle()
 
   if (auto sl = scanline(); sl <= 239U) {
     if (ppu_cycle == 0U) {
-      memset(&g_aBGColor[0], 0, sizeof(uint) * 256);// used for sprite0 hit detection
+      g_aBGColor.fill(0U);
     }
-    ppu_process_visible_frame(ppu_cycle);
+    process_visible_frame(ppu_cycle);
   } else if (sl == 241U) {
     if (ppu_cycle == 1) {
       /*
@@ -234,18 +239,18 @@ void mnes::ppu::do_cycle()
   } else if (sl == 261U) {
     if (ppu_cycle == 339) {
       if (!s_bEvenFrame && cmem::is_bg_enabled()) {
-        ppu_inc_cycle();
+        inc_cycle();
         gfx::update_texture_from_screen_data();
       } else {
-        ppu_process_prerender_frame(ppu_cycle);
+        process_prerender_frame(ppu_cycle);
       }
     } else {
-      ppu_process_prerender_frame(ppu_cycle);
+      process_prerender_frame(ppu_cycle);
       if (ppu_cycle == 340) { gfx::update_texture_from_screen_data(); }
     }
   }
 
   mappers::current()->do_ppu_cycle();
 
-  ppu_inc_cycle();
+  inc_cycle();
 }

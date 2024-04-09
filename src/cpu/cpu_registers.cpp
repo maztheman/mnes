@@ -130,7 +130,7 @@ void NS SET_DECIMAL(bool bValue)
   }
 }
 
-void NS set_nz(uint val)
+void NS set_nz(uint32_t val)
 {
   SET_SIGN((val & 0x80) == 0x80);
   SET_ZERO((val & 0xFF) == 0);

@@ -13,21 +13,23 @@
 #include "memory.h"
 
 #include <ppu/ppu_memory.h>
+#include <common/Log.h>
 
 #include <cstring>
 #include <fstream>
 
 #define NS mnes::mappers::
 
-using namespace mnes::ppu::memory;
+using namespace mnes;
 using namespace mnes::mappers;
 
 namespace {
 
 mapper_t *get_mapper(uint mapper_no);
 
-std::array<uint8_t *, 8> rom = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 
+auto &ntable = ppu::memory::name_table();
+auto ntRam = ppu::memory::NTRam();
 
 struct nes_data
 {
@@ -35,31 +37,42 @@ struct nes_data
   mnes::file::ines_format_t ines_format;
   std::unique_ptr<uint8_t[]> romData;
   size_t romDataSize;
+// TODO: Could this be a std::array<fixed_size_bytes<0x1000U>, 8> ?
+  std::array<uint8_t *, 8> rom = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+  std::unique_ptr<uint8_t[]> vram = std::make_unique<uint8_t[]>(CART_VRAM_SIZE);
   
+  void read_from_stream(std::ifstream &stream, std::streamsize size)
+  {
+    romDataSize = static_cast<size_t>(size);
+    romData = std::make_unique<uint8_t[]>(romDataSize);
+    stream.read(reinterpret_cast<char *>(romData.get()), size);
+  }
+
+  cart_vram_t get_cart_vram() { return cart_vram_t(vram.get(), CART_VRAM_SIZE); }
 };
 
-nes_data &GNesData()
+nes_data& singleton()
 {
   static nes_data instance;
   return instance;
 }
 }// namespace
 
-mnes::file::ines_format_t & NS current_nes_format() { return GNesData().ines_format; }
+mnes::file::ines_format_t & NS current_nes_format() { return singleton().ines_format; }
 
-std::span<uint8_t> NS current_raw_data() { return { GNesData().romData.get(), GNesData().romDataSize }; }
+std::span<uint8_t> NS current_raw_data() { return { singleton().romData.get(), singleton().romDataSize }; }
 
-std::array<uint8_t *, 8> &NS current_rom_data() { return rom; }
+std::array<uint8_t *, 8> &NS current_rom_data() { return singleton().rom; }
 
-void NS set_mapper(uint mapper_no) { GNesData().mapper = get_mapper(mapper_no); }
+void NS set_mapper(uint mapper_no) { singleton().mapper = get_mapper(mapper_no); }
 
-NS mapper_t * NS current() { return GNesData().mapper; }
+NS mapper_t * NS current() { return singleton().mapper; }
 
 namespace {
 
 mapper_t *get_mapper(uint mapper_no)
 {
-  fmt::print(stderr, "using mapper no {}\n", mapper_no);
+  log::main()->info("using mapper no {}", mapper_no);
 
   switch (mapper_no) {
     using namespace mnes::mappers;
@@ -91,35 +104,27 @@ mapper_t *get_mapper(uint mapper_no)
 
 void NS set_romdata_from_stream(std::ifstream &stream, std::streamsize size)
 {
-  auto &rom = GNesData().romData;
-
-  auto sz = static_cast<size_t>(size);
-
-  rom = std::make_unique<uint8_t[]>(sz);
-  GNesData().romDataSize = sz;
-
-  stream.read(reinterpret_cast<char *>(rom.get()), size);
+  singleton().read_from_stream(stream, size);
 }
 
 void NS SetHorizontalMirror()
 {
-  auto &tables = Tables();
-  auto ntram = NTRam();
-  tables[0] = tables[1] = ntram.data();
-  tables[2] = tables[3] = ntram.subspan(0x400).data();
+  ntable[0] = ntable[1] = ntRam.data();
+  ntable[2] = ntable[3] = ntRam.subspan(0x400).data();
 }
 
 void NS SetVerticalMirror()
 {
-  auto &tables = Tables();
-  auto ntram = NTRam();
-
-  tables[0] = tables[2] = ntram.data();
-  tables[1] = tables[3] = ntram.subspan(0x400).data();
+  ntable[0] = ntable[2] = ntRam.data();
+  ntable[1] = ntable[3] = ntRam.subspan(0x400).data();
 }
 
 void NS SetOneScreenMirror()
 {
-  auto &tables = Tables();
-  tables[1] = tables[3] = tables[0] = tables[2] = NTRam().data();
+  ntable[1] = ntable[3] = ntable[0] = ntable[2] = ntRam.data();
+}
+
+cart_vram_t NS cart_vram()
+{
+  return singleton().get_cart_vram();
 }

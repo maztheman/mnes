@@ -5,6 +5,7 @@ SET(SRCS
     FileBrowser.cpp
     FileBrowser.h
     MainLayer.cpp
+    input.cpp
 )
 
 target_sources(mnes PRIVATE ${SRCS})

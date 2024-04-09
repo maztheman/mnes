@@ -1,52 +1,49 @@
 #include "cnrom.h"
-
 #include "nrom.h"
-
 #include "mapper.h"
-
 #include <ppu/ppu_memory.h>
 
-using namespace mnes::ppu::memory;
+using namespace mnes;
 using namespace mnes::mappers;
 
 namespace {
 size_t s_nOffset;
 auto &romData = current_rom_data();
 auto &format = current_nes_format();
+auto &ptable = ppu::memory::pattern_table();
 
 namespace cnrom {
-void write(uint address, uint value);
+void write(uint32_t address, uint32_t value);
 void reset();
 void nop();
 }
+
+mapper_t this_mapper = {
+    mapperNROM().read_memory, ppu_read_nop, cnrom::write, cnrom::nop, cnrom::nop, cnrom::reset, CNROM, false
+};
+
 }// namespace
 
 mnes::mappers::mapper_t &mnes::mappers::mapperCNROM()
 {
-  static mapper_t instance = {
-    mapperNROM().read_memory, ppu_read_nop, cnrom::write, cnrom::nop, cnrom::nop, cnrom::reset, CNROM, false
-  };
-  return instance;
+  return this_mapper;
 }
 
 namespace {
-void cnrom::write(uint address, uint value)
+void cnrom::write(uint32_t address, uint32_t value)
 {
   if (address < 0x8000) { return; }
 
   size_t nBankAddress = (value * 0x2000) + s_nOffset;
 
-  static auto &pputable = PPUTable();
-
   auto rawData = current_raw_data();
 
   // ppu pages are 1k or 0x400
-  for (size_t n = 0; n < 8; n++) { pputable[n] = rawData.subspan(nBankAddress + (0x400 * n)).data(); }
+  for (size_t n = 0; n < 8; n++) { ptable[n] = rawData.subspan(nBankAddress + (0x400 * n)).data(); }
 }
 
 void cnrom::reset()
 {
-  
   auto rawData = current_raw_data();
 
   s_nOffset = 0x4000;
@@ -70,7 +67,7 @@ void cnrom::reset()
   }
 
   // ppu pages are 1k or 0x400
-  for (uint n = 0; n < 8; n++) { PPUTable()[n] = rawData.subspan(s_nOffset + (0x400 * n)).data(); }
+  for (uint32_t n = 0; n < 8; n++) { ptable[n] = rawData.subspan(s_nOffset + (0x400 * n)).data(); }
 
   if ((format.rom_control_1 & 1) == 1) {
     SetVerticalMirror();

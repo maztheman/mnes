@@ -8,6 +8,7 @@
 #include <sound/apu.h>
 
 #include <common/FileLoader.h>
+#include <common/Log.h>
 
 #include <imgui.h>
 
@@ -17,18 +18,39 @@
 
 using namespace mnes;
 
+namespace {
+  void reset();
+  void KeepAspectRatio(ImGuiSizeCallbackData *data);
+  void KeepItASquare(ImGuiSizeCallbackData *data);
+}
+
+
 const std::shared_ptr<MainLayer> &Main()
 {
   static std::shared_ptr<MainLayer> instance = std::make_shared<MainLayer>();
   return instance;
 }
 
-static void reset()
+namespace {
+void reset()
 {
   cpu::reset();
   ppu::initialize();
   apu::initialize();
   cpu::initialize();
+}
+
+void KeepAspectRatio(ImGuiSizeCallbackData *data)
+{
+  float aspect_ratio = *(float *)data->UserData;
+  data->DesiredSize.x = std::max(data->CurrentSize.x, data->CurrentSize.y);
+  data->DesiredSize.y = std::round((data->DesiredSize.x / aspect_ratio) + 0.5f);
+}
+
+void KeepItASquare(ImGuiSizeCallbackData *data)
+{
+  data->DesiredSize.x = data->DesiredSize.y = std::max(data->CurrentSize.x, data->CurrentSize.y);
+}
 }
 
 MainLayer::~MainLayer() {}
@@ -58,7 +80,8 @@ void MainLayer::OnKeyEvent(Key key, int action, int extra, bool &handled) { hand
 
 void MainLayer::readIni()
 {
-  if (std::ifstream settings("mnes.ini", std::ios::in | std::ios::app); settings) {
+  log::main()->info("Reading mnes.ini from path {}", std::filesystem::current_path().generic_string());
+  if (std::ifstream settings(std::filesystem::current_path() / "mnes.ini", std::ios::in); settings) {
     std::string lastDir;
     std::getline(settings, lastDir);
     if (!lastDir.empty()) { m_Browser.moveTo(std::filesystem::directory_entry{ lastDir }); }
@@ -67,7 +90,7 @@ void MainLayer::readIni()
 
 void MainLayer::writeIni(std::filesystem::path lastDir)
 {
-  std::ofstream settings("mnes.ini", std::ios::out | std::ios::ate);
+  std::ofstream settings(std::filesystem::current_path() / "mnes.ini", std::ios::out | std::ios::ate);
   settings << lastDir.generic_string();
 }
 
@@ -92,22 +115,37 @@ void MainLayer::addMenu()
 
       ImGui::EndMenu();
     }
+    if (ImGui::BeginMenu("Log")) {
+      if (ImGui::BeginMenu("PPU")) {
+          static auto ppulogger = log::ppu();
+          if (ImGui::MenuItem("Off")) ppulogger->set_level(spdlog::level::off);
+          if (ImGui::MenuItem("Critical")) ppulogger->set_level(spdlog::level::critical);
+          if (ImGui::MenuItem("Error")) ppulogger->set_level(spdlog::level::err);
+          if (ImGui::MenuItem("Warning")) ppulogger->set_level(spdlog::level::warn);
+          if (ImGui::MenuItem("Info")) ppulogger->set_level(spdlog::level::info);
+          if (ImGui::MenuItem("Debug")) ppulogger->set_level(spdlog::level::debug);
+          if (ImGui::MenuItem("Trace")) ppulogger->set_level(spdlog::level::trace);
+          ImGui::EndMenu();
+      }
+      if (ImGui::BeginMenu("Main")) {
+          static auto mainlogger = log::main();
+          if (ImGui::MenuItem("Off")) mainlogger->set_level(spdlog::level::off);
+          if (ImGui::MenuItem("Critical")) mainlogger->set_level(spdlog::level::critical);
+          if (ImGui::MenuItem("Error")) mainlogger->set_level(spdlog::level::err);
+          if (ImGui::MenuItem("Warning")) mainlogger->set_level(spdlog::level::warn);
+          if (ImGui::MenuItem("Info")) mainlogger->set_level(spdlog::level::info);
+          if (ImGui::MenuItem("Debug")) mainlogger->set_level(spdlog::level::debug);
+          if (ImGui::MenuItem("Trace")) mainlogger->set_level(spdlog::level::trace);
+          ImGui::EndMenu();
+      }
+      ImGui::EndMenu();
+    }
     ImGui::EndMainMenuBar();
   }
 }
 
 
-static void KeepAspectRatio(ImGuiSizeCallbackData *data)
-{
-  float aspect_ratio = *(float *)data->UserData;
-  data->DesiredSize.x = std::max(data->CurrentSize.x, data->CurrentSize.y);
-  data->DesiredSize.y = std::round((data->DesiredSize.x / aspect_ratio) + 0.5f);
-}
 
-static void KeepItASquare(ImGuiSizeCallbackData *data)
-{
-  data->DesiredSize.x = data->DesiredSize.y = std::max(data->CurrentSize.x, data->CurrentSize.y);
-}
 
 void MainLayer::OnImGui()
 {

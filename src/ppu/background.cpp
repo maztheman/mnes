@@ -52,7 +52,7 @@ uint8_t get_attribute_byte(uint value, uint screen)
 
 uint8_t ppu_memory_main_read_byte(uint address) { return TO_BYTE(pmem::read(address)); }
 
-void ppu_bg_pre_process_shift_regs(const uint ppu_cycle, const uint)
+void pre_process_shift_regs(const uint ppu_cycle, const uint)
 {
   const uint32_t v = cmem::r2006();
 
@@ -105,7 +105,7 @@ void ppu_bg_pre_process_shift_regs(const uint ppu_cycle, const uint)
   }
 }
 
-void ppu_bg_post_process_shift_regs(const uint &ppu_cycle)
+void post_process_shift_regs(const uint &ppu_cycle)
 {
   uint tmp = ppu_cycle & 7;
 
@@ -122,7 +122,7 @@ void ppu_bg_post_process_shift_regs(const uint &ppu_cycle)
   }
 }
 
-void ppu_bg_draw(const uint &ppu_cycle)
+void draw(const uint &ppu_cycle)
 {
   // drawing uses the scanline.front() to get the current lines data
   auto bits = gfx::screen_data();

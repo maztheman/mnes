@@ -2,7 +2,7 @@
 
 
 #include <common/control_flags.h>
-
+#include <common/Log.h>
 #include <cpu/cpu.h>
 #include <cpu/cpu_opcodes.h>
 #include <cpu/cpu_registers.h>
@@ -40,7 +40,7 @@ void Stop() { common::set_cpu_running(false); }
 
 void Start()
 {
-  printf("init memory\n");
+  log::main()->info("init memory");
   common::set_all_display_ready(false);
   memory::intialize();
   common::set_cpu_running(true);

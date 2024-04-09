@@ -15,9 +15,8 @@
 #include <common/Log.h>
 
 using namespace mnes;
-using namespace mnes::ppu::memory;
 using namespace mnes::mappers;
-
+using mnes::memory::SRam;
 
 namespace {
 bool s_bSaveRam;
@@ -25,40 +24,43 @@ bool s_bDisableIRQ;
 bool s_bChipEnable;
 bool s_bForceReload;
 
-uint s_r8000;
-uint s_r8001;
-uint s_rA000;
-uint s_rA001;
+uint32_t s_r8000;
+uint32_t s_r8001;
+uint32_t s_rA000;
+uint32_t s_rA001;
 /// <summary>
 /// IRQ Counter Register
 /// </summary>
-uint s_rC000;
+uint32_t s_rC000;
 /// <summary>
 /// IRQ Latch Register
 /// </summary>
-uint s_rC001;
-uint s_rE000;
-uint s_rE001;
+uint32_t s_rC001;
+uint32_t s_rE000;
+uint32_t s_rE001;
 
-uint s_nPRGCount;
-uint8_t s_VRAM[0x2000];
-uint s_nLastBank;
-uint s_nScanlineCount;
+uint32_t s_nPRGCount;
+uint32_t s_nLastBank;
+uint32_t s_nScanlineCount;
 uint8_t *s_pVROM;
-uint s_nVromMask;
+uint32_t s_nVromMask;
 vuchar s_arNTRAM;
+auto &romData = current_rom_data();
+auto cvram = cart_vram();
+auto &format = current_nes_format();
+auto &ptable = ppu::memory::pattern_table();
+auto &ntable = ppu::memory::name_table();
+auto ntRam = ppu::memory::NTRam();
+
 
 namespace mmc3 {
-  void write(uint address, uint value);
+  void write(uint32_t address, uint32_t value);
   void reset();
   void ppu_do_cycle();
   void nop();
 }
-}
 
-mnes::mappers::mapper_t &mnes::mappers::mapperMMC3()
-{
-  static mapper_t instance = { mapperNROM().read_memory,
+mapper_t this_mapper = { mapperNROM().read_memory,
     ppu_read_nop,
     mmc3::write,
     mmc3::nop,
@@ -66,18 +68,16 @@ mnes::mappers::mapper_t &mnes::mappers::mapperMMC3()
     mmc3::reset,
     MMC3,
     false };
-  return instance;
 }
 
-using mnes::memory::SRam;
-
-// maybe split up register writes into seperate functions for clarity
+mnes::mappers::mapper_t &mnes::mappers::mapperMMC3()
+{
+  return this_mapper;
+}
 
 namespace {
-void mmc3::write(uint address, uint value)
+void mmc3::write(uint32_t address, uint32_t value)
 {
-  static auto &ppuTable = PPUTable();
-  static auto &romData = current_rom_data();
   auto rawData = current_raw_data();
 
   // could handle writes to save ram here to keep the save ram local to mapper butt fuck it for now.
@@ -98,34 +98,34 @@ void mmc3::write(uint address, uint value)
       s_r8000 = value;
     } else {
       s_r8001 = value;
-      uint nCommand = s_r8000 & 7;
+      uint32_t nCommand = s_r8000 & 7;
 
       switch (nCommand) {
       case 0:
       case 1: {
-        uint nRomBank = ((s_r8001 & s_nVromMask) * 0x400);
-        uint nAddress = nCommand * 0x800;
+        uint32_t nRomBank = ((s_r8001 & s_nVromMask) * 0x400);
+        uint32_t nAddress = nCommand * 0x800;
         if ((s_r8000 & 0x80) == 0x80) { nAddress ^= 0x1000; }
         // convert to bank
         nAddress >>= 0xA;
-        ppuTable[nAddress] = &s_pVROM[nRomBank];
-        ppuTable[nAddress + 1] = &s_pVROM[nRomBank + 0x400];
+        ptable[nAddress] = &s_pVROM[nRomBank];
+        ptable[nAddress + 1] = &s_pVROM[nRomBank + 0x400];
       } break;
       case 2:
       case 3:
       case 4:
       case 5: {
-        uint nRomBank = ((s_r8001 & s_nVromMask) * 0x400);
-        uint nAddress = 0x1000 + ((nCommand - 2) * 0x400);
+        uint32_t nRomBank = ((s_r8001 & s_nVromMask) * 0x400);
+        uint32_t nAddress = 0x1000 + ((nCommand - 2) * 0x400);
         if ((s_r8000 & 0x80) == 0x80) { nAddress ^= 0x1000; }
 
         // convert to bank
         nAddress >>= 0xA;
-        ppuTable[nAddress] = &s_pVROM[nRomBank];
+        ptable[nAddress] = &s_pVROM[nRomBank];
       } break;
       case 6: {
         size_t nBank = 0;
-        uint nHardWire = (s_nPRGCount - 1) * 0x4000;
+        uint32_t nHardWire = (s_nPRGCount - 1) * 0x4000;
         if ((s_r8000 & 0x40) == 0x40) {
           romData[0] = rawData.subspan(nHardWire).data();// 0x8000-9FFF is hardwires to 2nd last bank
           romData[1] = rawData.subspan(nHardWire + 0x1000).data();
@@ -141,7 +141,7 @@ void mmc3::write(uint address, uint value)
         romData[nBank + 1] = rawData.subspan(nRomBank + 0x1000UL).data();
       } break;
       case 7: {
-        uint nRomBank = 0x2000 * (s_r8001 & ((s_nPRGCount * 2) - 1));
+        uint32_t nRomBank = 0x2000 * (s_r8001 & ((s_nPRGCount * 2) - 1));
         romData[2] = rawData.subspan(nRomBank).data();
         romData[3] = rawData.subspan(nRomBank + 0x1000).data();
       } break;
@@ -159,7 +159,7 @@ void mmc3::write(uint address, uint value)
         SetHorizontalMirror();
       }
       s_bChipEnable = (s_rA001 & 0x80) == 0x80;
-      mapperMMC3().m_bSaveRam = s_bSaveRam = (s_rA001 & 0x40) == 0x0;
+      this_mapper.m_bSaveRam = s_bSaveRam = (s_rA001 & 0x40) == 0x0;
     }
   } else if (address < 0xE000) {
     bool bReg = (address & 1) == 0;
@@ -191,24 +191,19 @@ void mmc3::write(uint address, uint value)
 
 void SetFourScreenMirror()
 {
-  static auto &tables = Tables();
-  auto ntRam = NTRam();
   s_arNTRAM.resize(0x800);
-  tables[0] = ntRam.data();
-  tables[1] = ntRam.subspan(0x400).data();
-  tables[2] = &s_arNTRAM[0x000];
-  tables[3] = &s_arNTRAM[0x400];
+  ntable[0] = ntRam.data();
+  ntable[1] = ntRam.subspan(0x400).data();
+  ntable[2] = &s_arNTRAM[0x000];
+  ntable[3] = &s_arNTRAM[0x400];
 }
 
 
 void mmc3::reset()
 {
-  static auto &ppuTable = PPUTable();
-  static auto &romData = current_rom_data();
-  auto &format = current_nes_format();
   auto rawData = current_raw_data();
   // mmc3_log.Start("logs/mmc3.log");
-  mapperMMC3().m_bSaveRam = s_bSaveRam = true;
+  this_mapper.m_bSaveRam = s_bSaveRam = true;
   s_bDisableIRQ = false;
   s_bChipEnable = true;
   s_bForceReload = false;
@@ -241,15 +236,14 @@ void mmc3::reset()
     s_nVromMask = (8 * format.chr_rom_count) - 1U;
     s_nLastBank += 0x4000;
     s_pVROM = rawData.subspan(s_nLastBank).data();
-    for (uint n = 0; n < 8; n++) {
+    for (uint32_t n = 0; n < 8; n++) {
       // first 2k is swapped in at reset
-      ppuTable[n] = &s_pVROM[(0x400 * n)];
+      ptable[n] = &s_pVROM[(0x400 * n)];
     }
   } else {
     s_nVromMask = 7;
-    s_pVROM = &s_VRAM[0];
-    memset(&s_VRAM[0], 0, 0x2000);
-    for (uint n = 0; n < 8; n++) { ppuTable[n] = &s_pVROM[(0x400 * n)]; }
+    s_pVROM = cvram.data();
+    for (uint32_t n = 0; n < 8; n++) { ptable[n] = &s_pVROM[(0x400 * n)]; }
   }
 
   if ((format.rom_control_1 & 8) == 8) {
@@ -261,7 +255,7 @@ void mmc3::reset()
   }
 }
 
-bool is_a12_rising(const uint s_ui_ppu_addr_last, const uint ui_ppu_addr)
+bool is_a12_rising(const uint32_t s_ui_ppu_addr_last, const uint32_t ui_ppu_addr)
 {
   auto last_is_zero = (s_ui_ppu_addr_last & 0x1000) == 0;
   auto now_is_1 = (ui_ppu_addr & 0x1000) == 0x1000;
@@ -271,7 +265,7 @@ bool is_a12_rising(const uint s_ui_ppu_addr_last, const uint ui_ppu_addr)
 
 void mmc3::ppu_do_cycle()
 {
-  static uint s_ui_ppu_addr_last = 0;
+  static uint32_t s_ui_ppu_addr_last = 0;
 
   auto ui_ppu_addr = memory::ppu_addr_bus();
 

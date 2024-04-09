@@ -29,17 +29,17 @@ Notes: * The high byte of the effective address may be invalid
 */
 
 namespace {
-void mnes_::memory::rmw_absolute_indexed(const uint &indexRegister)
+void mnes_::memory::rmw_absolute_indexed(const uint32_t &indexRegister)
 {
   using namespace mnes::opcodes;
   // 2
-  uint pcl = ext::read(cpureg.pc++);
+  uint32_t pcl = ext::read(cpureg.pc++);
   // 3
-  uint pch = ext::read(cpureg.pc++) << 8;
-  MLOG(" $%04X, I[$%02X]", pcl | pch, indexRegister)
+  uint32_t pch = ext::read(cpureg.pc++) << 8;
+  MLOG("operand[${:04X}] + index[${:02X}]", pcl | pch, indexRegister);
   pcl += indexRegister;
   // 4
-  MLOG(" DR:$%04X", pch | (pcl & 0xFF))
+  MLOG("fake read address:${:04X}", pch | (pcl & 0xFF));
   ext::read(pch | (pcl & 0xFF));
   cpureg.addressLatch = (pch + pcl) & 0xFFFF;
   if (cpureg.opCode == OPCODE_LAS_AB_Y) {
@@ -50,7 +50,7 @@ void mnes_::memory::rmw_absolute_indexed(const uint &indexRegister)
   }
   // 5
   cpureg.byteLatch = ext::read(cpureg.addressLatch);
-  MLOG(" R/W:$%04X <- $%02X", cpureg.addressLatch, cpureg.byteLatch)
+  MLOG("effective_address:${:04X} <- data:${:02X}", cpureg.addressLatch, cpureg.byteLatch);
   // 6.1
   ext::write(cpureg.addressLatch, cpureg.byteLatch);
   // 6.2 do operation
@@ -107,7 +107,7 @@ void mnes_::memory::rmw_absolute_indexed(const uint &indexRegister)
   }
   }
   // 7
-  MLOG(" W:$%04X <= $%02X", cpureg.addressLatch, cpureg.byteLatch)
+  MLOG("write_address:${:04X} <= data: ${:02X}", cpureg.addressLatch, cpureg.byteLatch);
   ext::write(cpureg.addressLatch, cpureg.byteLatch);
 }
 
@@ -129,13 +129,13 @@ and do the operation on it
 void mnes_::memory::rwm_absolute()
 {
   // 2
-  uint pcl = ext::read(cpureg.pc++);
+  uint32_t pcl = ext::read(cpureg.pc++);
   // 3
-  uint pch = ext::read(cpureg.pc++) << 8;
+  uint32_t pch = ext::read(cpureg.pc++) << 8;
   cpureg.addressLatch = pch | pcl;
   // 4
   cpureg.byteLatch = ext::read(cpureg.addressLatch);
-  MLOG(" R/W:$%04X <- $%02X", cpureg.addressLatch, cpureg.byteLatch);
+  MLOG(" R/W:${:04X} <- ${:02X}", cpureg.addressLatch, cpureg.byteLatch);
   // 5.1
   ext::write(cpureg.addressLatch, cpureg.byteLatch);
   // 5.1 Do the operation
@@ -180,7 +180,7 @@ void mnes_::memory::rwm_absolute()
   }
   // 6
   ext::write(cpureg.addressLatch, cpureg.byteLatch);
-  MLOG(" W:$%04X <= $%02X", cpureg.addressLatch, cpureg.byteLatch);
+  MLOG(" W:${:04X} <= ${:02X}", cpureg.addressLatch, cpureg.byteLatch);
 }
 
 /*
@@ -201,7 +201,7 @@ void mnes_::memory::rwm_zero_page()
   // 3
   cpureg.byteLatch = ext::read(cpureg.addressLatch);
   // 4.1
-  MLOG(" $%02X <- $%02X", cpureg.addressLatch, cpureg.byteLatch);
+  MLOG(" ${:02X} <- ${:02X}", cpureg.addressLatch, cpureg.byteLatch);
   ext::write(cpureg.addressLatch, cpureg.byteLatch);
   // 4.2 Do the operation
   switch (cpureg.opCode) {
@@ -244,7 +244,7 @@ void mnes_::memory::rwm_zero_page()
     break;
   }
   // 5
-  MLOG(" W:$%02X <= $%02X", cpureg.addressLatch, cpureg.byteLatch);
+  MLOG(" W:${:02X} <= ${:02X}", cpureg.addressLatch, cpureg.byteLatch);
   ext::write(cpureg.addressLatch, cpureg.byteLatch);
 }
 
@@ -266,16 +266,16 @@ Note: * The high byte of the effective address is always zero,
 void mnes_::memory::rwm_zero_page_indexed_x()
 {
   // 2
-  uint address = ext::read(cpureg.pc++);
+  uint32_t address = ext::read(cpureg.pc++);
   // 3.1 - read from address
-  MLOG(" $%02X, X[$%02X]", address, cpureg.x)
+  MLOG("fake read address[${:02X}], then + X[${:02X}]", address, cpureg.x);
   // this is wrong should read from address and throw away
   ext::read(address);
   // 3.2 - add index register x to address w/ zero page
-  const uint effectiveAddress = TO_ZERO_PAGE(address + cpureg.x);
+  const uint32_t effectiveAddress = TO_ZERO_PAGE(address + cpureg.x);
   // 4
   cpureg.byteLatch = ext::read(effectiveAddress);
-  MLOG(" R/W:$%02X <- $%02X", effectiveAddress, cpureg.byteLatch);
+  MLOG("read_effective_address:${:02X} <- data: ${:02X}", effectiveAddress, cpureg.byteLatch);
   // 5.1
   ext::write(effectiveAddress, cpureg.byteLatch);
   // 5.2 Do Operation
@@ -319,7 +319,7 @@ void mnes_::memory::rwm_zero_page_indexed_x()
     break;
   }
   // 6
-  MLOG(" W:$%02X <= $%02X", effectiveAddress, cpureg.byteLatch);
+  MLOG(" W:${:02X} <= ${:02X}", effectiveAddress, cpureg.byteLatch);
   ext::write(effectiveAddress, cpureg.byteLatch);
 }
 
@@ -345,20 +345,21 @@ i.e.the zero page boundary crossing is not handled.
 void mnes_::memory::rwm_indexed_indirect()
 {
   // 2
-  uint pointer = ext::read(cpureg.pc++);
-  MLOG(" ($%02X, X[$%02X])", pointer, cpureg.x)
+  uint32_t pointer = ext::read(cpureg.pc++);
   // 3.1 - read from pointer address, result thrown away
   ext::read(pointer);
+  MLOG("pointer[${:02X}] + X[${:02X}])", pointer, cpureg.x);
   // 3.2 - add X to pointer address
   pointer += cpureg.x;
+  
   // 4
-  uint pcl = ext::read(TO_ZERO_PAGE(pointer));
+  uint32_t pcl = ext::read(TO_ZERO_PAGE(pointer));
   // 5
-  uint pch = ext::read(TO_ZERO_PAGE(pointer + 1));
+  uint32_t pch = ext::read(TO_ZERO_PAGE(pointer + 1));
   cpureg.addressLatch = pcl | (pch << 8);
   // 6
   cpureg.byteLatch = ext::read(cpureg.addressLatch);
-  MLOG(" R/W:$%04X <- $%02X", cpureg.addressLatch, cpureg.byteLatch);
+  MLOG("rw_effective_address: ${:04X} <- data: ${:02X}", cpureg.addressLatch, cpureg.byteLatch);
   // 7.1
   ext::write(cpureg.addressLatch, cpureg.byteLatch);
   // 7.2
@@ -387,7 +388,7 @@ void mnes_::memory::rwm_indexed_indirect()
     break;
   }
   // 8
-  MLOG(" W:$%04X <= $%02X", cpureg.addressLatch, cpureg.byteLatch);
+  MLOG(" W:${:04X} <= ${:02X}", cpureg.addressLatch, cpureg.byteLatch);
   ext::write(cpureg.addressLatch, cpureg.byteLatch);
 }
 
@@ -416,21 +417,22 @@ void mnes_::memory::rwm_indexed_indirect()
 void mnes_::memory::rwm_indirect_indexed()
 {
   // 2
-  uint pointer = ext::read(cpureg.pc++);
-  MLOG(" ($%02X), Y[%02X]", pointer, cpureg.y);
+  uint32_t pointer = ext::read(cpureg.pc++);
+  MLOG("indirect_pointer[${:02X}] + Y[{:02X}]", pointer, cpureg.y);
   // 3
-  uint pcl = ext::read(pointer);
+  uint32_t pcl = ext::read(pointer);
   // 4
-  uint pch = ext::read(TO_ZERO_PAGE(pointer + 1)) << 8;
+  uint32_t pch = ext::read(TO_ZERO_PAGE(pointer + 1)) << 8;
   pcl += cpureg.y;
   // 5.1 read from effective address, may be invalid
-  MLOG(" DR:$%04X", pch | TO_ZERO_PAGE(pcl))
+  MLOG("fake_read_effective_address:${:04X} data: throwaway", pch | TO_ZERO_PAGE(pcl));
   ext::read(TO_ZERO_PAGE(pcl) | pch);
   // 5.2 Fix PCH
+  //TODO: do we really allow pcl to overflow over 0x100 ?
   cpureg.addressLatch = (pch + pcl) & 0xFFFF;
   // 6
   cpureg.byteLatch = ext::read(cpureg.addressLatch);
-  MLOG(" R/W:$%04X <- $%02X", cpureg.addressLatch, cpureg.byteLatch)
+  MLOG("rw_effective_address: ${:04X} <- data: ${:02X}", cpureg.addressLatch, cpureg.byteLatch);
   // 7.1
   ext::write(cpureg.addressLatch, cpureg.byteLatch);
   // 7.2 - Do Operation
@@ -462,7 +464,7 @@ void mnes_::memory::rwm_indirect_indexed()
     break;
   }
   // 8
-  MLOG(" W:$%04X <= $%02X", cpureg.addressLatch, cpureg.byteLatch)
+  MLOG("w_effective_address: ${:04X} <= data: ${:02X}", cpureg.addressLatch, cpureg.byteLatch);
   ext::write(cpureg.addressLatch, cpureg.byteLatch);
 }
 }
